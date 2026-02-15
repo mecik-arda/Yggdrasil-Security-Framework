@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YGGDRASIL SECURITY FRAMEWORK</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='roots.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="rune-corner top-left">ᛤ</div>
+        <div class="rune-corner top-right">ᛣ</div>
+        <div class="rune-corner bottom-left">ᛠ</div>
+        <div class="rune-corner bottom-right">ᛘ</div>
+
+        <div class="header-group">
+            <a href="https://en.wikipedia.org/wiki/Yggdrasil" target="_blank">
+                <img id="project-logo" src="https://nordiksimit.org/wp-content/uploads/2016/11/pr50482_900x900_b_p_061526_by_design_by_humans-d7ss3og.jpg" alt="Yggdrasil Logo">
+            </a>
+            <h1>YGGDRASIL SECURITY FRAMEWORK</h1>
+        </div>
+
+        <div class="dashboard-panel">
+            <div class="stat-card">
+                <span class="stat-label">TOTAL INCURSIONS</span>
+                <span id="stat-scans" class="stat-value">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">LAST TARGET</span>
+                <span id="stat-target" class="stat-value">NONE</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">ACTIVE RUNE</span>
+                <span id="stat-tool" class="stat-value">IDLE</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="sidebar">
+                <input type="text" id="target-input" placeholder=">> ENTER TARGET IP/DOMAIN <<">
+                
+                <div class="tool-group">
+                    <h3>[ ᚠ ] PASSIVE RECON</h3>
+                    <button onclick="runTool('whois')">WHOIS Lookup</button>
+                    <button onclick="runTool('google_dorks')">Google Dorks Tree</button>
+                    <button onclick="runTool('theharvester')">The Harvester</button>
+                    <button onclick="runTool('wayback')">Wayback Machine</button>
+                    <button onclick="runTool('amass')">Amass Enumeration</button>
+                    <button onclick="runTool('sherlock')">Sherlock (Username)</button>
+                </div>
+
+                <div class="tool-group">
+                    <h3>[ ᛉ ] DNS & SUBDOMAIN</h3>
+                    <button onclick="runTool('dnsenum')">DNS Enum</button>
+                    <button onclick="runTool('sublist3r')">Sublist3r</button>
+                    <button onclick="runTool('dnsrecon')">DNS Recon</button>
+                    <button onclick="runTool('dig')">Dig (DNS Utils)</button>
+                </div>
+
+                <div class="tool-group">
+                    <h3>[ ᛦ ] ACTIVE SCANNING</h3>
+                    <button onclick="runTool('nmap')">Nmap (Full Scan)</button>
+                    <button onclick="runTool('wafw00f')">WAF Detection</button>
+                    <button onclick="runTool('nikto')">Nikto Web Scan</button>
+                    <button onclick="runTool('wpscan')">WPScan (WordPress)</button>
+                    <button onclick="runTool('wireshark')">Packet Sniffer</button>
+                </div>
+
+                <div class="tool-group">
+                    <h3>[ ᛟ ] VULNERABILITY</h3>
+                    <button onclick="runTool('searchsploit')">Exploit-DB Search</button>
+                    <button onclick="runTool('sqlmap')">Sqlmap (SQLi)</button>
+                    <button onclick="runTool('commix')">Commix (Injection)</button>
+                </div>
+
+                <div class="creator-zone">
+                    <div class="creator-title">ᛗ ARCHITECT OF THE SYSTEM ᛗ</div>
+                    <a href="https://github.com/mecik-arda" target="_blank" class="creator-name">
+                        ARDA 'HADES' MEÇİK
+                    </a>
+                    
+                    <div class="social-links">
+                        <a href="https://github.com/mecik-arda" target="_blank" class="social-btn">
+                            ᛝ GITHUB
+                        </a>
+                        <a href="https://www.linkedin.com/in/SENIN-ADRESIN/" target="_blank" class="social-btn">
+                            ᛡ LINKEDIN
+                        </a>
+                    </div>
+                    <div style="margin-top:15px; font-size: 10px; color: var(--accent-color);">
+                        EST. 2026 • TRAKYA UNIV
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div id="status-display" class="status-bar">SYSTEM INITIALIZED. THE ROOTS ARE LISTENING...</div>
+                
+                <div class="action-bar">
+                    <button onclick="downloadArtifact('txt')" class="btn-download">ᛈ SAVE LOG (.TXT)</button>
+                    <button onclick="downloadArtifact('json')" class="btn-download">ᛈ EXPORT DATA (.JSON)</button>
+                </div>
+
+                <div id="output-area"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="installModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--wood-light); margin-top:0;">[ ᚾ ] MISSING TOOL</h2>
+            <p id="installMsg" style="font-size: 18px; margin: 30px 0;"></p>
+            <button onclick="confirmInstall()" class="btn-install">INITIATE RITUAL (INSTALL)</button>
+            <button onclick="closeModal()" class="btn-cancel">ABORT</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTool = '';
+        let typewriterTimeouts = [];
+
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                document.getElementById('stat-scans').innerText = stats.total_scans;
+                document.getElementById('stat-target').innerText = stats.last_target;
+                document.getElementById('stat-tool').innerText = stats.active_tool;
+            } catch (e) { console.log(e); }
+        }
+
+        setInterval(updateStats, 5000);
+        updateStats();
+
+        function typeWriter(element, text, i) {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                element.scrollTop = element.scrollHeight;
+                let timeout = setTimeout(() => typeWriter(element, text, i + 1), 2);
+                typewriterTimeouts.push(timeout);
+            }
+        }
+
+        function clearTypewriter() {
+            typewriterTimeouts.forEach(t => clearTimeout(t));
+            typewriterTimeouts = [];
+        }
+
+        async function runTool(toolName) {
+            const target = document.getElementById('target-input').value;
+            const statusDiv = document.getElementById('status-display');
+            
+            if (!target) {
+                statusDiv.innerText = ">> ERROR: A TARGET (IP/DOMAIN) IS REQUIRED <<";
+                statusDiv.style.color = "var(--danger-color)";
+                statusDiv.style.borderColor = "var(--danger-color)";
+                return;
+            }
+            statusDiv.style.color = "var(--wood-light)";
+            statusDiv.style.borderColor = "var(--wood-light)";
+
+            currentTool = toolName;
+            statusDiv.innerText = `>> CONSULTING THE ROOTS FOR: ${toolName.toUpperCase()}...`;
+            
+            clearTypewriter();
+            document.getElementById('output-area').innerHTML = "";
+
+            const formData = new FormData();
+            formData.append('tool', toolName);
+            formData.append('target', target);
+            formData.append('action', 'check');
+
+            try {
+                const response = await fetch('/api/action', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.status === 'missing') {
+                    showInstallModal(toolName);
+                } else {
+                    executeTool(toolName, target);
+                }
+            } catch (error) {
+                statusDiv.innerText = "SYSTEM ERROR: " + error;
+                statusDiv.style.color = "var(--danger-color)";
+            }
+        }
+
+        function showInstallModal(toolName) {
+            document.getElementById('installMsg').innerText = `The tool '${toolName.toUpperCase()}' is not present.\n\nDo you wish to summon it now?`;
+            document.getElementById('installModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('installModal').style.display = 'none';
+            document.getElementById('status-display').innerText = ">> RITUAL ABORTED.";
+        }
+
+        async function confirmInstall() {
+            closeModal();
+            const statusDiv = document.getElementById('status-display');
+            statusDiv.innerText = `>> SUMMONING ${currentTool.toUpperCase()}... PLEASE WAIT...`;
+            
+            const formData = new FormData();
+            formData.append('tool', currentTool);
+            formData.append('action', 'install');
+
+            try {
+                const response = await fetch('/api/action', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    statusDiv.innerText = ">> SUMMONING COMPLETE. ENGAGING TOOL...";
+                    const target = document.getElementById('target-input').value;
+                    executeTool(currentTool, target);
+                } else {
+                    statusDiv.innerText = ">> SUMMONING FAILED: " + data.message;
+                    statusDiv.style.color = "var(--danger-color)";
+                }
+            } catch (error) {
+                statusDiv.innerText = "INSTALLATION ERROR: " + error;
+            }
+        }
+
+        async function executeTool(tool, target) {
+            const statusDiv = document.getElementById('status-display');
+            const outputDiv = document.getElementById('output-area');
+            
+            statusDiv.innerText = `>> WEAVING FATE WITH ${tool.toUpperCase()} ON [${target}]...`;
+            outputDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE... ]</span>";
+
+            const formData = new FormData();
+            formData.append('tool', tool);
+            formData.append('target', target);
+            formData.append('action', 'run');
+
+            try {
+                const response = await fetch('/api/action', { method: 'POST', body: formData });
+                const data = await response.json();
+                updateStats();
+
+                outputDiv.innerHTML = ""; 
+
+                if (data.type === 'html') {
+                    outputDiv.innerHTML = data.output;
+                } else {
+                    typeWriter(outputDiv, data.output, 0);
+                }
+                
+                statusDiv.innerText = ">> FATE HAS BEEN WOVEN. OPERATION COMPLETE.";
+                statusDiv.style.color = "var(--highlight-color)";
+                statusDiv.style.borderColor = "var(--highlight-color)";
+            } catch (error) {
+                outputDiv.innerText = "RUNTIME ERROR: " + error;
+                statusDiv.innerText = ">> THE CHANT FAILED.";
+                statusDiv.style.color = "var(--danger-color)";
+            }
+        }
+
+        function downloadArtifact(type) {
+            const content = document.getElementById('output-area').innerText;
+            const target = document.getElementById('target-input').value || 'unknown_target';
+            const tool = currentTool || 'tool';
+            const timestamp = new Date().toISOString().slice(0,10);
+            
+            let filename = `yggdrasil_${target}_${tool}_${timestamp}.${type}`;
+            let blob;
+
+            if (type === 'json') {
+                const data = { target: target, tool: tool, date: timestamp, log: content };
+                blob = new Blob([JSON.stringify(data, null, 4)], { type: "application/json" });
+            } else {
+                blob = new Blob([content], { type: "text/plain" });
+            }
+
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+    </script>
+</body>
+</html>
