@@ -50,41 +50,41 @@ python3 app.py
 ```
 ## What happens next? ##
 
-  The Flask server will initialize and start listening for local connections.
+*   The Flask server will initialize and start listening for local connections.
 
-  You will see the local gateway link (typically http://127.0.0.1:5000) in your terminal.
+*   You will see the local gateway link (typically http://127.0.0.1:5000) in your terminal.
 
-  Once accessed, the Runic Dashboard will be active, and you can begin your reconnaissance operations immediately.
+*   Once accessed, the Runic Dashboard will be active, and you can begin your reconnaissance operations immediately.
   
 ## ᛖ Core Functionalities ##
 
-  Passive Reconnaissance (ᚠ): Gathers intelligence without direct target interaction using tools like WHOIS, theHarvester, and Amass.
+*   Passive Reconnaissance (ᚠ): Gathers intelligence without direct target interaction using tools like WHOIS, theHarvester, and Amass.
 
-  DNS & Subdomain Enumeration (ᛉ): Maps the target's digital footprint through sublist3r, dnsenum, and advanced DNS queries.
+*   DNS & Subdomain Enumeration (ᛉ): Maps the target's digital footprint through sublist3r, dnsenum, and advanced DNS queries.
 
-  Active Scanning (ᛦ): Performs deep service discovery and WAF detection using Nmap, Nikto, and WPScan.
+*   Active Scanning (ᛦ): Performs deep service discovery and WAF detection using Nmap, Nikto, and WPScan.
 
-  Vulnerability Assessment (ᛟ): Identifies and tests potential exploits with Sqlmap, Commix, and Searchsploit integration.
+*   Vulnerability Assessment (ᛟ): Identifies and tests potential exploits with Sqlmap, Commix, and Searchsploit integration.
 
 ## ᛒ Advanced System Features ##
 
-  The Overseer Dashboard: Monitor real-time statistics including total incursions, current active tools, and last engaged targets.
+*   The Overseer Dashboard: Monitor real-time statistics including total incursions, current active tools, and last engaged targets.
 
-  The Scribe Module (Reporting): Export raw terminal data into structured TXT logs or professional JSON artifacts for security documentation.
+*   The Scribe Module (Reporting): Export raw terminal data into structured TXT logs or professional JSON artifacts for security documentation.
 
-  Runic Installation Ritual: Automatically detects missing dependencies and offers a one-click installation process within the UI.
+*   Runic Installation Ritual: Automatically detects missing dependencies and offers a one-click installation process within the UI.
 
-  Authentic Terminal Experience: Features a custom-coded typewriter effect for realistic command-line rendering.
+*   Authentic Terminal Experience: Features a custom-coded typewriter effect for realistic command-line rendering.
 
 ## ᚦ Usage Protocol ##
 
-  Step 1: Enter the target's IP address or Domain in the central input field.
+*   Step 1: Enter the target's IP address or Domain in the central input field.
 
-  Step 2: Select a specific "Rune" (Tool) from the sidebar categories.
+*   Step 2: Select a specific "Rune" (Tool) from the sidebar categories.
 
-  Step 3: Monitor the "Status Bar" for system feedback and the "Output Area" for live results.
+*   Step 3: Monitor the "Status Bar" for system feedback and the "Output Area" for live results.
 
-  Step 4: Once the operation is complete, use the Artifact Export buttons to secure your findings.
+*   Step 4: Once the operation is complete, use the Artifact Export buttons to secure your findings.
 
 ## Disclaimer: This framework is developed for educational purposes and authorized penetration testing only. ##
 
@@ -96,5 +96,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Position**: Computer Engineering Student at Trakya University  
 
 **Student ID**: 1241602620
+
 
 
