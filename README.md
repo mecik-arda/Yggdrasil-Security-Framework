@@ -43,6 +43,19 @@ python3 app.py
 Accessing the Interface: Open your browser and navigate to the local gateway.
 ```bashhttp://127.0.0.1:5000```
 
+### Execution
+To ignite the backend engine and launch the framework, run:
+```bash
+python3 app.py
+```
+## What happens next? ##
+
+  The Flask server will initialize and start listening for local connections.
+
+  You will see the local gateway link (typically http://127.0.0.1:5000) in your terminal.
+
+  Once accessed, the Runic Dashboard will be active, and you can begin your reconnaissance operations immediately.
+  
 ## ᛖ Core Functionalities ##
 
   Passive Reconnaissance (ᚠ): Gathers intelligence without direct target interaction using tools like WHOIS, theHarvester, and Amass.
@@ -83,4 +96,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Position**: Computer Engineering Student at Trakya University  
 
 **Student ID**: 1241602620
+
 
