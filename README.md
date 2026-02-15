@@ -29,7 +29,7 @@ This repository features an advanced security reconnaissance and vulnerability a
 ## Installation Guide
 * **Clone the Repository**: First, pull the world tree to your local machine.
 ```bash
-git clone [https://github.com/mecik-arda/Yggdrasil-Security-Framework.git](https://github.com/mecik-arda/Yggdrasil-Security-Framework.git)
+git clone https://github.com/mecik-arda/Yggdrasil-Security-Framework.git
 cd Yggdrasil-Security-Framework
 ```
 ## Environment Setup: Ensure Python 3.x and Flask are installed in your realm.
@@ -83,3 +83,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Position**: Computer Engineering Student at Trakya University  
 
 **Student ID**: 1241602620
+
