@@ -77,6 +77,10 @@
                     <div class="tool-group" data-category="snoopdork">
                         <h3>[ ᛞ ] SNOOPDORK OSINT V3</h3>
                     </div>
+
+                    <div class="tool-group" data-category="packet_injector">
+                        <h3>[ ᛇ ] PACKET INJECTOR</h3>
+                    </div>
                 </div>
 
                 <div class="tool-group" data-category="system_ops">
@@ -162,6 +166,140 @@
         </div>
     </div>
 
+    <div id="packetInjectorModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; text-align: left;">
+            <h2 style="color: var(--wood-light); margin-top:0;">[ ᛇ ] PACKET INJECTOR</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Operation Mode / Action:</label>
+                <select id="injectorAction" onchange="toggleInjectorFields()" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                    <option value="sniff">Packet Sniffing (sniff)</option>
+                    <option value="arp-detect">ARP Poison Detection (arp-detect)</option>
+                    <option value="inject">Packet Injection (inject)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Network Interface:</label>
+                <input type="text" id="injectorInterface" value="eth0" placeholder="eth0, wlan0, etc." style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+            </div>
+
+            <!-- Inject Specific Options -->
+            <div id="injectorInjectFields" style="display: none; border: 1px solid rgba(136, 192, 208, 0.2); padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2);">
+                <h3 style="color: var(--highlight-color); margin-top: 0; margin-bottom: 15px; font-size: 16px;">Injection Parameters</h3>
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Protocol:</label>
+                    <select id="injectorProtocol" onchange="toggleInjectorProtocolFields()" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        <option value="tcp">TCP</option>
+                        <option value="arp">ARP</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Target IP (Destination):</label>
+                    <input type="text" id="injectorTarget" placeholder="192.168.1.1" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Source IP:</label>
+                    <input type="text" id="injectorSrcIp" value="192.168.1.100" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Source MAC:</label>
+                        <input type="text" id="injectorSrcMac" value="00:00:00:00:00:00" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Destination MAC:</label>
+                        <input type="text" id="injectorDstMac" value="ff:ff:ff:ff:ff:ff" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">TTL:</label>
+                    <input type="number" id="injectorTtl" value="64" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                </div>
+
+                <!-- TCP Protocol Options -->
+                <div id="injectorTcpFields" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(136, 192, 208, 0.2);">
+                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Source Port:</label>
+                            <input type="number" id="injectorSrcPort" value="4444" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Dest Port:</label>
+                            <input type="number" id="injectorDstPort" placeholder="80" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Seq Number:</label>
+                            <input type="number" id="injectorSeq" value="123456789" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Ack Number:</label>
+                            <input type="number" id="injectorAckNum" value="0" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Window Size:</label>
+                            <input type="number" id="injectorWindow" value="8192" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">TCP Flags (Comma separated):</label>
+                            <input type="text" id="injectorFlags" value="SYN" placeholder="SYN, ACK, FIN, RST" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ARP Protocol Options -->
+                <div id="injectorArpFields" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(136, 192, 208, 0.2);">
+                    <div style="margin-bottom: 12px;">
+                        <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">ARP Opcode:</label>
+                        <select id="injectorArpOp" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                            <option value="1">1 (Request)</option>
+                            <option value="2">2 (Reply)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Scheduling Options -->
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(136, 192, 208, 0.2);">
+                    <h4 style="color: var(--wood-light); margin-top: 0; margin-bottom: 10px; font-size: 14px;">Transmission Settings</h4>
+                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Delay (Rate in sec):</label>
+                            <input type="number" step="0.01" id="injectorRate" value="0.0" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Count (Total):</label>
+                            <input type="number" id="injectorCount" value="1" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Duration (sec):</label>
+                            <input type="number" step="0.1" id="injectorDuration" value="0.0" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Burst Size:</label>
+                            <input type="number" id="injectorBurst" value="1" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="submitPacketInjector()" class="btn-install" style="width:100%; margin-bottom:10px;">EXECUTE RUNES</button>
+            <button onclick="closePacketInjectorModal()" class="btn-cancel" style="width:100%;">ABORT</button>
+        </div>
+    </div>
+    
     <div id="erebusScannerModal" class="modal">
         <div class="modal-content" style="max-width: 500px; width: 90%;">
             <h2 style="color: var(--wood-light); margin-top:0;">[ ᛖ ] EREBUS SCANNER</h2>
@@ -251,6 +389,8 @@
                             } else if (tool.has_modal) {
                                 if (toolKey === 'erebus') {
                                     openErebusModal();
+                                } else if (toolKey === 'packet_injector') {
+                                    openPacketInjectorModal();
                                 } else {
                                     openSynModal();
                                 }
@@ -794,6 +934,121 @@
                 .catch(error => {
                     contentDiv.innerText = "RUNTIME ERROR: " + error;
                     statusDiv.innerText = ">> THE CHANT FAILED.";
+                    statusDiv.style.color = "var(--danger-color)";
+                    statusDiv.style.borderColor = "var(--danger-color)";
+                });
+        function openPacketInjectorModal() {
+            document.getElementById('packetInjectorModal').style.display = 'block';
+            const target = document.getElementById('target-input').value;
+            if (target) {
+                document.getElementById('injectorTarget').value = target;
+            }
+        }
+
+        function closePacketInjectorModal() {
+            document.getElementById('packetInjectorModal').style.display = 'none';
+        }
+
+        function toggleInjectorFields() {
+            const action = document.getElementById('injectorAction').value;
+            const injectFields = document.getElementById('injectorInjectFields');
+            if (action === 'inject') {
+                injectFields.style.display = 'block';
+                toggleInjectorProtocolFields();
+            } else {
+                injectFields.style.display = 'none';
+            }
+        }
+
+        function toggleInjectorProtocolFields() {
+            const protocol = document.getElementById('injectorProtocol').value;
+            const tcpFields = document.getElementById('injectorTcpFields');
+            const arpFields = document.getElementById('injectorArpFields');
+            if (protocol === 'tcp') {
+                tcpFields.style.display = 'block';
+                arpFields.style.display = 'none';
+            } else if (protocol === 'arp') {
+                tcpFields.style.display = 'none';
+                arpFields.style.display = 'block';
+            }
+        }
+
+        function submitPacketInjector() {
+            closePacketInjectorModal();
+            const action = document.getElementById('injectorAction').value;
+            const interface = document.getElementById('injectorInterface').value || 'eth0';
+            const target = document.getElementById('injectorTarget').value;
+            
+            const formData = new FormData();
+            formData.append('tool', 'packet_injector');
+            formData.append('action', 'run');
+            formData.append('packet_action', action);
+            formData.append('interface', interface);
+
+            if (action === 'inject') {
+                const protocol = document.getElementById('injectorProtocol').value;
+                formData.append('protocol', protocol);
+                formData.append('target', target);
+                formData.append('src_ip', document.getElementById('injectorSrcIp').value);
+                formData.append('src_mac', document.getElementById('injectorSrcMac').value);
+                formData.append('dst_mac', document.getElementById('injectorDstMac').value);
+                formData.append('ttl', document.getElementById('injectorTtl').value);
+
+                if (protocol === 'tcp') {
+                    formData.append('dst_port', document.getElementById('injectorDstPort').value);
+                    formData.append('src_port', document.getElementById('injectorSrcPort').value);
+                    formData.append('seq', document.getElementById('injectorSeq').value);
+                    formData.append('ack_num', document.getElementById('injectorAckNum').value);
+                    formData.append('window', document.getElementById('injectorWindow').value);
+                    formData.append('flags', document.getElementById('injectorFlags').value);
+                } else if (protocol === 'arp') {
+                    formData.append('arp_op', document.getElementById('injectorArpOp').value);
+                }
+
+                // Scheduling
+                formData.append('rate', document.getElementById('injectorRate').value);
+                formData.append('count', document.getElementById('injectorCount').value);
+                formData.append('duration', document.getElementById('injectorDuration').value);
+                formData.append('burst', document.getElementById('injectorBurst').value);
+            } else {
+                // For sniff and arp-detect, we can optionally pass the global target or leave it blank
+                formData.append('target', target || 'none');
+            }
+
+            const statusDiv = document.getElementById('status-display');
+            
+            if (action === 'inject' && !target) {
+                statusDiv.innerText = ">> ERROR: A TARGET IP IS REQUIRED FOR INJECTION <<";
+                statusDiv.style.color = "var(--danger-color)";
+                statusDiv.style.borderColor = "var(--danger-color)";
+                return;
+            }
+
+            currentTool = 'packet_injector';
+            statusDiv.style.color = "var(--wood-light)";
+            statusDiv.style.borderColor = "var(--wood-light)";
+            statusDiv.innerText = `>> INITIATING PACKET INJECTOR [${action.toUpperCase()}] ON INTERFACE [${interface}]...`;
+            
+            const contentDiv = createTerminalWindow(`[ PACKET INJECTOR - ${action.toUpperCase()} ]`);
+            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ ENGAGING PACKET CRAFTING ENGINE... ]</span>";
+
+            fetch('/api/action', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    updateStats();
+                    contentDiv.innerHTML = ""; 
+                    if (data.type === 'html') {
+                        contentDiv.innerHTML = data.output;
+                    } else {
+                        typeWriter(contentDiv, data.output, 0);
+                    }
+                    statusDiv.innerText = ">> RUNES CASTED. PACKET INJECTION COMPLETED.";
+                    statusDiv.style.color = "var(--highlight-color)";
+                    statusDiv.style.borderColor = "var(--highlight-color)";
+                })
+                .catch(error => {
+                    contentDiv.innerText = "RUNTIME ERROR: " + error;
+                    statusDiv.innerText = ">> THE CRAFTING FAILED.";
                     statusDiv.style.color = "var(--danger-color)";
                     statusDiv.style.borderColor = "var(--danger-color)";
                 });

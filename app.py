@@ -43,7 +43,8 @@ TOOLS_CONFIG = {
     'adv_syn_scan': {'name': 'Advanced SYN Scan', 'category': 'adv_syn', 'requires_target': True, 'type': 'custom_script', 'handler': 'adv_syn_scan', 'has_modal': True, 'supported_os': ['linux']},
     'java_sniffer': {'name': 'Launch GUI Sniffer', 'category': 'java_sniffer', 'requires_target': False, 'type': 'gui', 'cwd': 'Runes/Network-Sniffer-Scanner-Java', 'cmd_windows': 'mvn javafx:run', 'cmd_linux': 'sudo mvn javafx:run', 'log_file': 'Runes/Network-Sniffer-Scanner-Java/launcher.log', 'install_linux': 'sudo apt-get install maven -y', 'install_windows': 'winget install Apache.Maven', 'supported_os': ['linux', 'windows']},
     'update_modules': {'name': 'Sync All Runes (Update)', 'category': 'system_ops', 'requires_target': False, 'type': 'custom_html', 'handler': 'update_modules'},
-    'snoopdork': {'name': 'Launch SnoopDork OSINT', 'category': 'snoopdork', 'requires_target': False, 'type': 'gui', 'cwd': 'Runes/SnoopDork_V3', 'cmd_windows': 'start SnoopDork_V3.html', 'cmd_linux': 'xdg-open SnoopDork_V3.html', 'supported_os': ['linux', 'windows']}
+    'snoopdork': {'name': 'Launch SnoopDork OSINT', 'category': 'snoopdork', 'requires_target': False, 'type': 'gui', 'cwd': 'Runes/SnoopDork_V3', 'cmd_windows': 'start SnoopDork_V3.html', 'cmd_linux': 'xdg-open SnoopDork_V3.html', 'supported_os': ['linux', 'windows']},
+    'packet_injector': {'name': 'Packet Injector (Craft & Inject)', 'category': 'packet_injector', 'requires_target': True, 'type': 'custom_script', 'handler': 'packet_injector', 'has_modal': True, 'supported_os': ['linux']}
 }
 
 def check_tool_status(tool_key):
@@ -228,8 +229,69 @@ def execute_tool(tool_key, target, data=None):
                 if proxy and proxy.strip():
                     cmd.extend(['--proxy', str(proxy).strip()])
             
+        elif handler_name == 'packet_injector':
+            action = data.get('packet_action', 'sniff') if data else 'sniff'
+            interface = data.get('interface', 'eth0') if data else 'eth0'
+            protocol = data.get('protocol', 'tcp') if data else 'tcp'
+            
+            cmd = ['sudo', 'python3', 'Runes/packet-injector/main.py', '--action', action, '--interface', interface]
+            
+            if action == 'inject':
+                cmd.extend(['--protocol', protocol])
+                cmd.extend(['--dst-ip', str(target)])
+                
+                src_ip = data.get('src_ip')
+                if src_ip: cmd.extend(['--src-ip', src_ip])
+                
+                src_mac = data.get('src_mac')
+                if src_mac: cmd.extend(['--src-mac', src_mac])
+                
+                dst_mac = data.get('dst_mac')
+                if dst_mac: cmd.extend(['--dst-mac', dst_mac])
+                
+                ttl = data.get('ttl')
+                if ttl: cmd.extend(['--ttl', ttl])
+                
+                if protocol == 'tcp':
+                    dst_port = data.get('dst_port')
+                    if dst_port: cmd.extend(['--dst-port', dst_port])
+                    
+                    src_port = data.get('src_port')
+                    if src_port: cmd.extend(['--src-port', src_port])
+                    
+                    seq = data.get('seq')
+                    if seq: cmd.extend(['--seq', seq])
+                    
+                    ack_num = data.get('ack_num')
+                    if ack_num: cmd.extend(['--ack-num', ack_num])
+                    
+                    window = data.get('window')
+                    if window: cmd.extend(['--window', window])
+                    
+                    flags = data.get('flags')
+                    if flags:
+                        # flags could be a space or comma separated string or list
+                        flag_list = [f.strip() for f in flags.split(',') if f.strip()]
+                        if flag_list:
+                            cmd.append('--flags')
+                            cmd.extend(flag_list)
+                            
+                elif protocol == 'arp':
+                    arp_op = data.get('arp_op')
+                    if arp_op: cmd.extend(['--arp-op', arp_op])
+                
+                # Scheduling parameters
+                rate = data.get('rate')
+                if rate: cmd.extend(['--rate', rate])
+                count = data.get('count')
+                if count: cmd.extend(['--count', count])
+                duration = data.get('duration')
+                if duration: cmd.extend(['--duration', duration])
+                burst = data.get('burst')
+                if burst: cmd.extend(['--burst', burst])
+                
             try:
-                result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=180).decode('utf-8')
+                result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=120).decode('utf-8')
                 return result
             except subprocess.TimeoutExpired:
                 return "TIMEOUT: Process took too long"
