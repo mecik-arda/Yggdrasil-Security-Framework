@@ -21,71 +21,108 @@ This repository features an advanced security reconnaissance and vulnerability a
 * **Modular Integration**: I architected a modular command execution engine that handles specialized flags for Nmap, Sqlmap, Nikto, and WPScan to ensure optimal scan accuracy.
 * **Artifact Logging**: The framework includes a reporting module that sanitizes terminal output and exports it into structured TXT or JSON artifacts for professional security documentation.
 
-## Technical Specifications
-* **Language**: Python 3.x, HTML5, CSS3, JavaScript (ES6)
-* **Backend**: Flask Framework
-* **Integrated Arsenal**: Nmap, Sqlmap, Nikto, WPScan, Amass, Sherlock, theHarvester, Erebus Scanner, Kali Ghost Scripts, Advanced SYN Scanner, Network Sniffer.
-* **Theming**: Runic/Nordic Aesthetic with Custom CSS Overlays and Typewriter Logic
+---
+
+## ᚛᚜ Complete Integrated Arsenal & Features ᚛᚜
+
+The Yggdrasil Security Framework integrates **25 core features and modules** divided into 7 distinct tactical categories:
+
+| Runic Category | Tool Name | Description | Target Req. | OS Support | Command / Handler |
+| :--- | :--- | :--- | :---: | :---: | :--- |
+| **Passive Reconnaissance (ᚠ)** | WHOIS Lookup | Domain registration information retrieval | Yes | Linux/Win | `whois {target}` |
+| | The Harvester | Email, subdomain, and host intelligence gathering | Yes | Linux/Win | `theHarvester -d {target} -l 100 -b all` |
+| | Amass Enumeration | Deep open-source subdomain scanning | Yes | Linux/Win | `amass enum -d {target} -passive` |
+| | Sherlock | Search social accounts by username | Yes | Linux/Win | `sherlock {target} --timeout 5` |
+| | Google Dorks Tree | Interactive dork search links (admin/login/indexes/PDFs...) | Yes | Custom | `generate_dorks` handler |
+| | Wayback Machine | Query archive.org for past URLs and cached endpoints | Yes | Custom | `wayback` handler |
+| **DNS & Subdomain (ᛉ)** | DNS Enum | Locate DNS records and subdomains | Yes | Linux | `dnsenum --noreverse {target}` |
+| | Sublist3r | Fast multi-engine subdomain enumeration | Yes | Linux/Win | `sublist3r -d {target}` |
+| | DNS Recon | Advanced DNS discovery and AXFR query tool | Yes | Linux/Win | `dnsrecon -d {target}` |
+| | Dig (DNS Utils) | Direct query utility for DNS records | Yes | Linux/Win | `dig ANY {target}` |
+| **Active Scanning (ᛦ)** | Nmap (Full Scan) | Rapid service identification and port scanning | Yes | Linux/Win | `nmap -sV -F --version-light {target}` |
+| | WAF Detection | Detect and identify Web Application Firewalls (Wafw00f) | Yes | Linux/Win | `wafw00f {target}` |
+| | Packet Sniffer | Capture network traffic using live Tshark stream | Yes | Linux/Win | `tshark -c 5 -i any` |
+| | Nikto Web Scan | Scan target web servers for dangerous files and outdated software | Yes | Linux | `nikto -h {target} -Tuning 1` |
+| | WPScan | WordPress vulnerability enumeration & user scan | Yes | Linux | `wpscan --url {target} --enumerate p --random-user-agent` |
+| **Vulnerability (ᛟ)** | Exploit-DB Search | Offline check for local exploit binaries (Searchsploit) | Yes | Linux | `searchsploit {target}` |
+| | Sqlmap | Automate detection and exploitation of SQL injection | Yes | Linux/Win | `sqlmap -u {target} --batch --banner` |
+| | Commix | Automated command injection vulnerability scanner | Yes | Linux/Win | `commix --url {target} --batch` |
+| **Erebus Scanner (Rust) (ᛥ)** | Erebus Scanner | Multi-threaded port scanner with banner grabbing, proxy routing, and IDS evasion | Yes | Linux/Win | `cargo run --manifest-path Runes/erebus-scanner/Cargo.toml` |
+| **Kali Ghost Scripts (ᚷ)** | MAC Değiştir | Spoof network interfaces with random MAC | No | Linux | `bash Runes/mac_degistir.sh` |
+| | Kimlik Sorgula | Query current public metadata & geolocate | No | Linux | `bash Runes/sorgula.sh` |
+| | Yeni IP (Tor) | Renew active IP addressing on Tor circuits | No | Linux | `bash Runes/yeni_ip.sh` |
+| **Advanced SYN Scanning (ᛋ)** | Advanced SYN Scan | High speed custom TCP SYN port scanner | Yes | Linux | `Runes/Advanced-SYN-Scanner/syn_scanner` |
+| **GUI Traffic Analyzer (ᛗ)** | Launch GUI Sniffer | Maven-compiled JavaFX graphic packet analysis UI | No | Linux/Win | `mvn javafx:run` (in sniffer dir) |
+| **System Operations (⚙️)** | Sync All Runes | Synchronize local tool repos with upstream GitHub releases | No | Custom | `update_modules` handler |
+
+---
+
+## ᛝ Custom Integrations (My Runes)
+
+We have expanded the framework with specialized, custom-built tools compiled under the **Runes** directory:
+
+1. **Erebus Scanner (Rust):** An advanced, highly concurrent network scanner written in Rust. Features a dedicated UI Modal for deep configuration:
+   * **Port Ranges & Randomization:** Evade basic IDS logic by scrambling ports.
+   * **Banner Grabbing & Vulnerability Checking:** Instantly identify services and check CVE logs.
+   * **Adaptive Rate Limiting:** Dynamically throttle connection speeds to avoid triggering network firewalls.
+   * **Proxy Support:** Route scans seamlessly through Tor or SOCKS5 proxies.
+2. **Kali Ghost Scripts:** Essential networking manipulation tools fully integrated into the dashboard (MAC changer, Public IP lookup, IP renewal for Tor nodes).
+3. **Advanced SYN Scanner:** Configurable SYN port scanner offering automated and manual modes with custom source/target routing directly from the web interface.
+4. **GUI Sniffer (JavaFX & Maven):** A cross-platform GUI Packet Sniffer built in Java, tracking packet lengths, protocols, source/destination IPs, and network activity.
+5. **Dependency Manager (Runic Installation Ritual):** Scans the host system for missing dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs.
+
+---
 
 # ᚛᚜ System Manual & Deployment ᚛᚜
 
 ## Installation Guide
-* **Clone the Repository**: First, pull the world tree to your local machine.
+
+Since the custom **Runes** are integrated as Git Submodules, make sure to clone the repository recursively so that all modules are loaded:
+
 ```bash
-git clone https://github.com/mecik-arda/Yggdrasil-Security-Framework.git
+# Clone the repository along with all custom submodules
+git clone --recurse-submodules https://github.com/mecik-arda/Yggdrasil-Security-Framework.git
 cd Yggdrasil-Security-Framework
 ```
-## Environment Setup: Ensure Python 3.x and Flask are installed in your realm.
+
+*If you already cloned it without `--recurse-submodules`, run the following commands to download the submodules:*
 ```bash
-pip install flask
+git submodule update --init --recursive
 ```
 
-### Execution
-To ignite the backend engine and launch the framework, run:
+### Environment Setup
+Ensure Python 3.x and Flask are installed in your realm. You can use the included virtual environment scripts:
+
+**On Linux/macOS:**
 ```bash
-python3 app.py
+chmod +x run.sh
+./run.sh
 ```
-## What happens next? ##
 
-*   The Flask server will initialize and start listening for local connections.
-*   You will see the local gateway link (typically http://127.0.0.1:5000) in your terminal.
-*   Once accessed, the Runic Dashboard will be active, and you can begin your reconnaissance operations immediately.
-  
-## ᛖ Core Functionalities ##
+**On Windows:**
+```cmd
+run.bat
+```
 
-*   Passive Reconnaissance (ᚠ): Gathers intelligence without direct target interaction using tools like WHOIS, theHarvester, and Amass.
-*   DNS & Subdomain Enumeration (ᛉ): Maps the target's digital footprint through sublist3r, dnsenum, and advanced DNS queries.
-*   Active Scanning (ᛦ): Performs deep service discovery and WAF detection using Nmap, Nikto, and WPScan.
-*   Vulnerability Assessment (ᛟ): Identifies and tests potential exploits with Sqlmap, Commix, and Searchsploit integration.
+*Or manually:*
+```bash
+pip install -r requirements.txt
+python app.py
+```
 
-## ᛝ My Runes (Custom Integrations) ##
+---
 
-We have expanded the framework with specialized, custom-built tools:
+## ᚦ Usage Protocol
 
-*   **Erebus Scanner (Rust):** An advanced, highly concurrent network scanner written in Rust. Features a dedicated UI Modal for deep configuration:
-    *   **Port Ranges & Randomization:** Evade basic IDS logic.
-    *   **Banner Grabbing & Vulnerability Checking:** Instantly identify CVEs for detected services.
-    *   **Adaptive Rate Limiting:** Dynamically throttle connection speeds to avoid network alarms.
-    *   **Proxy Support:** Route scans seamlessly through Tor or SOCKS5 proxies.
-*   **Kali Ghost Scripts:** Essential networking manipulation tools fully integrated into the dashboard (MAC changer, Public IP lookup, IP renewal for Tor nodes).
-*   **Advanced SYN Scanner:** Configurable SYN port scanner offering automated and manual modes with custom source/target routing directly from the web interface.
-*   **Dependency Manager:** Scans the system for missing RUNE dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs.
+1. **Step 1**: Enter the target's IP address or Domain in the central input field.
+2. **Step 2**: Select a specific "Rune" (Tool) from the sidebar categories.
+3. **Step 3**: Monitor the "Status Bar" for system feedback and the "Output Area" for live results.
+4. **Step 4**: Once the operation is complete, use the Artifact Export buttons to secure your findings.
 
-## ᛒ Advanced System Features ##
+---
 
-*   The Overseer Dashboard: Monitor real-time statistics including total incursions, current active tools, and last engaged targets.
-*   The Scribe Module (Reporting): Export raw terminal data into structured TXT logs or professional JSON artifacts for security documentation.
-*   Runic Installation Ritual: Automatically detects missing dependencies and offers a one-click installation process within the UI.
-*   Authentic Terminal Experience: Features a custom-coded typewriter effect for realistic command-line rendering.
-
-## ᚦ Usage Protocol ##
-
-*   Step 1: Enter the target's IP address or Domain in the central input field.
-*   Step 2: Select a specific "Rune" (Tool) from the sidebar categories.
-*   Step 3: Monitor the "Status Bar" for system feedback and the "Output Area" for live results.
-*   Step 4: Once the operation is complete, use the Artifact Export buttons to secure your findings.
-
-## Disclaimer: This framework is developed for educational purposes and authorized penetration testing only. ##
+## Disclaimer
+This framework is developed for educational purposes and authorized penetration testing only. The author is not responsible for any misuse of this tool.
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -93,5 +130,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 **Author**: Arda Meçik  
 **Position**: Computer Engineering Student at Trakya University  
-
 **Student ID**: 1241602620
+
