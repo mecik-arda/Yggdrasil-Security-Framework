@@ -19,6 +19,7 @@ SCAN_STATS = {
 
 TOOLS_CONFIG = {
     'nmap': {'name': 'Nmap (Full Scan)', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sV', '-F', '--version-light', '{target}']},
+    'erebus': {'name': 'Erebus Scanner (Rust)', 'category': 'erebus_scanner', 'requires_target': True, 'type': 'custom_script', 'handler': 'erebus_scan', 'has_modal': True, 'bin': 'cargo', 'install_linux': 'sudo apt-get install cargo -y', 'install_windows': 'winget install Rustlang.Rustup', 'supported_os': ['linux', 'windows']},
     'whois': {'name': 'WHOIS Lookup', 'category': 'passive_recon', 'requires_target': True, 'type': 'cli', 'bin': 'whois', 'install_linux': 'sudo apt-get install whois -y', 'install_windows': 'winget install Microsoft.Sysinternals.WhoIs', 'supported_os': ['linux', 'windows'], 'cmd': ['whois', '{target}']},
     'dnsenum': {'name': 'DNS Enum', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'dnsenum', 'install_linux': 'sudo apt-get install dnsenum -y', 'install_windows': '', 'supported_os': ['linux'], 'cmd': ['dnsenum', '--noreverse', '{target}']},
     'sublist3r': {'name': 'Sublist3r', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'sublist3r', 'install_linux': 'sudo apt-get install sublist3r -y', 'install_windows': 'pip install sublist3r', 'supported_os': ['linux', 'windows'], 'cmd': ['sublist3r', '-d', '{target}']},
@@ -200,6 +201,34 @@ def execute_tool(tool_key, target, data=None):
             
             try:
                 result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=120).decode('utf-8')
+                return result
+            except subprocess.TimeoutExpired:
+                return "TIMEOUT: Process took too long"
+            except subprocess.CalledProcessError as e:
+                return f"Execution Error:\n{e.output.decode('utf-8')}"
+            except Exception as e:
+                return f"System Error: {str(e)}"
+        elif handler_name == 'erebus_scan':
+            ports = data.get('ports', '1-1024') if data else '1-1024'
+            if not ports or not ports.strip():
+                ports = '1-1024'
+            
+            # Base command
+            cmd = ['cargo', 'run', '--manifest-path', 'Runes/erebus-scanner/Cargo.toml', '--', '-t', str(target), '-p', str(ports)]
+            
+            if data:
+                if data.get('banner') == 'true':
+                    cmd.append('--banner')
+                if data.get('randomize') == 'true':
+                    cmd.append('--randomize')
+                if data.get('adaptive') == 'true':
+                    cmd.append('--adaptive')
+                proxy = data.get('proxy')
+                if proxy and proxy.strip():
+                    cmd.extend(['--proxy', str(proxy).strip()])
+            
+            try:
+                result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=180).decode('utf-8')
                 return result
             except subprocess.TimeoutExpired:
                 return "TIMEOUT: Process took too long"

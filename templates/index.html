@@ -58,6 +58,10 @@
 
                 <div class="my-runes-container">
                     <h2 class="my-runes-title">[ ᛝ ] MY RUNES</h2>
+                    <div class="tool-group" data-category="erebus_scanner">
+                        <h3>[ ᛖ ] EREBUS SCANNER (RUST)</h3>
+                    </div>
+
                     <div class="tool-group" data-category="kali_ghost">
                         <h3>[ ᚷ ] KALI GHOST SCRIPTS</h3>
                     </div>
@@ -154,6 +158,45 @@
         </div>
     </div>
 
+    <div id="erebusScannerModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <h2 style="color: var(--wood-light); margin-top:0;">[ ᛖ ] EREBUS SCANNER</h2>
+            
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Target IP/Domain:</label>
+                <input type="text" id="erebusTarget" placeholder="127.0.0.1 or example.com" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Port Range (Default: 1-1024):</label>
+                <input type="text" id="erebusPorts" placeholder="1-1024 or 80,443,8080" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">HTTP/Socks5 Proxy (Optional):</label>
+                <input type="text" id="erebusProxy" placeholder="socks5://127.0.0.1:9050" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; text-align: left;">
+                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="erebusBanner" checked style="accent-color: var(--accent-color);">
+                    <span>Grab Service Banners</span>
+                </label>
+                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="erebusRandomize" style="accent-color: var(--accent-color);">
+                    <span>Randomize Port Scan Order</span>
+                </label>
+                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="erebusAdaptive" style="accent-color: var(--accent-color);">
+                    <span>Adaptive Rate Limiting (Evade IDS)</span>
+                </label>
+            </div>
+
+            <button onclick="submitErebusScan()" class="btn-install" style="width:100%; margin-bottom:10px;">LAUNCH SCAN</button>
+            <button onclick="closeErebusModal()" class="btn-cancel" style="width:100%;">CANCEL</button>
+        </div>
+    </div>
+
     <div id="depManagerModal" class="modal">
         <div class="modal-content" style="max-width: 800px; width: 90%;">
             <h2 style="color: var(--wood-light); margin-top:0;">[ 📦 ] DEPENDENCY MANAGER</h2>
@@ -202,7 +245,11 @@
                             if (toolKey === 'update_modules') {
                                 initiateUpdateCheck();
                             } else if (tool.has_modal) {
-                                openSynModal();
+                                if (toolKey === 'erebus') {
+                                    openErebusModal();
+                                } else {
+                                    openSynModal();
+                                }
                             } else {
                                 runTool(toolKey);
                             }
@@ -653,6 +700,78 @@
             
             const contentDiv = createTerminalWindow(`[ ADVANCED SYN SCAN - ${target} ]`);
             contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE... ]</span>";
+
+            fetch('/api/action', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    updateStats();
+                    contentDiv.innerHTML = ""; 
+                    if (data.type === 'html') {
+                        contentDiv.innerHTML = data.output;
+                    } else {
+                        typeWriter(contentDiv, data.output, 0);
+                    }
+                    statusDiv.innerText = ">> FATE HAS BEEN WOVEN. OPERATION COMPLETE.";
+                    statusDiv.style.color = "var(--highlight-color)";
+                    statusDiv.style.borderColor = "var(--highlight-color)";
+                })
+                .catch(error => {
+                    contentDiv.innerText = "RUNTIME ERROR: " + error;
+                    statusDiv.innerText = ">> THE CHANT FAILED.";
+                    statusDiv.style.color = "var(--danger-color)";
+                    statusDiv.style.borderColor = "var(--danger-color)";
+                });
+        }
+
+        function openErebusModal() {
+            document.getElementById('erebusScannerModal').style.display = 'block';
+            const target = document.getElementById('target-input').value;
+            if (target) {
+                document.getElementById('erebusTarget').value = target;
+            }
+        }
+
+        function closeErebusModal() {
+            document.getElementById('erebusScannerModal').style.display = 'none';
+        }
+
+        function submitErebusScan() {
+            closeErebusModal();
+            const target = document.getElementById('erebusTarget').value;
+            const ports = document.getElementById('erebusPorts').value || '1-1024';
+            const proxy = document.getElementById('erebusProxy').value;
+            const banner = document.getElementById('erebusBanner').checked;
+            const randomize = document.getElementById('erebusRandomize').checked;
+            const adaptive = document.getElementById('erebusAdaptive').checked;
+
+            const statusDiv = document.getElementById('status-display');
+            
+            if (!target) {
+                statusDiv.innerText = ">> ERROR: A TARGET IP/DOMAIN IS REQUIRED FOR EREBUS <<";
+                statusDiv.style.color = "var(--danger-color)";
+                statusDiv.style.borderColor = "var(--danger-color)";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('tool', 'erebus');
+            formData.append('action', 'run');
+            formData.append('target', target);
+            formData.append('ports', ports);
+            if (proxy && proxy.trim()) {
+                formData.append('proxy', proxy.trim());
+            }
+            formData.append('banner', banner ? 'true' : 'false');
+            formData.append('randomize', randomize ? 'true' : 'false');
+            formData.append('adaptive', adaptive ? 'true' : 'false');
+
+            currentTool = 'erebus';
+            statusDiv.style.color = "var(--wood-light)";
+            statusDiv.style.borderColor = "var(--wood-light)";
+            statusDiv.innerText = `>> WEAVING FATE WITH EREBUS SCANNER ON [${target}]...`;
+            
+            const contentDiv = createTerminalWindow(`[ EREBUS SCANNER - ${target} ]`);
+            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE / CARGO RUNNING... ]</span>";
 
             fetch('/api/action', { method: 'POST', body: formData })
                 .then(r => r.json())
