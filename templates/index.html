@@ -40,38 +40,42 @@
             <div class="sidebar">
                 <input type="text" id="target-input" placeholder=">> ENTER TARGET IP/DOMAIN <<">
                 
-                <div class="tool-group">
+                <div class="tool-group" data-category="passive_recon">
                     <h3>[ ᚠ ] PASSIVE RECON</h3>
-                    <button onclick="runTool('whois')">WHOIS Lookup</button>
-                    <button onclick="runTool('google_dorks')">Google Dorks Tree</button>
-                    <button onclick="runTool('theharvester')">The Harvester</button>
-                    <button onclick="runTool('wayback')">Wayback Machine</button>
-                    <button onclick="runTool('amass')">Amass Enumeration</button>
-                    <button onclick="runTool('sherlock')">Sherlock (Username)</button>
                 </div>
 
-                <div class="tool-group">
+                <div class="tool-group" data-category="dns_subdomain">
                     <h3>[ ᛉ ] DNS & SUBDOMAIN</h3>
-                    <button onclick="runTool('dnsenum')">DNS Enum</button>
-                    <button onclick="runTool('sublist3r')">Sublist3r</button>
-                    <button onclick="runTool('dnsrecon')">DNS Recon</button>
-                    <button onclick="runTool('dig')">Dig (DNS Utils)</button>
                 </div>
 
-                <div class="tool-group">
+                <div class="tool-group" data-category="active_scanning">
                     <h3>[ ᛦ ] ACTIVE SCANNING</h3>
-                    <button onclick="runTool('nmap')">Nmap (Full Scan)</button>
-                    <button onclick="runTool('wafw00f')">WAF Detection</button>
-                    <button onclick="runTool('nikto')">Nikto Web Scan</button>
-                    <button onclick="runTool('wpscan')">WPScan (WordPress)</button>
-                    <button onclick="runTool('wireshark')">Packet Sniffer</button>
                 </div>
 
-                <div class="tool-group">
+                <div class="tool-group" data-category="vulnerability">
                     <h3>[ ᛟ ] VULNERABILITY</h3>
-                    <button onclick="runTool('searchsploit')">Exploit-DB Search</button>
-                    <button onclick="runTool('sqlmap')">Sqlmap (SQLi)</button>
-                    <button onclick="runTool('commix')">Commix (Injection)</button>
+                </div>
+
+                <div class="my-runes-container">
+                    <h2 class="my-runes-title">[ ᛝ ] MY RUNES</h2>
+                    <div class="tool-group" data-category="kali_ghost">
+                        <h3>[ ᚷ ] KALI GHOST SCRIPTS</h3>
+                    </div>
+
+                    <div class="tool-group" data-category="adv_syn">
+                        <h3>[ ᛋ ] ADVANCED SYN SCANNER</h3>
+                    </div>
+
+                    <div class="tool-group" data-category="java_sniffer">
+                        <h3>[ ᛈ ] NETWORK SNIFFER (JAVA)</h3>
+                    </div>
+                </div>
+
+                <div class="tool-group" data-category="system_ops">
+                    <h3>[ ᛊ ] SYSTEM OPERATIONS</h3>
+                    <button type="button" onclick="openDependencyManager()">
+                        [ 📦 ] DEPENDENCY MANAGER
+                    </button>
                 </div>
 
                 <div class="creator-zone">
@@ -84,7 +88,7 @@
                         <a href="https://github.com/mecik-arda" target="_blank" class="social-btn">
                             ᛝ GITHUB
                         </a>
-                        <a href="https://www.linkedin.com/in/SENIN-ADRESIN/" target="_blank" class="social-btn">
+                        <a href="https://www.linkedin.com/in/arda-mecik/" target="_blank" class="social-btn">
                             ᛡ LINKEDIN
                         </a>
                     </div>
@@ -116,9 +120,100 @@
         </div>
     </div>
 
+    <div id="synScannerModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--wood-light); margin-top:0;">[ ᚷ ] ADVANCED SYN SCANNER</h2>
+            <div style="margin-bottom: 15px;">
+                <label style="color:var(--text-color);">Mode:</label>
+                <select id="synMode" onchange="toggleSynFields()" style="background:var(--bg-dark); color:var(--text-color); border:1px solid var(--accent-color); padding:5px; width:100%; margin-top:5px;">
+                    <option value="auto">Automated (Recommended)</option>
+                    <option value="manual">Manual</option>
+                </select>
+            </div>
+            
+            <div id="synAutoFields">
+                <label style="color:var(--text-color);">Target IP:</label>
+                <input type="text" id="synAutoTarget" placeholder="192.168.1.1" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
+                <label style="color:var(--text-color);">Max Port:</label>
+                <input type="text" id="synAutoPort" placeholder="1000" style="margin-bottom:15px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
+            </div>
+
+            <div id="synManualFields" style="display:none;">
+                <label style="color:var(--text-color);">Source IP:</label>
+                <input type="text" id="synManSource" placeholder="192.168.1.5" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
+                <label style="color:var(--text-color);">Target IP:</label>
+                <input type="text" id="synManTarget" placeholder="192.168.1.1" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
+                <label style="color:var(--text-color);">Start Port:</label>
+                <input type="text" id="synManStart" placeholder="1" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
+                <label style="color:var(--text-color);">End Port:</label>
+                <input type="text" id="synManEnd" placeholder="1000" style="margin-bottom:15px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
+            </div>
+
+            <button onclick="submitSynScan()" class="btn-install" style="width:100%; margin-bottom:10px;">START SCAN</button>
+            <button onclick="closeSynModal()" class="btn-cancel" style="width:100%;">CANCEL</button>
+        </div>
+    </div>
+
+    <div id="depManagerModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <h2 style="color: var(--wood-light); margin-top:0;">[ 📦 ] DEPENDENCY MANAGER</h2>
+            <p style="color: var(--text-color); margin-bottom: 20px;">Select missing dependencies to install. OS specific logic will be applied.</p>
+            
+            <div style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px; border: 1px solid var(--accent-color); padding: 10px; background: rgba(0,0,0,0.3);">
+                <table id="depTable" style="width: 100%; border-collapse: collapse; color: white; text-align: left; font-family: 'Courier New', Courier, monospace; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--accent-color);">
+                            <th style="padding: 10px;"><input type="checkbox" id="selectAllDeps" onclick="toggleSelectAllDeps()"></th>
+                            <th style="padding: 10px;">Tool</th>
+                            <th style="padding: 10px;">Used For</th>
+                            <th style="padding: 10px;">Status</th>
+                            <th style="padding: 10px;">OS Support</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="installSelectedDependencies()" class="btn-install" style="flex: 1;">INSTALL SELECTED</button>
+                <button onclick="closeDependencyManager()" class="btn-cancel" style="flex: 1;">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentTool = '';
         let typewriterTimeouts = [];
+
+        async function loadTools() {
+            try {
+                const response = await fetch('/api/tools');
+                const tools = await response.json();
+                window.toolsConfig = tools;
+                
+                Object.keys(tools).forEach(toolKey => {
+                    const tool = tools[toolKey];
+                    const categoryContainer = document.querySelector(`[data-category="${tool.category}"]`);
+                    if (categoryContainer) {
+                        const btn = document.createElement('button');
+                        btn.innerText = tool.name;
+                        btn.onclick = () => {
+                            if (toolKey === 'update_modules') {
+                                initiateUpdateCheck();
+                            } else if (tool.has_modal) {
+                                openSynModal();
+                            } else {
+                                runTool(toolKey);
+                            }
+                        };
+                        categoryContainer.appendChild(btn);
+                    }
+                });
+            } catch (e) {}
+        }
+        
+        loadTools();
 
         async function updateStats() {
             try {
@@ -127,44 +222,178 @@
                 document.getElementById('stat-scans').innerText = stats.total_scans;
                 document.getElementById('stat-target').innerText = stats.last_target;
                 document.getElementById('stat-tool').innerText = stats.active_tool;
-            } catch (e) { console.log(e); }
+            } catch (e) {}
         }
 
         setInterval(updateStats, 5000);
         updateStats();
 
-        function typeWriter(element, text, i) {
-            if (i < text.length) {
-                element.innerHTML += text.charAt(i);
-                element.scrollTop = element.scrollHeight;
-                let timeout = setTimeout(() => typeWriter(element, text, i + 1), 2);
-                typewriterTimeouts.push(timeout);
+        async function openDependencyManager() {
+            document.getElementById('depManagerModal').style.display = 'block';
+            const tbody = document.getElementById('depTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Fetching dependencies...</td></tr>';
+            
+            try {
+                const response = await fetch('/api/dependencies');
+                const deps = await response.json();
+                
+                tbody.innerHTML = '';
+                deps.forEach(dep => {
+                    const statusColor = dep.installed ? '#a3be8c' : 'var(--danger-color)';
+                    const statusText = dep.installed ? 'INSTALLED' : 'MISSING';
+                    
+                    const supportColor = dep.supported ? 'var(--highlight-color)' : '#888';
+                    const supportText = dep.supported ? 'NATIVE' : 'MANUAL/WSL';
+
+                    const disabledAttr = dep.installed || !dep.supported ? 'disabled' : '';
+
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(136, 192, 208, 0.2)';
+                    tr.innerHTML = `
+                        <td style="padding: 10px;"><input type="checkbox" class="dep-checkbox" value="${dep.tool_key}" ${disabledAttr}></td>
+                        <td style="padding: 10px; font-weight: bold;">${dep.tool_key}</td>
+                        <td style="padding: 10px;">${dep.name}</td>
+                        <td style="padding: 10px; color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                        <td style="padding: 10px; color: ${supportColor};">${supportText}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--danger-color);">Failed to fetch dependencies.</td></tr>';
             }
         }
 
-        function clearTypewriter() {
-            typewriterTimeouts.forEach(t => clearTimeout(t));
-            typewriterTimeouts = [];
+        function closeDependencyManager() {
+            document.getElementById('depManagerModal').style.display = 'none';
+        }
+
+        function toggleSelectAllDeps() {
+            const selectAll = document.getElementById('selectAllDeps').checked;
+            const checkboxes = document.querySelectorAll('.dep-checkbox:not([disabled])');
+            checkboxes.forEach(cb => cb.checked = selectAll);
+        }
+
+        async function installSelectedDependencies() {
+            const checkboxes = document.querySelectorAll('.dep-checkbox:checked');
+            const toolsToInstall = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (toolsToInstall.length === 0) {
+                alert("Please select at least one missing dependency to install.");
+                return;
+            }
+
+            closeDependencyManager();
+
+            for (const tool of toolsToInstall) {
+                const contentDiv = createTerminalWindow(`INSTALLING: ${tool.toUpperCase()}`);
+                const statusDiv = document.getElementById('status-display');
+                statusDiv.innerText = `>> INITIATING RITUAL FOR: ${tool.toUpperCase()}...`;
+                
+                typeWriter(contentDiv, `[SYSTEM] Requesting installation sequence for ${tool}...\n`, 0);
+
+                const formData = new FormData();
+                formData.append('tool', tool);
+                formData.append('action', 'install');
+
+                try {
+                    const response = await fetch('/api/action', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    
+                    const msg = data.message || "Unknown error";
+                    if (data.status === 'success') {
+                        typeWriter(contentDiv, `\n[SUCCESS] Sequence completed.\n\n${msg}`, contentDiv.innerText.length);
+                    } else {
+                        typeWriter(contentDiv, `\n[ERROR] Sequence failed.\n\n${msg}`, contentDiv.innerText.length);
+                    }
+                } catch (error) {
+                    typeWriter(contentDiv, `\n[SYSTEM ERROR] Failed to connect: ${error}`, contentDiv.innerText.length);
+                }
+            }
+        }
+
+        function typeWriter(element, text, i) {
+            if (i < text.length) {
+                // Use textContent to prevent XSS injection during typing
+                element.textContent += text.charAt(i);
+                element.scrollTop = element.scrollHeight;
+                let timeout = setTimeout(() => typeWriter(element, text, i + 1), 2);
+                if (!element.typewriterTimeouts) element.typewriterTimeouts = [];
+                element.typewriterTimeouts.push(timeout);
+            } else if (element.typewriterTimeouts) {
+                // Clear the timeout references to prevent memory leaks
+                element.typewriterTimeouts.forEach(t => clearTimeout(t));
+                element.typewriterTimeouts = [];
+            }
+        }
+
+        function createTerminalWindow(title) {
+            const outputArea = document.getElementById('output-area');
+            
+            const win = document.createElement('div');
+            win.className = 'terminal-window';
+            
+            const header = document.createElement('div');
+            header.className = 'terminal-header';
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'terminal-title';
+            titleSpan.innerText = title;
+            
+            const actions = document.createElement('div');
+            actions.className = 'terminal-actions';
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'btn-mini';
+            copyBtn.innerText = 'COPY';
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(content.innerText);
+                copyBtn.innerText = 'COPIED!';
+                setTimeout(() => copyBtn.innerText = 'COPY', 2000);
+            };
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn-mini terminal-close-btn';
+            closeBtn.innerText = 'X';
+            closeBtn.onclick = () => {
+                if (content.typewriterTimeouts) {
+                    content.typewriterTimeouts.forEach(t => clearTimeout(t));
+                }
+                win.remove();
+            };
+            
+            actions.appendChild(copyBtn);
+            actions.appendChild(closeBtn);
+            header.appendChild(titleSpan);
+            header.appendChild(actions);
+            
+            const content = document.createElement('div');
+            content.className = 'terminal-content';
+            content.typewriterTimeouts = [];
+            
+            win.appendChild(header);
+            win.appendChild(content);
+            
+            outputArea.insertBefore(win, outputArea.firstChild);
+            return content;
         }
 
         async function runTool(toolName) {
             const target = document.getElementById('target-input').value;
             const statusDiv = document.getElementById('status-display');
             
-            if (!target) {
+            const toolInfo = window.toolsConfig[toolName];
+            if (toolInfo && toolInfo.requires_target && !target) {
                 statusDiv.innerText = ">> ERROR: A TARGET (IP/DOMAIN) IS REQUIRED <<";
                 statusDiv.style.color = "var(--danger-color)";
                 statusDiv.style.borderColor = "var(--danger-color)";
                 return;
             }
+            
             statusDiv.style.color = "var(--wood-light)";
             statusDiv.style.borderColor = "var(--wood-light)";
 
             currentTool = toolName;
-            statusDiv.innerText = `>> CONSULTING THE ROOTS FOR: ${toolName.toUpperCase()}...`;
-            
-            clearTypewriter();
-            document.getElementById('output-area').innerHTML = "";
+            statusDiv.innerText = `>> CONSULTING THE ROOTS FOR: ${toolInfo ? toolInfo.name.toUpperCase() : toolName.toUpperCase()}...`;
 
             const formData = new FormData();
             formData.append('tool', toolName);
@@ -186,8 +415,85 @@
             }
         }
 
+        let updateContentDiv = null;
+
+        async function initiateUpdateCheck() {
+            const statusDiv = document.getElementById('status-display');
+            
+            statusDiv.innerText = ">> CONSULTING THE ARCHIVES FOR KNOWLEDGE (CHECKING UPDATES)...";
+            statusDiv.style.color = "var(--wood-light)";
+            
+            updateContentDiv = createTerminalWindow("[ SYSTEM OPERATIONS - RUNE SYNC ]");
+            updateContentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ SCANNING GITHUB REPOSITORIES... ]</span>";
+
+            const formData = new FormData();
+            formData.append('action', 'check_updates');
+
+            try {
+                const response = await fetch('/api/action', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.updates && data.updates.length > 0) {
+                    let html = `<div style="color: var(--wood-light); margin-bottom: 20px; font-family: monospace;">
+                        <h3>[ ᛊ ] NEW KNOWLEDGE DISCOVERED</h3>
+                        <p>The following Runes have updates available from their source:</p>
+                        <ul style="color: var(--highlight-color);">`;
+                    data.updates.forEach(u => html += `<li>${u}</li>`);
+                    html += `</ul>
+                        <p>Do you wish to integrate these updates into the framework?</p>
+                        <button onclick="applyUpdates()" class="btn-install" style="margin-right: 10px; width: auto; padding: 10px 20px;">YES, INTEGRATE UPDATES</button>
+                        <button onclick="cancelUpdates()" class="btn-cancel" style="width: auto; padding: 10px 20px;">NO, KEEP CURRENT</button>
+                    </div>`;
+                    updateContentDiv.innerHTML = html;
+                    statusDiv.innerText = ">> AWAITING YOUR COMMAND.";
+                } else {
+                    updateContentDiv.innerHTML = "<span style='color: #a3be8c;'>[ ALL RUNES ARE CURRENTLY UP TO DATE. THE ROOTS ARE UNTOUCHED. ]</span>";
+                    statusDiv.innerText = ">> THE ARCHIVES ARE SYNCED.";
+                }
+            } catch (error) {
+                if(updateContentDiv) updateContentDiv.innerText = "RUNTIME ERROR: " + error;
+                statusDiv.innerText = ">> THE CHANT FAILED.";
+                statusDiv.style.color = "var(--danger-color)";
+            }
+        }
+
+        function cancelUpdates() {
+            if(updateContentDiv) {
+                updateContentDiv.innerHTML = "<span style='color: #a3be8c;'>[ UPDATE CANCELLED. THE ROOTS REMAIN UNTOUCHED. ]</span>";
+            }
+            document.getElementById('status-display').innerText = ">> OPERATION ABORTED.";
+        }
+
+        async function applyUpdates() {
+            const statusDiv = document.getElementById('status-display');
+            
+            statusDiv.innerText = ">> WEAVING NEW FATE (APPLYING UPDATES & RECOMPILING)...";
+            if(updateContentDiv) {
+                updateContentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ DOWNLOADING AND INTEGRATING... ]</span>";
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'apply_updates');
+
+            try {
+                const response = await fetch('/api/action', { method: 'POST', body: formData });
+                const data = await response.json();
+                if(updateContentDiv) {
+                    updateContentDiv.innerHTML = data.output;
+                }
+                statusDiv.innerText = ">> FATE HAS BEEN WOVEN. UPDATES INTEGRATED.";
+                statusDiv.style.color = "var(--highlight-color)";
+            } catch (error) {
+                if(updateContentDiv) updateContentDiv.innerText = "RUNTIME ERROR: " + error;
+                statusDiv.innerText = ">> THE CHANT FAILED.";
+                statusDiv.style.color = "var(--danger-color)";
+            }
+        }
+
         function showInstallModal(toolName) {
-            document.getElementById('installMsg').innerText = `The tool '${toolName.toUpperCase()}' is not present.\n\nDo you wish to summon it now?`;
+            const toolInfo = window.toolsConfig[toolName];
+            const displayName = toolInfo ? toolInfo.name : toolName;
+            document.getElementById('installMsg').innerText = `The tool '${displayName.toUpperCase()}' is not present.\n\nDo you wish to summon it now?`;
             document.getElementById('installModal').style.display = 'block';
         }
 
@@ -199,7 +505,10 @@
         async function confirmInstall() {
             closeModal();
             const statusDiv = document.getElementById('status-display');
-            statusDiv.innerText = `>> SUMMONING ${currentTool.toUpperCase()}... PLEASE WAIT...`;
+            const toolInfo = window.toolsConfig[currentTool];
+            const displayName = toolInfo ? toolInfo.name : currentTool;
+            
+            statusDiv.innerText = `>> SUMMONING ${displayName.toUpperCase()}... PLEASE WAIT...`;
             
             const formData = new FormData();
             formData.append('tool', currentTool);
@@ -224,10 +533,13 @@
 
         async function executeTool(tool, target) {
             const statusDiv = document.getElementById('status-display');
-            const outputDiv = document.getElementById('output-area');
+            const toolInfo = window.toolsConfig[tool];
+            const displayName = toolInfo ? toolInfo.name : tool;
             
-            statusDiv.innerText = `>> WEAVING FATE WITH ${tool.toUpperCase()} ON [${target}]...`;
-            outputDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE... ]</span>";
+            statusDiv.innerText = `>> WEAVING FATE WITH ${displayName.toUpperCase()} ON [${target || 'NO TARGET'}]...`;
+            
+            const contentDiv = createTerminalWindow(`[ ${displayName.toUpperCase()} - ${target || 'SYSTEM'} ]`);
+            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE... ]</span>";
 
             const formData = new FormData();
             formData.append('tool', tool);
@@ -239,19 +551,19 @@
                 const data = await response.json();
                 updateStats();
 
-                outputDiv.innerHTML = ""; 
+                contentDiv.innerHTML = ""; 
 
                 if (data.type === 'html') {
-                    outputDiv.innerHTML = data.output;
+                    contentDiv.innerHTML = data.output;
                 } else {
-                    typeWriter(outputDiv, data.output, 0);
+                    typeWriter(contentDiv, data.output, 0);
                 }
                 
                 statusDiv.innerText = ">> FATE HAS BEEN WOVEN. OPERATION COMPLETE.";
                 statusDiv.style.color = "var(--highlight-color)";
                 statusDiv.style.borderColor = "var(--highlight-color)";
             } catch (error) {
-                outputDiv.innerText = "RUNTIME ERROR: " + error;
+                contentDiv.innerText = "RUNTIME ERROR: " + error;
                 statusDiv.innerText = ">> THE CHANT FAILED.";
                 statusDiv.style.color = "var(--danger-color)";
             }
@@ -277,6 +589,91 @@
             link.href = URL.createObjectURL(blob);
             link.download = filename;
             link.click();
+        }
+
+        function openSynModal() {
+            document.getElementById('synScannerModal').style.display = 'block';
+            const target = document.getElementById('target-input').value;
+            if (target) {
+                document.getElementById('synAutoTarget').value = target;
+                document.getElementById('synManTarget').value = target;
+            }
+        }
+
+        function closeSynModal() {
+            document.getElementById('synScannerModal').style.display = 'none';
+        }
+
+        function toggleSynFields() {
+            const mode = document.getElementById('synMode').value;
+            if (mode === 'auto') {
+                document.getElementById('synAutoFields').style.display = 'block';
+                document.getElementById('synManualFields').style.display = 'none';
+            } else {
+                document.getElementById('synAutoFields').style.display = 'none';
+                document.getElementById('synManualFields').style.display = 'block';
+            }
+        }
+
+        function submitSynScan() {
+            closeSynModal();
+            const mode = document.getElementById('synMode').value;
+            let target = "";
+            const formData = new FormData();
+            formData.append('tool', 'adv_syn_scan');
+            formData.append('action', 'run');
+            formData.append('syn_mode', mode);
+
+            if (mode === 'auto') {
+                target = document.getElementById('synAutoTarget').value;
+                formData.append('target', target);
+                formData.append('max_port', document.getElementById('synAutoPort').value || '1000');
+            } else {
+                target = document.getElementById('synManTarget').value;
+                formData.append('target', target);
+                formData.append('source_ip', document.getElementById('synManSource').value);
+                formData.append('start_port', document.getElementById('synManStart').value || '1');
+                formData.append('end_port', document.getElementById('synManEnd').value || '1000');
+            }
+
+            const statusDiv = document.getElementById('status-display');
+            const outputDiv = document.getElementById('output-area');
+            
+            if (!target) {
+                statusDiv.innerText = ">> ERROR: A TARGET IP IS REQUIRED <<";
+                statusDiv.style.color = "var(--danger-color)";
+                statusDiv.style.borderColor = "var(--danger-color)";
+                return;
+            }
+
+            currentTool = 'adv_syn_scan';
+            statusDiv.style.color = "var(--wood-light)";
+            statusDiv.style.borderColor = "var(--wood-light)";
+            statusDiv.innerText = `>> WEAVING FATE WITH ADVANCED SYN SCAN ON [${target}]...`;
+            
+            const contentDiv = createTerminalWindow(`[ ADVANCED SYN SCAN - ${target} ]`);
+            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE... ]</span>";
+
+            fetch('/api/action', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    updateStats();
+                    contentDiv.innerHTML = ""; 
+                    if (data.type === 'html') {
+                        contentDiv.innerHTML = data.output;
+                    } else {
+                        typeWriter(contentDiv, data.output, 0);
+                    }
+                    statusDiv.innerText = ">> FATE HAS BEEN WOVEN. OPERATION COMPLETE.";
+                    statusDiv.style.color = "var(--highlight-color)";
+                    statusDiv.style.borderColor = "var(--highlight-color)";
+                })
+                .catch(error => {
+                    contentDiv.innerText = "RUNTIME ERROR: " + error;
+                    statusDiv.innerText = ">> THE CHANT FAILED.";
+                    statusDiv.style.color = "var(--danger-color)";
+                    statusDiv.style.borderColor = "var(--danger-color)";
+                });
         }
     </script>
 </body>
