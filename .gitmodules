@@ -1,0 +1,3 @@
+[submodule "Runes"]
+	path = Runes
+	url = https://github.com/mecik-arda/Kali-Ghost-Scripts.git
