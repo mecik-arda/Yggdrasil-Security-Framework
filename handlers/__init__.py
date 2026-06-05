@@ -2,6 +2,7 @@ from .packet_injector import handle_packet_injector
 from .erebus_scanner import handle_erebus_scan
 from .adv_syn import handle_adv_syn_scan
 from .custom_html import handle_generate_dorks, handle_wayback
+from .mimir_scanner import handle_mimir_scanner
 
 # Map handler string names to actual Python functions
 HANDLER_MAP = {
@@ -9,7 +10,8 @@ HANDLER_MAP = {
     'erebus_scan': handle_erebus_scan,
     'adv_syn_scan': handle_adv_syn_scan,
     'generate_dorks': handle_generate_dorks,
-    'wayback': handle_wayback
+    'wayback': handle_wayback,
+    'mimir_scanner': handle_mimir_scanner
 }
 
 def dispatch_handler(handler_name, target, data):
