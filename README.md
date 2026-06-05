@@ -1,5 +1,8 @@
 # ᚛᚜ Yggdrasil Security Framework ᚛᚜
 
+![Screenshot 1](screenshots/1.png)
+![Screenshot 2](screenshots/2.png)
+
 This repository features an advanced security reconnaissance and vulnerability assessment framework developed to centralize offensive security operations. It integrates industry-standard tools into a unified, Norse-themed dashboard to streamline the information gathering and exploitation phases of a penetration test.
 
 ## Project Reflection & Technical Q&A
@@ -21,7 +24,7 @@ This repository features an advanced security reconnaissance and vulnerability a
 ## Technical Specifications
 * **Language**: Python 3.x, HTML5, CSS3, JavaScript (ES6)
 * **Backend**: Flask Framework
-* **Integrated Arsenal**: Nmap, Sqlmap, Nikto, WPScan, Amass, Sherlock, theHarvester
+* **Integrated Arsenal**: Nmap, Sqlmap, Nikto, WPScan, Amass, Sherlock, theHarvester, Erebus Scanner, Kali Ghost Scripts, Advanced SYN Scanner, Network Sniffer.
 * **Theming**: Runic/Nordic Aesthetic with Custom CSS Overlays and Typewriter Logic
 
 # ᚛᚜ System Manual & Deployment ᚛᚜
@@ -35,13 +38,7 @@ cd Yggdrasil-Security-Framework
 ## Environment Setup: Ensure Python 3.x and Flask are installed in your realm.
 ```bash
 pip install flask
-
-Execution: Ignite the backend engine.
-
-python3 app.py
 ```
-Accessing the Interface: Open your browser and navigate to the local gateway.
-```bashhttp://127.0.0.1:5000```
 
 ### Execution
 To ignite the backend engine and launch the framework, run:
@@ -51,39 +48,41 @@ python3 app.py
 ## What happens next? ##
 
 *   The Flask server will initialize and start listening for local connections.
-
 *   You will see the local gateway link (typically http://127.0.0.1:5000) in your terminal.
-
 *   Once accessed, the Runic Dashboard will be active, and you can begin your reconnaissance operations immediately.
   
 ## ᛖ Core Functionalities ##
 
 *   Passive Reconnaissance (ᚠ): Gathers intelligence without direct target interaction using tools like WHOIS, theHarvester, and Amass.
-
 *   DNS & Subdomain Enumeration (ᛉ): Maps the target's digital footprint through sublist3r, dnsenum, and advanced DNS queries.
-
 *   Active Scanning (ᛦ): Performs deep service discovery and WAF detection using Nmap, Nikto, and WPScan.
-
 *   Vulnerability Assessment (ᛟ): Identifies and tests potential exploits with Sqlmap, Commix, and Searchsploit integration.
+
+## ᛝ My Runes (Custom Integrations) ##
+
+We have expanded the framework with specialized, custom-built tools:
+
+*   **Erebus Scanner (Rust):** An advanced, highly concurrent network scanner written in Rust. Features a dedicated UI Modal for deep configuration:
+    *   **Port Ranges & Randomization:** Evade basic IDS logic.
+    *   **Banner Grabbing & Vulnerability Checking:** Instantly identify CVEs for detected services.
+    *   **Adaptive Rate Limiting:** Dynamically throttle connection speeds to avoid network alarms.
+    *   **Proxy Support:** Route scans seamlessly through Tor or SOCKS5 proxies.
+*   **Kali Ghost Scripts:** Essential networking manipulation tools fully integrated into the dashboard (MAC changer, Public IP lookup, IP renewal for Tor nodes).
+*   **Advanced SYN Scanner:** Configurable SYN port scanner offering automated and manual modes with custom source/target routing directly from the web interface.
+*   **Dependency Manager:** Scans the system for missing RUNE dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs.
 
 ## ᛒ Advanced System Features ##
 
 *   The Overseer Dashboard: Monitor real-time statistics including total incursions, current active tools, and last engaged targets.
-
 *   The Scribe Module (Reporting): Export raw terminal data into structured TXT logs or professional JSON artifacts for security documentation.
-
 *   Runic Installation Ritual: Automatically detects missing dependencies and offers a one-click installation process within the UI.
-
 *   Authentic Terminal Experience: Features a custom-coded typewriter effect for realistic command-line rendering.
 
 ## ᚦ Usage Protocol ##
 
 *   Step 1: Enter the target's IP address or Domain in the central input field.
-
 *   Step 2: Select a specific "Rune" (Tool) from the sidebar categories.
-
 *   Step 3: Monitor the "Status Bar" for system feedback and the "Output Area" for live results.
-
 *   Step 4: Once the operation is complete, use the Artifact Export buttons to secure your findings.
 
 ## Disclaimer: This framework is developed for educational purposes and authorized penetration testing only. ##
@@ -96,6 +95,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Position**: Computer Engineering Student at Trakya University  
 
 **Student ID**: 1241602620
-
-
-
