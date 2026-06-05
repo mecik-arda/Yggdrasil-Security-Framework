@@ -42,7 +42,8 @@ TOOLS_CONFIG = {
     'yeni_ip': {'name': 'Yeni IP (Tor)', 'category': 'kali_ghost', 'requires_target': False, 'type': 'script', 'supported_os': ['linux'], 'cmd': ['bash', 'Runes/yeni_ip.sh']},
     'adv_syn_scan': {'name': 'Advanced SYN Scan', 'category': 'adv_syn', 'requires_target': True, 'type': 'custom_script', 'handler': 'adv_syn_scan', 'has_modal': True, 'supported_os': ['linux']},
     'java_sniffer': {'name': 'Launch GUI Sniffer', 'category': 'java_sniffer', 'requires_target': False, 'type': 'gui', 'cwd': 'Runes/Network-Sniffer-Scanner-Java', 'cmd_windows': 'mvn javafx:run', 'cmd_linux': 'sudo mvn javafx:run', 'log_file': 'Runes/Network-Sniffer-Scanner-Java/launcher.log', 'install_linux': 'sudo apt-get install maven -y', 'install_windows': 'winget install Apache.Maven', 'supported_os': ['linux', 'windows']},
-    'update_modules': {'name': 'Sync All Runes (Update)', 'category': 'system_ops', 'requires_target': False, 'type': 'custom_html', 'handler': 'update_modules'}
+    'update_modules': {'name': 'Sync All Runes (Update)', 'category': 'system_ops', 'requires_target': False, 'type': 'custom_html', 'handler': 'update_modules'},
+    'snoopdork': {'name': 'Launch SnoopDork OSINT', 'category': 'snoopdork', 'requires_target': False, 'type': 'gui', 'cwd': 'Runes/SnoopDork_V3', 'cmd_windows': 'start SnoopDork_V3.html', 'cmd_linux': 'xdg-open SnoopDork_V3.html', 'supported_os': ['linux', 'windows']}
 }
 
 def check_tool_status(tool_key):
