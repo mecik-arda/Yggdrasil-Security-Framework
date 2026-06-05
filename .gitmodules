@@ -1,3 +1,21 @@
-[submodule "Runes"]
-	path = Runes
+[submodule "Runes/Advanced-SYN-Scanner"]
+	path = Runes/Advanced-SYN-Scanner
+	url = https://github.com/mecik-arda/Advanced-SYN-Scanner.git
+[submodule "Runes/Network-Sniffer-Scanner-Java"]
+	path = Runes/Network-Sniffer-Scanner-Java
+	url = https://github.com/mecik-arda/Network-Sniffer-Scanner-Java.git
+[submodule "Runes/SnoopDork_V3"]
+	path = Runes/SnoopDork_V3
+	url = https://github.com/mecik-arda/SnoopDork_V3.git
+[submodule "Runes/erebus-scanner"]
+	path = Runes/erebus-scanner
+	url = https://github.com/mecik-arda/erebus-scanner.git
+[submodule "Runes/mimir-scanner"]
+	path = Runes/mimir-scanner
+	url = https://github.com/mecik-arda/mimir-scanner.git
+[submodule "Runes/packet-injector"]
+	path = Runes/packet-injector
+	url = https://github.com/mecik-arda/packet-injector.git
+[submodule "Runes/Kali-Ghost-Scripts"]
+	path = Runes/Kali-Ghost-Scripts
 	url = https://github.com/mecik-arda/Kali-Ghost-Scripts.git
