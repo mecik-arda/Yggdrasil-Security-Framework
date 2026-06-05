@@ -9,12 +9,25 @@ import re
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from handlers import dispatch_handler
+from dotenv import load_dotenv
+import sqlite3
+import shlex
+import socket
+import ipaddress
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'yggdrasil-dev-key-1234')
 
-# Hardcoded password (could be moved to env vars later)
-ADMIN_PASSWORD = "yggdrasil2026"
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    import secrets
+    app.secret_key = secrets.token_hex(16)
+
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+if not ADMIN_PASSWORD:
+    print("WARNING: ADMIN_PASSWORD not set in .env! Using fallback for dev. Do NOT use in production.")
+    ADMIN_PASSWORD = "yggdrasil2026"
 
 def login_required(f):
     @wraps(f)
@@ -24,22 +37,58 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def is_private_ip(ip_str):
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        return ip.is_private or ip.is_loopback
+    except ValueError:
+        return False
+
 def validate_target(target):
     # Allows IPv4, IPv6, Domains, and none
     if not target or target.lower() == 'none':
         return True
     pattern = r'^[\w\.\-\:]+$'
-    if re.match(pattern, target):
-        return True
-    return False
+    if not re.match(pattern, target):
+        return False
+        
+    # SSRF Protection
+    try:
+        resolved_ip = socket.gethostbyname(target)
+        if is_private_ip(resolved_ip):
+            return False
+    except socket.gaierror:
+        pass
+        
+    return True
 
-stats_lock = threading.Lock()
+def init_db():
+    conn = sqlite3.connect('stats.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS stats
+                 (id INTEGER PRIMARY KEY, total_scans INTEGER, last_target TEXT, active_tool TEXT)''')
+    c.execute('SELECT COUNT(*) FROM stats')
+    if c.fetchone()[0] == 0:
+        c.execute('INSERT INTO stats (total_scans, last_target, active_tool) VALUES (0, "NONE", "IDLE")')
+    conn.commit()
+    conn.close()
 
-SCAN_STATS = {
-    'total_scans': 0,
-    'last_target': 'NONE',
-    'active_tool': 'IDLE'
-}
+init_db()
+
+def get_db_stats():
+    conn = sqlite3.connect('stats.db')
+    c = conn.cursor()
+    c.execute('SELECT total_scans, last_target, active_tool FROM stats WHERE id=1')
+    row = c.fetchone()
+    conn.close()
+    return {'total_scans': row[0], 'last_target': row[1], 'active_tool': row[2]}
+
+def update_db_stats(target, tool):
+    conn = sqlite3.connect('stats.db')
+    c = conn.cursor()
+    c.execute('UPDATE stats SET total_scans = total_scans + 1, last_target = ?, active_tool = ? WHERE id=1', (target, tool))
+    conn.commit()
+    conn.close()
 
 TOOLS_CONFIG = {
     'nmap': {'name': 'Nmap (Full Scan)', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sV', '-F', '--version-light', '{target}']},
@@ -97,8 +146,8 @@ def install_tool_system(tool_key):
         return False, "Installation command not defined for this OS."
 
     try:
-        # Use shell=True to support commands with pipes or '&&' if any.
-        output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
+        cmd_list = shlex.split(cmd)
+        output = subprocess.check_output(cmd_list, stderr=subprocess.STDOUT).decode('utf-8')
         return True, f"Installation output:\n{output}"
     except subprocess.CalledProcessError as e:
         return False, f"Installation failed:\n{e.output.decode('utf-8')}"
@@ -122,37 +171,31 @@ def check_runes_updates():
                 pass
     return updates
 
-def apply_runes_updates():
-    runes_dir = "Runes"
-    output_html = "<div style='font-family: monospace;'>"
-    output_html += "<h3>[ ᛊ ] RUNE SYNC (UPDATE APPLIED)</h3>"
-    
-    if not os.path.exists(runes_dir):
-        return "Runes directory not found."
-
+def background_update(runes_dir):
     for item in os.listdir(runes_dir):
         repo_path = os.path.join(runes_dir, item)
         if os.path.isdir(repo_path) and os.path.exists(os.path.join(repo_path, ".git")):
             try:
                 status = subprocess.check_output(["git", "status", "-uno"], cwd=repo_path, stderr=subprocess.STDOUT).decode("utf-8")
                 if "Your branch is behind" in status or "git pull" in status:
-                    output_html += f"<p style='color: var(--highlight-color);'>Applying updates for <b>{item}</b>...</p>"
-                    pull_output = subprocess.check_output(["git", "pull"], cwd=repo_path, stderr=subprocess.STDOUT).decode("utf-8")
-                    output_html += f"<pre style='background: #222; padding: 10px; border: 1px solid #444; color: #fff;'>{pull_output}</pre>"
+                    subprocess.check_output(["git", "pull"], cwd=repo_path, stderr=subprocess.STDOUT)
                     
                     if "Network-Sniffer-Scanner-Java" in item:
-                        output_html += "<p style='color: #88c0d0;'>Recompiling Java Sniffer with Maven...</p>"
                         mvn_cmd = "mvn.cmd" if platform.system() == "Windows" else "mvn"
-                        mvn_output = subprocess.check_output([mvn_cmd, "clean", "install"], cwd=repo_path, stderr=subprocess.STDOUT).decode("utf-8")
-                        if "BUILD SUCCESS" in mvn_output:
-                            output_html += "<p style='color: #a3be8c;'>Compilation Successful.</p>"
-                        else:
-                            output_html += "<p style='color: #bf616a;'>Compilation Failed. Check logs.</p>"
-            except Exception as e:
-                output_html += f"<p style='color: #bf616a;'>Error updating {item}: {str(e)}</p>"
-                
-    output_html += "<br><p style='color: #a3be8c;'>Update process complete.</p></div>"
-    return output_html
+                        subprocess.check_output([mvn_cmd, "clean", "install"], cwd=repo_path, stderr=subprocess.STDOUT)
+            except Exception:
+                pass
+
+def apply_runes_updates():
+    runes_dir = "Runes"
+    if not os.path.exists(runes_dir):
+        return "<p>Runes directory not found.</p>"
+
+    thread = threading.Thread(target=background_update, args=(runes_dir,))
+    thread.daemon = True
+    thread.start()
+    
+    return "<div style='font-family: monospace;'><p style='color: #a3be8c;'>Updates started in the background. Tools will be synced shortly.</p></div>"
 
 def execute_tool(tool_key, target, data=None):
     config = TOOLS_CONFIG.get(tool_key)
@@ -229,7 +272,7 @@ def get_tools():
 @app.route('/api/stats', methods=['GET'])
 @login_required
 def get_stats():
-    return jsonify(SCAN_STATS)
+    return jsonify(get_db_stats())
 
 @app.route('/api/dependencies', methods=['GET'])
 @login_required
@@ -277,10 +320,8 @@ def handle_action():
         return jsonify({'status': 'success' if success else 'error', 'message': msg})
 
     elif action == 'run':
-        with stats_lock:
-            SCAN_STATS['total_scans'] += 1
-            SCAN_STATS['last_target'] = target if target else 'NONE'
-            SCAN_STATS['active_tool'] = tool.upper()
+        target_val = target if target else 'NONE'
+        update_db_stats(target_val, tool.upper())
         
         config = TOOLS_CONFIG.get(tool)
         if config and config.get('type') == 'custom_html':
