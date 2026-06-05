@@ -5,9 +5,33 @@ import json
 import platform
 import threading
 import html
-from flask import Flask, render_template, request, jsonify
+import re
+from functools import wraps
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from handlers import dispatch_handler
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'yggdrasil-dev-key-1234')
+
+# Hardcoded password (could be moved to env vars later)
+ADMIN_PASSWORD = "yggdrasil2026"
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def validate_target(target):
+    # Allows IPv4, IPv6, Domains, and none
+    if not target or target.lower() == 'none':
+        return True
+    pattern = r'^[\w\.\-\:]+$'
+    if re.match(pattern, target):
+        return True
+    return False
 
 stats_lock = threading.Lock()
 
@@ -79,26 +103,6 @@ def install_tool_system(tool_key):
         return False, f"Installation failed:\n{e.output.decode('utf-8')}"
     except Exception as e:
         return False, f"Error: {str(e)}"
-
-def generate_dorks(target):
-    target_escaped = html.escape(target)
-    dorks = [
-        f"site:{target_escaped}",
-        f"site:{target_escaped} inurl:admin",
-        f"site:{target_escaped} inurl:login",
-        f"site:{target_escaped} intitle:index of",
-        f"site:{target_escaped} filetype:pdf",
-        f"site:{target_escaped} filetype:sql",
-        f"site:{target_escaped} inurl:wp-config.bak",
-        f"site:{target_escaped} intext:'sql syntax near'",
-        f"site:{target_escaped} inurl:dashboard"
-    ]
-    html_out = "<div style='display:flex; flex-wrap:wrap; gap:10px;'>"
-    for d in dorks:
-        url = f"https://www.google.com/search?q={d.replace(' ', '+')}"
-        html_out += f"<a href='{url}' target='_blank' style='background:#333; padding:10px; color:#88c0d0; text-decoration:none; border:1px solid #4c566a;'>{d}</a>"
-    html_out += "</div>"
-    return html_out
 
 def check_runes_updates():
     runes_dir = "Runes"
@@ -181,132 +185,35 @@ def execute_tool(tool_key, target, data=None):
         except Exception as e:
             return f"System Error: {str(e)}"
 
-    elif tool_type == 'custom_html':
+    elif tool_type in ['custom_html', 'custom_script']:
         handler_name = config.get('handler')
-        if handler_name == 'generate_dorks':
-            return generate_dorks(target)
-        elif handler_name == 'wayback':
-            return f"Wayback Machine Link: https://web.archive.org/web/*/{target}"
-
-    elif tool_type == 'custom_script':
-        handler_name = config.get('handler')
-        if handler_name == 'adv_syn_scan':
-            syn_mode = data.get('syn_mode', 'auto') if data else 'auto'
-            if syn_mode == 'auto':
-                max_port = data.get('max_port', '1000') if data else '1000'
-                cmd = ["bash", "Runes/Advanced-SYN-Scanner/auto_scan.sh", str(target), str(max_port)]
-            else:
-                source_ip = data.get('source_ip', '') if data else ''
-                start_port = data.get('start_port', '1') if data else '1'
-                end_port = data.get('end_port', '1000') if data else '1000'
-                cmd = ["sudo", "Runes/Advanced-SYN-Scanner/syn_scanner", "-s", source_ip, "-t", target, "-p", start_port, "-e", end_port]
-            
-            try:
-                result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=120).decode('utf-8')
-                return result
-            except subprocess.TimeoutExpired:
-                return "TIMEOUT: Process took too long"
-            except subprocess.CalledProcessError as e:
-                return f"Execution Error:\n{e.output.decode('utf-8')}"
-            except Exception as e:
-                return f"System Error: {str(e)}"
-        elif handler_name == 'erebus_scan':
-            ports = data.get('ports', '1-1024') if data else '1-1024'
-            if not ports or not ports.strip():
-                ports = '1-1024'
-            
-            # Base command
-            cmd = ['cargo', 'run', '--manifest-path', 'Runes/erebus-scanner/Cargo.toml', '--', '-t', str(target), '-p', str(ports)]
-            
-            if data:
-                if data.get('banner') == 'true':
-                    cmd.append('--banner')
-                if data.get('randomize') == 'true':
-                    cmd.append('--randomize')
-                if data.get('adaptive') == 'true':
-                    cmd.append('--adaptive')
-                proxy = data.get('proxy')
-                if proxy and proxy.strip():
-                    cmd.extend(['--proxy', str(proxy).strip()])
-            
-        elif handler_name == 'packet_injector':
-            action = data.get('packet_action', 'sniff') if data else 'sniff'
-            interface = data.get('interface', 'eth0') if data else 'eth0'
-            protocol = data.get('protocol', 'tcp') if data else 'tcp'
-            
-            cmd = ['sudo', 'python3', 'Runes/packet-injector/main.py', '--action', action, '--interface', interface]
-            
-            if action == 'inject':
-                cmd.extend(['--protocol', protocol])
-                cmd.extend(['--dst-ip', str(target)])
-                
-                src_ip = data.get('src_ip')
-                if src_ip: cmd.extend(['--src-ip', src_ip])
-                
-                src_mac = data.get('src_mac')
-                if src_mac: cmd.extend(['--src-mac', src_mac])
-                
-                dst_mac = data.get('dst_mac')
-                if dst_mac: cmd.extend(['--dst-mac', dst_mac])
-                
-                ttl = data.get('ttl')
-                if ttl: cmd.extend(['--ttl', ttl])
-                
-                if protocol == 'tcp':
-                    dst_port = data.get('dst_port')
-                    if dst_port: cmd.extend(['--dst-port', dst_port])
-                    
-                    src_port = data.get('src_port')
-                    if src_port: cmd.extend(['--src-port', src_port])
-                    
-                    seq = data.get('seq')
-                    if seq: cmd.extend(['--seq', seq])
-                    
-                    ack_num = data.get('ack_num')
-                    if ack_num: cmd.extend(['--ack-num', ack_num])
-                    
-                    window = data.get('window')
-                    if window: cmd.extend(['--window', window])
-                    
-                    flags = data.get('flags')
-                    if flags:
-                        # flags could be a space or comma separated string or list
-                        flag_list = [f.strip() for f in flags.split(',') if f.strip()]
-                        if flag_list:
-                            cmd.append('--flags')
-                            cmd.extend(flag_list)
-                            
-                elif protocol == 'arp':
-                    arp_op = data.get('arp_op')
-                    if arp_op: cmd.extend(['--arp-op', arp_op])
-                
-                # Scheduling parameters
-                rate = data.get('rate')
-                if rate: cmd.extend(['--rate', rate])
-                count = data.get('count')
-                if count: cmd.extend(['--count', count])
-                duration = data.get('duration')
-                if duration: cmd.extend(['--duration', duration])
-                burst = data.get('burst')
-                if burst: cmd.extend(['--burst', burst])
-                
-            try:
-                result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=120).decode('utf-8')
-                return result
-            except subprocess.TimeoutExpired:
-                return "TIMEOUT: Process took too long"
-            except subprocess.CalledProcessError as e:
-                return f"Execution Error:\n{e.output.decode('utf-8')}"
-            except Exception as e:
-                return f"System Error: {str(e)}"
+        return dispatch_handler(handler_name, target, data)
 
     return "Unsupported tool type"
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == ADMIN_PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('home'))
+        else:
+            return render_template('login.html', error="Parola hatalı! (Incorrect password)")
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def home():
     return render_template('index.html')
 
 @app.route('/api/tools', methods=['GET'])
+@login_required
 def get_tools():
     frontend_config = {}
     for key, val in TOOLS_CONFIG.items():
@@ -319,10 +226,12 @@ def get_tools():
     return jsonify(frontend_config)
 
 @app.route('/api/stats', methods=['GET'])
+@login_required
 def get_stats():
     return jsonify(SCAN_STATS)
 
 @app.route('/api/dependencies', methods=['GET'])
+@login_required
 def get_dependencies():
     current_os = platform.system().lower()
     deps = []
@@ -339,11 +248,16 @@ def get_dependencies():
     return jsonify(deps)
 
 @app.route('/api/action', methods=['POST'])
+@login_required
 def handle_action():
     data = request.form
     tool = data.get('tool')
     target = data.get('target')
     action = data.get('action')
+
+    # Validate target for SSRF/Argument Injection protection
+    if not validate_target(target):
+        return jsonify({'status': 'error', 'message': '>> INVALID TARGET. BANNED CHARACTERS DETECTED.'})
 
     if action == 'check':
         exists = check_tool_status(tool)
@@ -378,4 +292,6 @@ def handle_action():
     return jsonify({'status': 'error', 'message': 'Invalid action'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Listen on localhost by default for security, can be overridden with environment variables if desired
+    host = os.environ.get('HOST', '127.0.0.1')
+    app.run(host=host, port=5000, debug=False)

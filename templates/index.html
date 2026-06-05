@@ -504,10 +504,11 @@
 
         function typeWriter(element, text, i) {
             if (i < text.length) {
+                let chunkSize = text.length > 5000 ? 50 : (text.length > 1000 ? 15 : 1);
                 // Use textContent to prevent XSS injection during typing
-                element.textContent += text.charAt(i);
+                element.textContent += text.substring(i, i + chunkSize);
                 element.scrollTop = element.scrollHeight;
-                let timeout = setTimeout(() => typeWriter(element, text, i + 1), 2);
+                let timeout = setTimeout(() => typeWriter(element, text, i + chunkSize), 2);
                 if (!element.typewriterTimeouts) element.typewriterTimeouts = [];
                 element.typewriterTimeouts.push(timeout);
             } else if (element.typewriterTimeouts) {

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yggdrasil - Authentication</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='roots.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Fira Code', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at center, #1a1e24 0%, #0d1117 100%);
+        }
+        
+        .login-container {
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            color: var(--highlight-color);
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 0 0 10px rgba(136, 192, 208, 0.3);
+        }
+
+        h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--wood-light);
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent-color);
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            background: #111;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-family: 'Fira Code', monospace;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: var(--highlight-color);
+            box-shadow: 0 0 5px rgba(136, 192, 208, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-color);
+            color: var(--wood-light);
+            border: 1px solid var(--border-color);
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: var(--highlight-color);
+            color: #000;
+            box-shadow: 0 0 15px var(--highlight-color);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .runes {
+            font-size: 1.5em;
+            color: var(--wood-dark);
+            margin-top: 20px;
+            letter-spacing: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Yggdrasil</h1>
+        <h2>[ Access the Roots ]</h2>
+        
+        {% if error %}
+            <div class="error-message">>> {{ error }}</div>
+        {% endif %}
+        
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="input-group">
+                <label for="password">Authentication Key (Parola):</label>
+                <input type="password" id="password" name="password" required autofocus placeholder="Enter the secret rune...">
+            </div>
+            <button type="submit">Unlock Framework</button>
+        </form>
+        
+        <div class="runes">ᚢ ᚷ ᚷ ᛞ ᚱ ᚨ ᛋ ᛁ ᛚ</div>
+    </div>
+
+</body>
+</html>
