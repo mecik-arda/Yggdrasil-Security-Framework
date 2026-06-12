@@ -118,7 +118,8 @@ TOOLS_CONFIG = {
     'update_modules': {'name': 'Sync All Runes (Update)', 'category': 'system_ops', 'requires_target': False, 'type': 'custom_html', 'handler': 'update_modules'},
     'snoopdork': {'name': 'Launch SnoopDork OSINT', 'category': 'snoopdork', 'requires_target': False, 'type': 'gui', 'cwd': 'Runes/SnoopDork_V3', 'cmd_windows': 'start SnoopDork_V3.html', 'cmd_linux': 'xdg-open SnoopDork_V3.html', 'supported_os': ['linux', 'windows']},
     'packet_injector': {'name': 'Packet Injector (Craft & Inject)', 'category': 'packet_injector', 'requires_target': True, 'type': 'custom_script', 'handler': 'packet_injector', 'has_modal': True, 'supported_os': ['linux']},
-    'mimir_scanner': {'name': 'Mimir Scanner (Real-time)', 'category': 'mimir_scanner', 'requires_target': False, 'type': 'custom_script', 'handler': 'mimir_scanner', 'supported_os': ['linux', 'windows']}
+    'mimir_scanner': {'name': 'Mimir Scanner (Real-time)', 'category': 'mimir_scanner', 'requires_target': False, 'type': 'custom_script', 'handler': 'mimir_scanner', 'supported_os': ['linux', 'windows']},
+    'bifrost_gateway': {'name': 'Bifrost Security Gateway', 'category': 'bifrost_gateway', 'requires_target': False, 'type': 'custom_script', 'handler': 'bifrost_gateway', 'install_linux': 'sudo apt-get install maven -y', 'install_windows': 'winget install Apache.Maven', 'supported_os': ['linux', 'windows']}
 }
 
 def check_tool_status(tool_key):

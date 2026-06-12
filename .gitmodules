@@ -19,3 +19,6 @@
 [submodule "Runes/Kali-Ghost-Scripts"]
 	path = Runes/Kali-Ghost-Scripts
 	url = https://github.com/mecik-arda/Kali-Ghost-Scripts.git
+[submodule "Runes/bifrost-gateway"]
+	path = Runes/bifrost-gateway
+	url = https://github.com/mecik-arda/bifrost-gateway.git
