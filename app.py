@@ -52,14 +52,8 @@ def validate_target(target):
     if not re.match(pattern, target):
         return False
         
-    # SSRF Protection
-    try:
-        resolved_ip = socket.gethostbyname(target)
-        if is_private_ip(resolved_ip):
-            return False
-    except socket.gaierror:
-        pass
-        
+    # We do NOT block private IPs here because Yggdrasil is a network 
+    # scanning framework meant to target local subnets and localhost.
     return True
 
 def init_db():
