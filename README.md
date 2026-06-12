@@ -1,13 +1,14 @@
 # ᚛᚜ Yggdrasil Security Framework ᚛᚜
 
+![Screenshot 1](screenshots/1.png)
+![Screenshot 2](screenshots/2.png)
+![Screenshot 3](screenshots/3.png)
+
 [ 🇬🇧 English ](#-english) | [ 🇹🇷 Türkçe ](#-türkçe)
 
 ---
 
 ## 🇬🇧 English
-
-![Screenshot 1](screenshots/1.png)
-![Screenshot 2](screenshots/2.png)
 
 This repository features an advanced security reconnaissance and vulnerability assessment framework developed to centralize offensive security operations. It integrates industry-standard tools into a unified, Norse-themed dashboard to streamline the information gathering and exploitation phases of a penetration test.
 
@@ -157,9 +158,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 <br>
 
 ## 🇹🇷 Türkçe
-
-![Screenshot 1](screenshots/1.png)
-![Screenshot 2](screenshots/2.png)
 
 Bu depo, ofansif güvenlik operasyonlarını tek bir merkezde toplamak için geliştirilmiş kapsamlı bir güvenlik keşif (reconnaissance) ve zafiyet değerlendirme framework'üdür. Sızma testi (penetration test) süreçlerindeki bilgi toplama ve sömürme aşamalarını kolaylaştırmak için endüstri standardı araçları İskandinav mitolojisi (Norse) temalı dinamik bir kontrol panelinde (dashboard) birleştirir.
 
