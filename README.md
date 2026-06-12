@@ -1,8 +1,6 @@
 # ᚛᚜ Yggdrasil Security Framework ᚛᚜
 
-![Dashboard Overview](screenshots/1.png?v=2)
-![Terminal & Scan Results](screenshots/2.png?v=2)
-![Tool Modals](screenshots/3.png?v=2)
+![Dashboard Overview](screenshots/1.png?v=3)
 
 [ 🇬🇧 English ](#-english) | [ 🇹🇷 Türkçe ](#-türkçe)
 
