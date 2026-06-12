@@ -19,6 +19,33 @@ load_dotenv()
 
 app = Flask(__name__)
 
+def load_translations():
+    translations = {}
+    lang_dir = os.path.join(os.path.dirname(__file__), 'translations')
+    if os.path.exists(lang_dir):
+        for file in os.listdir(lang_dir):
+            if file.endswith('.json'):
+                lang_code = file.split('.')[0]
+                with open(os.path.join(lang_dir, file), 'r', encoding='utf-8') as f:
+                    translations[lang_code] = json.load(f)
+    return translations
+
+TRANSLATIONS = load_translations()
+
+def get_translation(key, **kwargs):
+    lang = session.get('lang', 'en')
+    text = TRANSLATIONS.get(lang, {}).get(key, key)
+    if kwargs:
+        try:
+            text = text.format(**kwargs)
+        except KeyError:
+            pass
+    return text
+
+@app.before_request
+def before_request():
+    app.jinja_env.globals.update(t=get_translation)
+
 app.secret_key = os.environ.get('SECRET_KEY')
 if not app.secret_key:
     import secrets
@@ -85,7 +112,14 @@ def update_db_stats(target, tool):
     conn.close()
 
 TOOLS_CONFIG = {
-    'nmap': {'name': 'Nmap (Full Scan)', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sV', '-F', '--version-light', '{target}']},
+    'nmap': {'name': 'Nmap (Full Scan)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sV', '-F', '--version-light', '{target}']},
+    'nmap_stealth': {'name': 'Nmap (Stealth/Bypass)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sS', '-T2', '-f', '--data-length', '24', '--spoof-mac', '0', '--decoy', 'RND:5', '{target}']},
+    'nmap_banner': {'name': 'Nmap (Banner Grab)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sV', '--version-intensity', '5', '--script', 'banner', '{target}']},
+    'nmap_udp': {'name': 'Nmap (UDP Scan)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sU', '-p', '53,67,161,162,500,4500', '{target}']},
+    'nmap_tcp': {'name': 'Nmap (TCP Scan)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sS', '-p-', '-T4', '{target}']},
+    'nmap_tcp_udp': {'name': 'Nmap (TCP & UDP Scan)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sS', '-sU', '-T4', '-p', 'T:1-1000,U:53,67,161,162,500', '{target}']},
+    'nmap_vuln': {'name': 'Nmap (Vuln Scan)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '--script', 'vuln,safe', '-p', '80,443,445', '{target}']},
+    'nmap_os': {'name': 'Nmap (OS Detect)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-O', '--osscan-guess', '{target}']},
     'erebus': {'name': 'Erebus Scanner (Rust)', 'category': 'erebus_scanner', 'requires_target': True, 'type': 'custom_script', 'handler': 'erebus_scan', 'has_modal': True, 'bin': 'cargo', 'install_linux': 'sudo apt-get install cargo -y', 'install_windows': 'winget install Rustlang.Rustup', 'supported_os': ['linux', 'windows']},
     'whois': {'name': 'WHOIS Lookup', 'category': 'passive_recon', 'requires_target': True, 'type': 'cli', 'bin': 'whois', 'install_linux': 'sudo apt-get install whois -y', 'install_windows': 'winget install Microsoft.Sysinternals.WhoIs', 'supported_os': ['linux', 'windows'], 'cmd': ['whois', '{target}']},
     'dnsenum': {'name': 'DNS Enum', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'dnsenum', 'install_linux': 'sudo apt-get install dnsenum -y', 'install_windows': '', 'supported_os': ['linux'], 'cmd': ['dnsenum', '--noreverse', '{target}']},
@@ -94,6 +128,12 @@ TOOLS_CONFIG = {
     'wafw00f': {'name': 'WAF Detection', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'wafw00f', 'install_linux': 'sudo apt-get install wafw00f -y', 'install_windows': 'pip install wafw00f', 'supported_os': ['linux', 'windows'], 'cmd': ['wafw00f', '{target}']},
     'dnsrecon': {'name': 'DNS Recon', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'dnsrecon', 'install_linux': 'sudo apt-get install dnsrecon -y', 'install_windows': 'pip install dnsrecon', 'supported_os': ['linux', 'windows'], 'cmd': ['dnsrecon', '-d', '{target}']},
     'dig': {'name': 'Dig (DNS Utils)', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'dig', 'install_linux': 'sudo apt-get install dnsutils -y', 'install_windows': 'winget install ISC.BIND', 'supported_os': ['linux', 'windows'], 'cmd': ['dig', 'ANY', '{target}']},
+    'subfinder': {'name': 'Subfinder', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'custom_script', 'handler': 'subfinder', 'has_modal': True, 'bin': 'subfinder', 'install_linux': 'sudo apt-get install subfinder -y', 'install_windows': 'go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest', 'supported_os': ['linux', 'windows']},
+    'assetfinder': {'name': 'Assetfinder', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'assetfinder', 'install_linux': 'sudo apt-get install assetfinder -y', 'install_windows': 'go install github.com/tomnomnom/assetfinder@latest', 'supported_os': ['linux', 'windows'], 'cmd': ['assetfinder', '--subs-only', '{target}']},
+    'fierce': {'name': 'Fierce', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'fierce', 'install_linux': 'sudo apt-get install fierce -y', 'install_windows': 'pip install fierce', 'supported_os': ['linux', 'windows'], 'cmd': ['fierce', '--domain', '{target}']},
+    'knockpy': {'name': 'Knockpy', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'custom_script', 'handler': 'knockpy', 'has_modal': True, 'bin': 'knockpy', 'install_linux': 'sudo apt-get install knockpy -y', 'install_windows': 'pip install knockpy', 'supported_os': ['linux', 'windows']},
+    'gobuster_dns': {'name': 'Gobuster DNS', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'custom_script', 'handler': 'gobuster_dns', 'has_modal': True, 'bin': 'gobuster', 'install_linux': 'sudo apt-get install gobuster -y', 'install_windows': 'go install github.com/OJ/gobuster/v3@latest', 'supported_os': ['linux', 'windows']},
+    'nslookup': {'name': 'Nslookup', 'category': 'dns_subdomain', 'requires_target': True, 'type': 'cli', 'bin': 'nslookup', 'install_linux': '', 'install_windows': '', 'supported_os': ['linux', 'windows'], 'cmd': ['nslookup', '-type=any', '{target}']},
     'searchsploit': {'name': 'Exploit-DB Search', 'category': 'vulnerability', 'requires_target': True, 'type': 'cli', 'bin': 'searchsploit', 'install_linux': 'sudo apt-get install exploitdb -y', 'install_windows': '', 'supported_os': ['linux'], 'cmd': ['searchsploit', '{target}']},
     'wireshark': {'name': 'Packet Sniffer', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'tshark', 'install_linux': 'sudo apt-get install tshark -y', 'install_windows': 'winget install WiresharkFoundation.Wireshark', 'supported_os': ['linux', 'windows'], 'cmd': ['tshark', '-c', '5', '-i', 'any']},
     'nikto': {'name': 'Nikto Web Scan', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'nikto', 'install_linux': 'sudo apt-get install nikto -y', 'install_windows': '', 'supported_os': ['linux'], 'cmd': ['nikto', '-h', '{target}', '-Tuning', '1']},
@@ -113,7 +153,17 @@ TOOLS_CONFIG = {
     'snoopdork': {'name': 'Launch SnoopDork OSINT', 'category': 'snoopdork', 'requires_target': False, 'type': 'gui', 'cwd': 'Runes/SnoopDork_V3', 'cmd_windows': 'start SnoopDork_V3.html', 'cmd_linux': 'xdg-open SnoopDork_V3.html', 'supported_os': ['linux', 'windows']},
     'packet_injector': {'name': 'Packet Injector (Craft & Inject)', 'category': 'packet_injector', 'requires_target': True, 'type': 'custom_script', 'handler': 'packet_injector', 'has_modal': True, 'supported_os': ['linux']},
     'mimir_scanner': {'name': 'Mimir Scanner (Real-time)', 'category': 'mimir_scanner', 'requires_target': False, 'type': 'custom_script', 'handler': 'mimir_scanner', 'supported_os': ['linux', 'windows']},
-    'bifrost_gateway': {'name': 'Bifrost Security Gateway', 'category': 'bifrost_gateway', 'requires_target': False, 'type': 'custom_script', 'handler': 'bifrost_gateway', 'install_linux': 'sudo apt-get install maven -y', 'install_windows': 'winget install Apache.Maven', 'supported_os': ['linux', 'windows']}
+    'bifrost_gateway': {'name': 'Bifrost Security Gateway', 'category': 'bifrost_gateway', 'requires_target': False, 'type': 'custom_script', 'handler': 'bifrost_gateway', 'install_linux': 'sudo apt-get install maven -y', 'install_windows': 'winget install Apache.Maven', 'supported_os': ['linux', 'windows']},
+    'arp_scan': {'name': 'ARP Network Discovery (arp-scan)', 'category': 'active_scanning', 'requires_target': False, 'type': 'cli', 'bin': 'arp-scan', 'install_linux': 'sudo apt-get install arp-scan -y', 'supported_os': ['linux'], 'cmd': ['sudo', 'arp-scan', '--localnet']},
+    'hping3': {'name': 'hping3 (SYN Flood Test)', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'hping3', 'install_linux': 'sudo apt-get install hping3 -y', 'supported_os': ['linux'], 'cmd': ['sudo', 'hping3', '-S', '-p', '80', '-c', '20', '{target}']},
+    'dirb': {'name': 'Dirb (Directory Scan)', 'category': 'active_scanning', 'requires_target': True, 'type': 'cli', 'bin': 'dirb', 'install_linux': 'sudo apt-get install dirb -y', 'supported_os': ['linux'], 'cmd': ['dirb', 'http://{target}', '-r']},
+    'netdiscover': {'name': 'Netdiscover Recon', 'category': 'passive_recon', 'requires_target': False, 'type': 'cli', 'bin': 'netdiscover', 'install_linux': 'sudo apt-get install netdiscover -y', 'supported_os': ['linux'], 'cmd': ['sudo', 'netdiscover', '-p', '-c', '1']},
+    'traceroute': {'name': 'Traceroute (Route Tracking)', 'category': 'passive_recon', 'requires_target': True, 'type': 'cli', 'bin': 'traceroute', 'install_linux': 'sudo apt-get install traceroute -y', 'supported_os': ['linux'], 'cmd': ['traceroute', '-I', '{target}']},
+    'lynis': {'name': 'Lynis (System Hardening)', 'category': 'vulnerability', 'requires_target': False, 'type': 'cli', 'bin': 'lynis', 'install_linux': 'sudo apt-get install lynis -y', 'supported_os': ['linux'], 'cmd': ['sudo', 'lynis', 'audit', 'system']},
+    'nuclei': {'name': 'Nuclei (Vuln Scanner)', 'category': 'vulnerability', 'requires_target': True, 'type': 'cli', 'bin': 'nuclei', 'install_linux': 'sudo apt-get install nuclei -y', 'install_windows': 'winget install ProjectDiscovery.Nuclei', 'supported_os': ['linux', 'windows'], 'cmd': ['nuclei', '-u', '{target}']},
+    'wapiti': {'name': 'Wapiti (Web Scanner)', 'category': 'vulnerability', 'requires_target': True, 'type': 'cli', 'bin': 'wapiti', 'install_linux': 'sudo apt-get install wapiti -y', 'supported_os': ['linux'], 'cmd': ['wapiti', '-u', 'http://{target}/']},
+    'nmap_vulners': {'name': 'Nmap (CVE Vulners)', 'category': 'vulnerability', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sV', '--script', 'vulners', '{target}']},
+    'hydra': {'name': 'Hydra (Brute Force)', 'category': 'vulnerability', 'requires_target': True, 'type': 'custom_script', 'handler': 'hydra_bruteforce', 'has_modal': True, 'bin': 'hydra', 'install_linux': 'sudo apt-get install hydra -y', 'supported_os': ['linux']}
 }
 
 def check_tool_status(tool_key):
@@ -249,7 +299,15 @@ def logout():
 @app.route('/')
 @login_required
 def home():
-    return render_template('index.html')
+    lang = session.get('lang', 'en')
+    js_translations = TRANSLATIONS.get(lang, {})
+    return render_template('index.html', js_translations=js_translations, current_lang=lang)
+
+@app.route('/api/set_lang', methods=['POST'])
+def set_lang():
+    lang = request.json.get('lang', 'en')
+    session['lang'] = lang
+    return jsonify({'status': 'success', 'lang': lang})
 
 @app.route('/api/tools', methods=['GET'])
 @login_required
