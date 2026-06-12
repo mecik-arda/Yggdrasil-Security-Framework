@@ -1,8 +1,12 @@
 # ᚛᚜ Yggdrasil Security Framework ᚛᚜
 
-![Screenshot 1](screenshots/1.png)
-![Screenshot 2](screenshots/2.png)
-![Screenshot 3](screenshots/3.png)
+<p align="center">
+  <img src="screenshots/1.png" width="800" alt="Dashboard Overview">
+</p>
+<p align="center">
+  <img src="screenshots/2.png" width="400" alt="Terminal & Scan Results">
+  <img src="screenshots/3.png" width="400" alt="Tool Modals">
+</p>
 
 [ 🇬🇧 English ](#-english) | [ 🇹🇷 Türkçe ](#-türkçe)
 
