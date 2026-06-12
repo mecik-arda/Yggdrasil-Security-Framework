@@ -1,29 +1,35 @@
 # ᚛᚜ Yggdrasil Security Framework ᚛᚜
 
+[ 🇬🇧 English ](#-english) | [ 🇹🇷 Türkçe ](#-türkçe)
+
+---
+
+## 🇬🇧 English
+
 ![Screenshot 1](screenshots/1.png)
 ![Screenshot 2](screenshots/2.png)
 
 This repository features an advanced security reconnaissance and vulnerability assessment framework developed to centralize offensive security operations. It integrates industry-standard tools into a unified, Norse-themed dashboard to streamline the information gathering and exploitation phases of a penetration test.
 
-## Project Reflection & Technical Q&A
+### Project Reflection & Technical Q&A
 
-### 1. Why did I write the code this way? (XYZ Analysis)
+#### 1. Why did I write the code this way? (XYZ Analysis)
 * My objective was to eliminate the inefficiency of switching between multiple command-line tools during a security audit. 
 * I accomplished a centralized, web-based management system as measured by reducing tool initialization and reporting time by integrating a Python Flask backend with a dynamic Runic Dashboard. 
 * This ensures that reconnaissance data is visualized and logged in real-time within a cohesive operational environment.
 
-### 2. What challenges did I face?
+#### 2. What challenges did I face?
 * **Subprocess Management**: Handling multiple concurrent security tools required a robust subprocess execution logic to prevent the Flask backend from hanging during intensive scans.
 * **Dependency Orchestration**: I implemented a "Runic Installation Ritual" (Automated Dependency Checker) to detect missing system tools and install them dynamically without manual user intervention.
 * **Output Streaming**: Implementing the typewriter effect for real-time output rendering was a challenge in managing asynchronous JavaScript data streams within a synchronous HTML environment.
 
-### 3. How did I manage the Security Arsenal?
+#### 3. How did I manage the Security Arsenal?
 * **Modular Integration**: I architected a modular command execution engine that handles specialized flags for Nmap, Sqlmap, Nikto, and WPScan to ensure optimal scan accuracy.
 * **Artifact Logging**: The framework includes a reporting module that sanitizes terminal output and exports it into structured TXT or JSON artifacts for professional security documentation.
 
 ---
 
-## ᚛᚜ Complete Integrated Arsenal & Features ᚛᚜
+### ᚛᚜ Complete Integrated Arsenal & Features ᚛᚜
 
 The Yggdrasil Security Framework integrates **25 core features and modules** divided into 7 distinct tactical categories:
 
@@ -72,7 +78,7 @@ The Yggdrasil Security Framework integrates **25 core features and modules** div
 
 ---
 
-## ᛝ Custom Integrations (My Runes)
+### ᛝ Custom Integrations (My Runes)
 
 We have expanded the framework with specialized, custom-built tools compiled under the **Runes** directory:
 
@@ -92,9 +98,9 @@ We have expanded the framework with specialized, custom-built tools compiled und
 
 ---
 
-# ᚛᚜ System Manual & Deployment ᚛᚜
+### ᚛᚜ System Manual & Deployment ᚛᚜
 
-## Installation Guide
+#### Installation Guide
 
 Since the custom **Runes** are integrated as Git Submodules, make sure to clone the repository recursively so that all modules are loaded:
 
@@ -109,7 +115,7 @@ cd Yggdrasil-Security-Framework
 git submodule update --init --recursive
 ```
 
-### Environment Setup
+#### Environment Setup
 Ensure Python 3.x and Flask are installed in your realm. You can use the included virtual environment scripts:
 
 **On Linux/macOS:**
@@ -131,7 +137,7 @@ python app.py
 
 ---
 
-## ᚦ Usage Protocol
+### ᚦ Usage Protocol
 
 1. **Step 1**: Enter the target's IP address or Domain in the central input field.
 2. **Step 2**: Select a specific "Rune" (Tool) from the sidebar categories.
@@ -140,14 +146,165 @@ python app.py
 
 ---
 
-## Disclaimer
+### Disclaimer
 This framework is developed for educational purposes and authorized penetration testing only. The author is not responsible for any misuse of this tool.
 
-## License
+### License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
-**Author**: Arda Meçik  
-**Position**: Computer Engineering Student at Trakya University  
-**Student ID**: 1241602620
 
+<br>
+
+## 🇹🇷 Türkçe
+
+![Screenshot 1](screenshots/1.png)
+![Screenshot 2](screenshots/2.png)
+
+Bu depo, ofansif güvenlik operasyonlarını tek bir merkezde toplamak için geliştirilmiş kapsamlı bir güvenlik keşif (reconnaissance) ve zafiyet değerlendirme framework'üdür. Sızma testi (penetration test) süreçlerindeki bilgi toplama ve sömürme aşamalarını kolaylaştırmak için endüstri standardı araçları İskandinav mitolojisi (Norse) temalı dinamik bir kontrol panelinde (dashboard) birleştirir.
+
+### Proje Yansımaları & Teknik Soru-Cevap
+
+#### 1. Kodu Neden Bu Şekilde Yazdım? (XYZ Analizi)
+* Amacım, güvenlik denetimleri sırasında birden fazla komut satırı aracı arasında geçiş yapmanın getirdiği verimsizliği ortadan kaldırmaktı.
+* Python Flask tabanlı bir backend ile dinamik bir "Runic Dashboard"u entegre ederek, araç başlatma ve raporlama sürelerini ciddi oranda düşüren, merkezi ve web tabanlı bir yönetim sistemi kurmayı başardım.
+* Bu yapı, keşif verilerinin bütünleşik bir operasyonel ortamda eşzamanlı olarak (real-time) görselleştirilmesini ve loglanmasını sağlıyor.
+
+#### 2. Ne Tür Zorluklarla Karşılaştım?
+* **Subprocess (Alt Süreç) Yönetimi**: Eşzamanlı çalışan çok sayıda güvenlik aracını idare etmek, Flask sunucusunun yoğun taramalar sırasında çökmemesi veya kilitlenmemesi adına güçlü bir subprocess çalışma mantığı gerektirdi.
+* **Bağımlılık (Dependency) Orkestrasyonu**: Sistemde eksik olan araçları otomatik tespit eden ve manuel müdahale olmaksızın kurulumlarını gerçekleştiren "Runic Installation Ritual" (Otomatik Bağımlılık Yöneticisi) sistemini kurdum.
+* **Canlı Veri Akışı**: Terminal çıktılarının tarayıcıya yansıtılması (typewriter animasyonu ile), senkron çalışan bir HTML yapısı içinde asenkron JavaScript veri akışlarını yönetmeyi zorunlu kıldı.
+
+#### 3. Güvenlik Arsenalini Nasıl Yönettim?
+* **Modüler Entegrasyon**: Nmap, Sqlmap, Nikto ve WPScan gibi araçların kendilerine has argümanlarını en verimli tarama sonuçları için işleyebilen, modüler bir komut çalıştırma motoru tasarladım.
+* **Log ve Veri Dışa Aktarımı (Artifacts)**: Terminal çıktılarındaki gereksiz karakterleri temizleyerek sonuçları yapılandırılmış (structured) TXT veya JSON dosyalarına dönüştüren profesyonel bir raporlama modülü ekledim.
+
+---
+
+### ᚛᚜ Entegre Arsenal ve Tüm Özellikler ᚛᚜
+
+Yggdrasil Security Framework, 7 farklı taktiksel kategoriye ayrılmış **25 ana özellik ve modül** barındırmaktadır:
+
+| Runic Kategori | Araç İsmi | Açıklama | Hedef (Target) Zorunlu mu? | İşletim Sistemi (OS) Desteği | Komut / Handler |
+| :--- | :--- | :--- | :---: | :---: | :--- |
+| **Pasif Keşif (ᚠ)** | WHOIS Lookup | Domain kayıt bilgisi (WHOIS) sorgulama | Evet | Linux/Win | `whois {target}` |
+| | The Harvester | Email, subdomain ve host istihbarat aracı | Evet | Linux/Win | `theHarvester -d {target} -l 100 -b all` |
+| | Amass Enumeration | Kapsamlı açık kaynak (OSINT) subdomain taraması | Evet | Linux/Win | `amass enum -d {target} -passive` |
+| | Sherlock | Sosyal medya hesaplarında kullanıcı adı araması | Evet | Linux/Win | `sherlock {target} --timeout 5` |
+| | Google Dorks Tree | Interaktif dork arama bağlantıları (admin/login/pdf vb.) | Evet | Özel | `generate_dorks` handler |
+| | Wayback Machine | archive.org üzerinden geçmiş URL ve endpoint tespiti | Evet | Özel | `wayback` handler |
+| **DNS & Subdomain (ᛉ)** | DNS Enum | DNS kayıtları ve subdomain bulma aracı | Evet | Linux | `dnsenum --noreverse {target}` |
+| | Subfinder | Hızlı ve pasif subdomain keşfi | Evet | Linux/Win | `subfinder` handler |
+| | Assetfinder | Hafif ve sade subdomain tespiti | Evet | Linux/Win | `assetfinder --subs-only {target}` |
+| | Fierce | IP bloğu ve zone-transfer DNS taraması | Evet | Linux/Win | `fierce --domain {target}` |
+| | Knockpy | Kaba kuvvet (Brute-force) DNS subdomain taraması | Evet | Linux/Win | `knockpy` handler |
+| | Gobuster DNS | Hızlı brute-force subdomain tespiti | Evet | Linux/Win | `gobuster_dns` handler |
+| | Nslookup | Dahili DNS sorgulayıcı (Sisteme yerleşik) | Evet | Linux/Win | `nslookup -type=any {target}` |
+| | Sublist3r | Çok motorlu (multi-engine) hızlı subdomain aracı | Evet | Linux/Win | `sublist3r -d {target}` |
+| | DNS Recon | Gelişmiş DNS keşfi ve AXFR sorgu aracı | Evet | Linux/Win | `dnsrecon -d {target}` |
+| | Dig (DNS Utils) | DNS kayıtları için doğrudan sorgu aracı | Evet | Linux/Win | `dig ANY {target}` |
+| **Aktif Tarama (ᛦ)** | Nmap (Full Scan) | Hızlı servis ve port tanımlama taraması | Evet | Linux/Win | `nmap -sV -F --version-light {target}` |
+| | WAF Detection | Web Uygulama Güvenlik Duvarı (WAF) tespiti (Wafw00f) | Evet | Linux/Win | `wafw00f {target}` |
+| | Packet Sniffer | Canlı Tshark akışı kullanarak ağ trafiğini yakalama | Evet | Linux/Win | `tshark -c 5 -i any` |
+| | Nikto Web Scan | Hedef sunuculardaki tehlikeli dosya ve zafiyetli sürümleri arama | Evet | Linux | `nikto -h {target} -Tuning 1` |
+| | WPScan | WordPress kullanıcı arama ve zafiyet tespiti | Evet | Linux | `wpscan --url {target} --enumerate p --random-user-agent` |
+| **Zafiyet Taraması (ᛟ)** | Exploit-DB Search | Yerel veritabanında exploit taraması (Searchsploit) | Evet | Linux | `searchsploit {target}` |
+| | Lynis (System Hardening) | Sistem sertleştirme (Hardening) ve güvenlik denetimi aracı | Hayır | Linux | `lynis audit system` |
+| | Nuclei (Vuln Scanner) | Hızlı ve özelleştirilebilir genel zafiyet tarayıcısı | Evet | Linux/Win | `nuclei -u {target}` |
+| | Wapiti (Web Scanner) | Web uygulamaları için kapsamlı zafiyet tarayıcısı | Evet | Linux/Win | `wapiti -u {target}` |
+| | Nmap (CVE Vulners) | Vulners script'i ile Nmap tabanlı CVE zafiyet taraması | Evet | Linux/Win | `nmap -sV --script vulners {target}` |
+| | Hydra (Brute Force) | Paralel işlem gücüyle ağ login/parola kırma aracı | Evet | Linux/Win | `hydra_bruteforce` handler |
+| | Sqlmap | SQL Enjeksiyonu tespiti ve sömürülmesi | Evet | Linux/Win | `sqlmap -u {target} --batch --banner` |
+| | Commix | Otomatik komut enjeksiyonu (Command Injection) taraması | Evet | Linux/Win | `commix --url {target} --batch` |
+| **Erebus Scanner (Rust) (ᛥ)** | Erebus Scanner | Banner alma, Proxy yönlendirme ve IDS atlatma özellikli multi-thread port tarayıcı | Evet | Linux/Win | `cargo run --manifest-path Runes/erebus-scanner/Cargo.toml` |
+| **Kali Ghost Scripts (ᚷ)** | MAC Değiştir | MAC adresini rastgele (spoof) değiştirme | Hayır | Linux | `bash Runes/mac_degistir.sh` |
+| | Kimlik Sorgula | Mevcut public metadata ve lokasyon sorgusu | Hayır | Linux | `bash Runes/sorgula.sh` |
+| | Yeni IP (Tor) | Tor devreleri üzerinde aktif IP adresini yenileme | Hayır | Linux | `bash Runes/yeni_ip.sh` |
+| **Gelişmiş SYN Taraması (ᛋ)** | Advanced SYN Scan | Yüksek hızlı özel TCP SYN port tarayıcı | Evet | Linux | `Runes/Advanced-SYN-Scanner/syn_scanner` |
+| **GUI Ağ Trafiği İzleyici (ᛈ)** | Launch GUI Sniffer | Maven ile derlenmiş JavaFX grafik arayüzlü paket analiz aracı | Hayır | Linux/Win | `mvn javafx:run` (in sniffer dir) |
+| **Mimir Scanner (ᛗ)** | Mimir Scanner | Gerçek zamanlı ağ trafiği analizi (Java Spring Boot + React) | Hayır | Linux/Win | `mimir_scanner` handler |
+| **SnoopDork OSINT V3 (ᛞ)** | Launch SnoopDork OSINT | Dinamik ve Hedef odaklı OSINT Dork Üretici | Hayır | Linux/Win | Browser-based GUI |
+| **Paket Enjektörü (ᛇ)** | Packet Injector | TCP SYN/ARP paketleri oluşturma ve enjekte etme aracı | Evet | Linux | `sudo python3 Runes/packet-injector/main.py` |
+| **Bifrost Gateway (ᛒ)** | Bifrost Gateway | Spring Boot tabanlı yüksek performanslı siber güvenlik API Gateway'i | Hayır | Linux/Win | `mvn spring-boot:run` (in bifrost dir) |
+| **Sistem İşlemleri (⚙️)** | Sync All Runes | Yerel araç depolarını (Github) güncel sürümlerle senkronize etme | Hayır | Özel | `update_modules` handler |
+
+---
+
+### ᛝ Özel Entegrasyonlar (My Runes)
+
+Framework, **Runes** dizini altında derlenen özel yapım araçlarla genişletilmiştir:
+
+1. **Erebus Scanner (Rust):** Rust ile yazılmış gelişmiş ve yüksek hızlı ağ tarayıcısı. Özel bir UI (Arayüz) Modal penceresine sahiptir:
+   * **Port Aralıkları ve Rastgele Seçim:** Portları karıştırarak temel IDS algoritmalarından (Intrusion Detection System) kaçınır.
+   * **Banner Grabbing & Zafiyet Kontrolü:** Servisleri anında tanımlar ve CVE geçmişlerini kontrol eder.
+   * **Adaptif Hız Sınırlandırma (Rate Limiting):** Ağ güvenlik duvarlarını tetiklememek için bağlantı hızını dinamik olarak kısıtlar.
+   * **Proxy Desteği:** Aramaları Tor veya SOCKS5 proxy'leri üzerinden sorunsuzca yönlendirir.
+2. **Kali Ghost Scripts:** Arayüze entegre edilmiş temel ağ manipülasyon araçları (MAC değiştirici, Genel IP sorgulama, Tor node'ları için IP yenileme).
+3. **Advanced SYN Scanner:** Doğrudan web arayüzünden hedef rota belirleyebilen, otomatik ve manuel modlar sunan ayarlanabilir SYN port tarayıcı.
+4. **GUI Sniffer (JavaFX & Maven):** Java ile kodlanmış; paket boyutlarını, protokolleri, kaynak/hedef IP adreslerini ve ağ aktivitesini grafiksel olarak izleyen çapraz platform paket dinleyicisi.
+5. **SnoopDork V3:** Tamamen istemci tarafında (client-side) çalışan hedef odaklı bir OSINT Dork üretici. Gizlilik için "stealth mode" barındırarak Google, Shodan, GitHub, Pastebin vb. platformlar için kapsamlı sorgular üretir.
+6. **Packet Injector:** Gelişmiş raw socket paket üretici ve enjektörü. TCP SYN enjeksiyonu, ARP Zehirlemesi (ARP Poisoning), gönderim hızı sınırlandırma (rate limits) ve ağ kartlarında bağımsız dinleme (sniffing) / ARP tespiti yapabilme özelliklerini destekler.
+7. **Mimir Scanner:** Spring Boot (pcap4j + GeoIP2) tabanlı backend ve WebSocket üzerinden eşzamanlı akan React frontend kullanan Full-stack Gerçek Zamanlı (Real-time) Ağ Trafiği Analizörü.
+8. **Bifrost Gateway:** Spring Boot üzerine inşa edilmiş, performans ve güvenlik odaklı API Gateway. Zararlı trafikleri tespit eden WAF (Mjolnir) barındırır (JSON/XML Gövdeleri ve İstek Başlıklarını denetler). Caffeine Cache kullanarak siber saldırılara karşı hızlı IP yasaklama (Eviction) ve token-bucket tabanlı rate limiting özellikleri ile DDoS koruması sağlar.
+9. **Bağımlılık Yöneticisi (Runic Installation Ritual):** Sistemde eksik olan bağımlılıkları (Nmap, Sqlmap, Cargo, Maven vb.) tespit eder ve tek tıklamayla Linux/Windows platformlarında sırasıyla animasyonlu terminal çıktıları eşliğinde otomatik kurar.
+
+---
+
+### ᚛᚜ Sistem Kullanımı & Kurulum ᚛᚜
+
+#### Kurulum Rehberi
+
+Özel **Runes** modülleri birer Git Submodule olarak sisteme entegre edildiği için, projeyi klonlarken tüm modüllerin yüklenmesi adına `recurse-submodules` argümanını kullanmanız gerekmektedir:
+
+```bash
+# Projeyi tüm alt modülleriyle (submodules) beraber klonlayın
+git clone --recurse-submodules https://github.com/mecik-arda/Yggdrasil-Security-Framework.git
+cd Yggdrasil-Security-Framework
+```
+
+*Eğer projeyi daha önceden argümansız klonladıysanız, eksik alt modülleri indirmek için şu komutu çalıştırın:*
+```bash
+git submodule update --init --recursive
+```
+
+#### Ortam (Environment) Ayarları
+Bilgisayarınızda (realm) Python 3.x ve Flask'in kurulu olduğundan emin olun. Sisteme entegre başlatıcı scriptleri kullanabilirsiniz:
+
+**Linux/macOS İçin:**
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+**Windows İçin:**
+```cmd
+run.bat
+```
+
+*Veya manuel kurulum için:*
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+---
+
+### ᚦ Kullanım Protokolü
+
+1. **Adım 1**: Orta kısımda bulunan giriş (input) alanına hedefin IP adresini veya Domain bilgisini girin.
+2. **Adım 2**: Sol kısımdaki kategorilerden belirli bir "Rune" (Araç) seçin.
+3. **Adım 3**: Sistemdeki genel durumu "Status Bar" üzerinden, aktif süreç ve çıktıları ise "Output Area" (Terminal) üzerinden izleyin.
+4. **Adım 4**: İşlem tamamlandığında, bulgularınızı güvenli bir şekilde saklamak için "Artifact Export" butonlarını kullanın.
+
+---
+
+### Yasal Uyarı (Disclaimer)
+Bu framework yalnızca eğitim amaçlı ve yetkili olduğunuz sistemlerde sızma testleri (penetration testing) gerçekleştirmeniz için geliştirilmiştir. Yazar, bu aracın herhangi bir kötüye kullanımından sorumlu tutulamaz.
+
+### Lisans (License)
+Bu proje MIT Lisansı altında lisanlanmıştır - detaylar için LICENSE dosyasına göz atabilirsiniz.
+
+---
+**Yazar**: Arda Meçik  
+**Pozisyon**: Trakya Üniversitesi Bilgisayar Mühendisliği Öğrencisi  
+**Öğrenci Numarası**: 1241602620
