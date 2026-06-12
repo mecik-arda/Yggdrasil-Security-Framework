@@ -5,3 +5,19 @@ venv/
 .env
 .venv
 launcher.log
+
+# Databases
+*.sqlite3
+*.db
+stats.db
+
+# Agent Scratch / Test Files
+scratch/
+şifre.txt
+*ifre.txt
+yggdrasil_tool_recommendations.md
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
