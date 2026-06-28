@@ -21,3 +21,14 @@ yggdrasil_tool_recommendations.md
 # OS Files
 .DS_Store
 Thumbs.db
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node / JS
+node_modules/
+package-lock.json
+yarn.lock
