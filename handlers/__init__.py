@@ -8,6 +8,7 @@ from .hydra import handle_hydra_bruteforce
 from .subfinder import handle_subfinder
 from .knockpy import handle_knockpy
 from .gobuster_dns import handle_gobuster_dns
+from .fenrir import handle_fenrir_cracker
 
 # Map handler string names to actual Python functions
 HANDLER_MAP = {
@@ -21,7 +22,8 @@ HANDLER_MAP = {
     'hydra_bruteforce': handle_hydra_bruteforce,
     'subfinder': handle_subfinder,
     'knockpy': handle_knockpy,
-    'gobuster_dns': handle_gobuster_dns
+    'gobuster_dns': handle_gobuster_dns,
+    'fenrir_cracker': handle_fenrir_cracker
 }
 
 def dispatch_handler(handler_name, target, data):

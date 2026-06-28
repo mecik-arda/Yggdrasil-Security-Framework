@@ -63,6 +63,7 @@ The Yggdrasil Security Framework integrates **25 core features and modules** div
 | | Hydra (Brute Force) | Parallelized network login cracker | Yes | Linux/Win | `hydra_bruteforce` handler |
 | | Sqlmap | Automate detection and exploitation of SQL injection | Yes | Linux/Win | `sqlmap -u {target} --batch --banner` |
 | | Commix | Automated command injection vulnerability scanner | Yes | Linux/Win | `commix --url {target} --batch` |
+| | Fenrir Hash Cracker | Advanced GPU/CPU (AVX2/OpenCL) accelerated password hash auditor. | Yes | Linux/Win | `fenrir_handler` |
 | **Erebus Scanner (Rust) (ᛥ)** | Erebus Scanner | Multi-threaded port scanner with banner grabbing, proxy routing, and IDS evasion | Yes | Linux/Win | `cargo run --manifest-path Runes/erebus-scanner/Cargo.toml` |
 | **Kali Ghost Scripts (ᚷ)** | MAC Değiştir | Spoof network interfaces with random MAC | No | Linux | `bash Runes/mac_degistir.sh` |
 | | Kimlik Sorgula | Query current public metadata & geolocate | No | Linux | `bash Runes/sorgula.sh` |
@@ -81,19 +82,20 @@ The Yggdrasil Security Framework integrates **25 core features and modules** div
 
 We have expanded the framework with specialized, custom-built tools compiled under the **Runes** directory:
 
-1. **Erebus Scanner (Rust):** An advanced, highly concurrent network scanner written in Rust. Features a dedicated UI Modal for deep configuration:
+1. **Fenrir Hash Cracker:** Advanced GPU/CPU (AVX2/OpenCL) accelerated password hash auditor. Supports Dictionary, Mask, and Rule-based attacks with live TUI progress.
+2. **Erebus Scanner (Rust):** An advanced, highly concurrent network scanner written in Rust. Features a dedicated UI Modal for deep configuration:
    * **Port Ranges & Randomization:** Evade basic IDS logic by scrambling ports.
    * **Banner Grabbing & Vulnerability Checking:** Instantly identify services and check CVE logs.
    * **Adaptive Rate Limiting:** Dynamically throttle connection speeds to avoid triggering network firewalls.
    * **Proxy Support:** Route scans seamlessly through Tor or SOCKS5 proxies.
-2. **Kali Ghost Scripts:** Essential networking manipulation tools fully integrated into the dashboard (MAC changer, Public IP lookup, IP renewal for Tor nodes).
-3. **Advanced SYN Scanner:** Configurable SYN port scanner offering automated and manual modes with custom source/target routing directly from the web interface.
-4. **GUI Sniffer (JavaFX & Maven):** A cross-platform GUI Packet Sniffer built in Java, tracking packet lengths, protocols, source/destination IPs, and network activity.
-5. **SnoopDork V3:** A dynamic, target-oriented OSINT Dork generator that operates entirely client-side. Generates comprehensive queries for Google, Shodan, GitHub, Pastebin, and more, complete with a stealth mode for privacy.
-6. **Packet Injector:** Advanced raw socket packet crafter and injector tool. Supports TCP SYN injection, ARP Poison crafting, operation rate limits, bursts, and standalone packet sniffing/ARP detection on raw ethernet interfaces.
-7. **Mimir Scanner:** A full-stack Real-time Network Traffic Analyzer. Uses a Spring Boot backend with pcap4j and GeoIP2 mapping to capture packets, delivering real-time flows to a React frontend via WebSockets.
-8. **Bifrost Gateway:** A high-performance, cybersecurity-focused API Gateway built with Spring Boot. Operates as a stateless security intermediary intercepting malicious traffic. Features a robust WAF (Mjolnir) capable of inspecting Request Bodies (JSON/XML) and Headers, along with DoS protection utilizing Caffeine Cache for rapid IP eviction and token-bucket rate limiting.
-9. **Dependency Manager (Runic Installation Ritual):** Scans the host system for missing dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs.
+3. **Kali Ghost Scripts:** Essential networking manipulation tools fully integrated into the dashboard (MAC changer, Public IP lookup, IP renewal for Tor nodes).
+4. **Advanced SYN Scanner:** Configurable SYN port scanner offering automated and manual modes with custom source/target routing directly from the web interface.
+5. **GUI Sniffer (JavaFX & Maven):** A cross-platform GUI Packet Sniffer built in Java, tracking packet lengths, protocols, source/destination IPs, and network activity.
+6. **SnoopDork V3:** A dynamic, target-oriented OSINT Dork generator that operates entirely client-side. Generates comprehensive queries for Google, Shodan, GitHub, Pastebin, and more, complete with a stealth mode for privacy.
+7. **Packet Injector:** Advanced raw socket packet crafter and injector tool. Supports TCP SYN injection, ARP Poison crafting, operation rate limits, bursts, and standalone packet sniffing/ARP detection on raw ethernet interfaces.
+8. **Mimir Scanner:** A full-stack Real-time Network Traffic Analyzer. Uses a Spring Boot backend with pcap4j and GeoIP2 mapping to capture packets, delivering real-time flows to a React frontend via WebSockets.
+9. **Bifrost Gateway:** A high-performance, cybersecurity-focused API Gateway built with Spring Boot. Operates as a stateless security intermediary intercepting malicious traffic. Features a robust WAF (Mjolnir) capable of inspecting Request Bodies (JSON/XML) and Headers, along with DoS protection utilizing Caffeine Cache for rapid IP eviction and token-bucket rate limiting.
+10. **Dependency Manager (Runic Installation Ritual):** Scans the host system for missing dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs.
 
 ---
 
@@ -212,6 +214,7 @@ Yggdrasil Security Framework, 7 farklı taktiksel kategoriye ayrılmış **25 an
 | | Hydra (Brute Force) | Paralel işlem gücüyle ağ login/parola kırma aracı | Evet | Linux/Win | `hydra_bruteforce` handler |
 | | Sqlmap | SQL Enjeksiyonu tespiti ve sömürülmesi | Evet | Linux/Win | `sqlmap -u {target} --batch --banner` |
 | | Commix | Otomatik komut enjeksiyonu (Command Injection) taraması | Evet | Linux/Win | `commix --url {target} --batch` |
+| | Fenrir Hash Cracker | Gelişmiş GPU/CPU (AVX2/OpenCL) destekli parola kırıcı | Evet | Linux/Win | `fenrir_handler` |
 | **Erebus Scanner (Rust) (ᛥ)** | Erebus Scanner | Banner alma, Proxy yönlendirme ve IDS atlatma özellikli multi-thread port tarayıcı | Evet | Linux/Win | `cargo run --manifest-path Runes/erebus-scanner/Cargo.toml` |
 | **Kali Ghost Scripts (ᚷ)** | MAC Değiştir | MAC adresini rastgele (spoof) değiştirme | Hayır | Linux | `bash Runes/mac_degistir.sh` |
 | | Kimlik Sorgula | Mevcut public metadata ve lokasyon sorgusu | Hayır | Linux | `bash Runes/sorgula.sh` |
@@ -230,19 +233,20 @@ Yggdrasil Security Framework, 7 farklı taktiksel kategoriye ayrılmış **25 an
 
 Framework, **Runes** dizini altında derlenen özel yapım araçlarla genişletilmiştir:
 
-1. **Erebus Scanner (Rust):** Rust ile yazılmış gelişmiş ve yüksek hızlı ağ tarayıcısı. Özel bir UI (Arayüz) Modal penceresine sahiptir:
+1. **Fenrir Hash Cracker:** Gelişmiş GPU/CPU (AVX2/OpenCL) destekli parola (hash) kırıcı. Dictionary (Sözlük), Maske ve Kural tabanlı saldırıları destekler.
+2. **Erebus Scanner (Rust):** Rust ile yazılmış gelişmiş ve yüksek hızlı ağ tarayıcısı. Özel bir UI (Arayüz) Modal penceresine sahiptir:
    * **Port Aralıkları ve Rastgele Seçim:** Portları karıştırarak temel IDS algoritmalarından (Intrusion Detection System) kaçınır.
    * **Banner Grabbing & Zafiyet Kontrolü:** Servisleri anında tanımlar ve CVE geçmişlerini kontrol eder.
    * **Adaptif Hız Sınırlandırma (Rate Limiting):** Ağ güvenlik duvarlarını tetiklememek için bağlantı hızını dinamik olarak kısıtlar.
    * **Proxy Desteği:** Aramaları Tor veya SOCKS5 proxy'leri üzerinden sorunsuzca yönlendirir.
-2. **Kali Ghost Scripts:** Arayüze entegre edilmiş temel ağ manipülasyon araçları (MAC değiştirici, Genel IP sorgulama, Tor node'ları için IP yenileme).
-3. **Advanced SYN Scanner:** Doğrudan web arayüzünden hedef rota belirleyebilen, otomatik ve manuel modlar sunan ayarlanabilir SYN port tarayıcı.
-4. **GUI Sniffer (JavaFX & Maven):** Java ile kodlanmış; paket boyutlarını, protokolleri, kaynak/hedef IP adreslerini ve ağ aktivitesini grafiksel olarak izleyen çapraz platform paket dinleyicisi.
-5. **SnoopDork V3:** Tamamen istemci tarafında (client-side) çalışan hedef odaklı bir OSINT Dork üretici. Gizlilik için "stealth mode" barındırarak Google, Shodan, GitHub, Pastebin vb. platformlar için kapsamlı sorgular üretir.
-6. **Packet Injector:** Gelişmiş raw socket paket üretici ve enjektörü. TCP SYN enjeksiyonu, ARP Zehirlemesi (ARP Poisoning), gönderim hızı sınırlandırma (rate limits) ve ağ kartlarında bağımsız dinleme (sniffing) / ARP tespiti yapabilme özelliklerini destekler.
-7. **Mimir Scanner:** Spring Boot (pcap4j + GeoIP2) tabanlı backend ve WebSocket üzerinden eşzamanlı akan React frontend kullanan Full-stack Gerçek Zamanlı (Real-time) Ağ Trafiği Analizörü.
-8. **Bifrost Gateway:** Spring Boot üzerine inşa edilmiş, performans ve güvenlik odaklı API Gateway. Zararlı trafikleri tespit eden WAF (Mjolnir) barındırır (JSON/XML Gövdeleri ve İstek Başlıklarını denetler). Caffeine Cache kullanarak siber saldırılara karşı hızlı IP yasaklama (Eviction) ve token-bucket tabanlı rate limiting özellikleri ile DDoS koruması sağlar.
-9. **Bağımlılık Yöneticisi (Runic Installation Ritual):** Sistemde eksik olan bağımlılıkları (Nmap, Sqlmap, Cargo, Maven vb.) tespit eder ve tek tıklamayla Linux/Windows platformlarında sırasıyla animasyonlu terminal çıktıları eşliğinde otomatik kurar.
+3. **Kali Ghost Scripts:** Arayüze entegre edilmiş temel ağ manipülasyon araçları (MAC değiştirici, Genel IP sorgulama, Tor node'ları için IP yenileme).
+4. **Advanced SYN Scanner:** Doğrudan web arayüzünden hedef rota belirleyebilen, otomatik ve manuel modlar sunan ayarlanabilir SYN port tarayıcı.
+5. **GUI Sniffer (JavaFX & Maven):** Java ile kodlanmış; paket boyutlarını, protokolleri, kaynak/hedef IP adreslerini ve ağ aktivitesini grafiksel olarak izleyen çapraz platform paket dinleyicisi.
+6. **SnoopDork V3:** Tamamen istemci tarafında (client-side) çalışan hedef odaklı bir OSINT Dork üretici. Gizlilik için "stealth mode" barındırarak Google, Shodan, GitHub, Pastebin vb. platformlar için kapsamlı sorgular üretir.
+7. **Packet Injector:** Gelişmiş raw socket paket üretici ve enjektörü. TCP SYN enjeksiyonu, ARP Zehirlemesi (ARP Poisoning), gönderim hızı sınırlandırma (rate limits) ve ağ kartlarında bağımsız dinleme (sniffing) / ARP tespiti yapabilme özelliklerini destekler.
+8. **Mimir Scanner:** Spring Boot arka uç (backend), pcap4j ve GeoIP2 altyapısıyla canlı paket dinleme ve WebSockets üzerinden React önyüzüne aktarım (real-time stream) sağlayan Ağ Trafik Analizörü.
+9. **Bifrost Gateway:** Spring Boot tabanlı yüksek performanslı siber güvenlik API Ağ Geçidi (Gateway). Mjolnir WAF entegrasyonu sayesinde JSON/XML gövdelerini, Header'ları analiz eder; Caffeine Cache destekli Token-Bucket algoritmasıyla IP tabanlı Rate-Limiting ve DoS koruması sağlar.
+10. **Dependency Manager (Runic Installation Ritual):** Kullanıcı sistemini (Windows/Linux) tarayarak eksik olan araçları tespit eder ve animasyonlu terminal arayüzü eşliğinde tüm bağımlılıkları tek tuşla otomatik olarak kurar.
 
 ---
 

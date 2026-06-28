@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YGGDRASIL SECURITY FRAMEWORK v1.0.0</title>
+    <title>YGGDRASIL SECURITY FRAMEWORK v1.1.0</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='roots.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -24,7 +24,7 @@
             <a href="https://en.wikipedia.org/wiki/Yggdrasil" target="_blank">
                 <img id="project-logo" src="https://nordiksimit.org/wp-content/uploads/2016/11/pr50482_900x900_b_p_061526_by_design_by_humans-d7ss3og.jpg" alt="Yggdrasil Logo">
             </a>
-            <h1>YGGDRASIL SECURITY FRAMEWORK <span style="font-size: 0.4em; vertical-align: middle; color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-family: monospace;">v1.0.0</span></h1>
+            <h1>YGGDRASIL SECURITY FRAMEWORK <span style="font-size: 0.4em; vertical-align: middle; color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-family: monospace;">v1.1.0</span></h1>
         </div>
 
         <div class="dashboard-panel">
@@ -70,6 +70,10 @@
                     <h2 class="my-runes-title">{{ t('my_runes') }}</h2>
                     <div class="tool-group" data-category="erebus_scanner">
                         <h3>{{ t('rune_erebus') }}</h3>
+                    </div>
+
+                    <div class="tool-group" data-category="fenrir">
+                        <h3>{{ t('rune_fenrir') }}</h3>
                     </div>
 
                     <div class="tool-group" data-category="kali_ghost">
@@ -357,6 +361,50 @@
         </div>
     </div>
 
+    <!-- FENRIR CRACKER MODAL -->
+    <div id="fenrirModal" class="modal">
+        <div class="modal-content" style="border: 1px solid var(--accent-color);">
+            <h2 style="color: var(--wood-light); margin-top:0;">[ 🐺 ] FENRIR HASH CRACKER</h2>
+            <div style="margin-bottom:15px;">
+                <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_target') }}</label>
+                <input type="text" id="fenrirTarget" placeholder="{{ t('fenrir_target_ph') }}" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom:15px; display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_hash_mode') }}</label>
+                    <select id="fenrirHashMode" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        <option value="md5">MD5</option>
+                        <option value="sha1">SHA1</option>
+                        <option value="sha256" selected>SHA256</option>
+                        <option value="sha512">SHA512</option>
+                        <option value="ntlm">NTLM</option>
+                        <option value="bcrypt">Bcrypt</option>
+                        <option value="pbkdf2">PBKDF2</option>
+                        <option value="argon2">Argon2</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_attack_mode') }}</label>
+                    <select id="fenrirAttackMode" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+                        <option value="dict" selected>{{ t('fenrir_dict') }}</option>
+                        <option value="mask">{{ t('fenrir_mask') }}</option>
+                        <option value="rule">{{ t('fenrir_rule') }}</option>
+                        <option value="api">{{ t('fenrir_api') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_wordlist') }}</label>
+                <input type="text" id="fenrirWordlist" placeholder="{{ t('fenrir_wordlist_ph') }}" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
+            </div>
+
+            <button onclick="submitFenrirScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('launch_scan') }}</button>
+            <button onclick="closeFenrirModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
+        </div>
+    </div>
+
     <div id="hydraModal" class="modal">
         <div class="modal-content" style="max-width: 600px; width: 90%; text-align: left;">
             <h2 style="color: var(--wood-light); margin-top:0;">[ ᚺ ] HYDRA BRUTE FORCE</h2>
@@ -508,6 +556,16 @@
     </div>
 
     <script>
+        // CSRF Token Global Injector
+        const originalFetch = window.fetch;
+        window.fetch = async function() {
+            let [resource, config] = arguments;
+            if (config && config.method && config.method.toUpperCase() === 'POST') {
+                config.headers = config.headers || {};
+                config.headers['X-CSRFToken'] = '{{ csrf_token() }}';
+            }
+            return originalFetch(resource, config);
+        };
 
         const translations = {{ js_translations | tojson | safe }};
         function t(key, params={}) {
@@ -528,6 +586,27 @@
 
         let currentTool = '';
         let typewriterTimeouts = [];
+        let isProcessRunning = false;
+
+        // XSS Protection: Escapes HTML entities to prevent script injection
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Applies syntax highlighting safely AFTER escaping HTML
+        function highlightSafe(output) {
+            let safe = escapeHtml(output);
+            safe = safe.replace(/&gt;&gt; SYSTEM ERROR/g, '<span style="color:var(--danger-color); font-weight:bold;">&gt;&gt; SYSTEM ERROR</span>');
+            safe = safe.replace(/\[\+\]/g, '<span style="color:var(--highlight-color); font-weight:bold;">[+]</span>');
+            safe = safe.replace(/\[-\]/g, '<span style="color:var(--danger-color); font-weight:bold;">[-]</span>');
+            return safe;
+        }
 
         async function loadTools() {
             try {
@@ -547,7 +626,13 @@
                             } else if (tool.has_modal) {
                                 if (toolKey === 'erebus') {
                                     openErebusModal();
-                                } else if (toolKey === 'packet_injector') {
+                                    return;
+                                }
+                                if (toolKey === 'fenrir') {
+                                    openFenrirModal();
+                                    return;
+                                }
+                                if (toolKey === 'packet_injector') {
                                     openPacketInjectorModal();
                                 } else if (toolKey === 'hydra') {
                                     openHydraModal();
@@ -607,11 +692,11 @@
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(136, 192, 208, 0.2)';
                     tr.innerHTML = `
-                        <td style="padding: 10px;"><input type="checkbox" class="dep-checkbox" value="${dep.tool_key}" ${disabledAttr}></td>
-                        <td style="padding: 10px; font-weight: bold;">${dep.tool_key}</td>
-                        <td style="padding: 10px;">${dep.name}</td>
-                        <td style="padding: 10px; color: ${statusColor}; font-weight: bold;">${statusText}</td>
-                        <td style="padding: 10px; color: ${supportColor};">${supportText}</td>
+                        <td style="padding: 10px;"><input type="checkbox" class="dep-checkbox" value="${escapeHtml(dep.tool_key)}" ${disabledAttr}></td>
+                        <td style="padding: 10px; font-weight: bold;">${escapeHtml(dep.tool_key)}</td>
+                        <td style="padding: 10px;">${escapeHtml(dep.name)}</td>
+                        <td style="padding: 10px; color: ${statusColor}; font-weight: bold;">${escapeHtml(statusText)}</td>
+                        <td style="padding: 10px; color: ${supportColor};">${escapeHtml(supportText)}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -808,17 +893,10 @@
                 const response = await fetch('/api/action', { method: 'POST', body: formData });
                 const data = await response.json();
                 contentDiv.innerHTML = "";
-                
-                let outStr = data.output;
-                outStr = outStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                outStr = outStr.replace(/>> SYSTEM ERROR/g, '<span style="color:var(--danger-color); font-weight:bold;">>> SYSTEM ERROR</span>');
-                outStr = outStr.replace(/\[\+\]/g, '<span style="color:var(--highlight-color); font-weight:bold;">[+]</span>');
-                outStr = outStr.replace(/\[-\]/g, '<span style="color:var(--danger-color); font-weight:bold;">[-]</span>');
-
-                contentDiv.innerHTML = outStr;
+                contentDiv.innerHTML = highlightSafe(data.output);
                 updateStats();
             } catch (error) {
-                contentDiv.innerHTML = `<span style="color:var(--danger-color);">RUNTIME ERROR: ${error}</span>`;
+                contentDiv.innerHTML = `<span style="color:var(--danger-color);">RUNTIME ERROR: ${escapeHtml(String(error))}</span>`;
             }
         }
 
@@ -891,15 +969,10 @@
                 const response = await fetch('/api/action', { method: 'POST', body: formData });
                 const data = await response.json();
                 contentDiv.innerHTML = "";
-                let outStr = data.output;
-                outStr = outStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                outStr = outStr.replace(/>> SYSTEM ERROR/g, '<span style="color:var(--danger-color); font-weight:bold;">>> SYSTEM ERROR</span>');
-                outStr = outStr.replace(/\[\+\]/g, '<span style="color:var(--highlight-color); font-weight:bold;">[+]</span>');
-                outStr = outStr.replace(/\[-\]/g, '<span style="color:var(--danger-color); font-weight:bold;">[-]</span>');
-                contentDiv.innerHTML = outStr;
+                contentDiv.innerHTML = highlightSafe(data.output);
                 updateStats();
             } catch (error) {
-                contentDiv.innerHTML = `<span style="color:var(--danger-color);">RUNTIME ERROR: ${error}</span>`;
+                contentDiv.innerHTML = `<span style="color:var(--danger-color);">RUNTIME ERROR: ${escapeHtml(String(error))}</span>`;
             }
         }
 
@@ -964,7 +1037,7 @@
                         <h3>[ ᛊ ] NEW KNOWLEDGE DISCOVERED</h3>
                         <p>The following Runes have updates available from their source:</p>
                         <ul style="color: var(--highlight-color);">`;
-                    data.updates.forEach(u => html += `<li>${u}</li>`);
+                    data.updates.forEach(u => html += `<li>${escapeHtml(u)}</li>`);
                     html += `</ul>
                         <p>Do you wish to integrate these updates into the framework?</p>
                         <button onclick="applyUpdates()" class="btn-install" style="margin-right: 10px; width: auto; padding: 10px 20px;">YES, INTEGRATE UPDATES</button>
@@ -1089,7 +1162,7 @@
                 statusDiv.style.color = "var(--highlight-color)";
                 statusDiv.style.borderColor = "var(--highlight-color)";
             } catch (error) {
-                contentDiv.innerText = t('runtime_error') + error;
+                contentDiv.innerText = t('runtime_error') + String(error);
                 statusDiv.innerText = t('chant_failed');
                 statusDiv.style.color = "var(--danger-color)";
             }
@@ -1389,6 +1462,75 @@
                     statusDiv.style.color = "var(--danger-color)";
                     statusDiv.style.borderColor = "var(--danger-color)";
                 });
+        }
+        // FENRIR CRACKER MODAL FUNCTIONS
+        function openFenrirModal() {
+            document.getElementById('fenrirModal').style.display = 'block';
+            const target = document.getElementById('target-input').value;
+            if (target) {
+                document.getElementById('fenrirTarget').value = target;
+            }
+        }
+
+        function closeFenrirModal() {
+            document.getElementById('fenrirModal').style.display = 'none';
+        }
+
+        function submitFenrirScan() {
+            closeFenrirModal();
+            const target = document.getElementById('fenrirTarget').value;
+            const hashMode = document.getElementById('fenrirHashMode').value;
+            const attackMode = document.getElementById('fenrirAttackMode').value;
+            const wordlist = document.getElementById('fenrirWordlist').value;
+
+            if (!target) {
+                const statusDiv = document.getElementById('status-display');
+                statusDiv.innerText = t('err_target_req');
+                statusDiv.style.color = "var(--danger-color)";
+                return;
+            }
+
+            if (isProcessRunning) {
+                alert(t('err_process_run'));
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('tool', 'fenrir');
+            formData.append('target', target);
+            formData.append('action', 'run');
+            formData.append('fenrir_hash_mode', hashMode);
+            formData.append('fenrir_attack_mode', attackMode);
+            formData.append('fenrir_wordlist', wordlist);
+
+            isProcessRunning = true;
+            currentTool = 'fenrir';
+
+            const statusDiv = document.getElementById('status-display');
+            statusDiv.innerText = `>> AWAKENING FENRIR ON [ ${escapeHtml(target)} ]...`;
+
+            const contentDiv = createTerminalWindow(`[ 🐺 FENRIR - ${escapeHtml(hashMode.toUpperCase())} - ${escapeHtml(target)} ]`);
+
+            fetch('/api/action', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                isProcessRunning = false;
+                if (data.status === 'success') {
+                    contentDiv.innerHTML = `<pre>${escapeHtml(data.output)}</pre>`;
+                    statusDiv.innerText = t('fate_woven');
+                } else {
+                    contentDiv.innerHTML = `<pre style="color:var(--danger-color);">${escapeHtml(data.message)}</pre>`;
+                    statusDiv.innerText = t('err_execute');
+                }
+            })
+            .catch(error => {
+                isProcessRunning = false;
+                console.error('Error:', error);
+                statusDiv.innerText = t('err_network');
+            });
         }
     </script>
 </body>

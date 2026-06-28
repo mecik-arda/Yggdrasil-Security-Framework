@@ -22,3 +22,6 @@
 [submodule "Runes/bifrost-gateway"]
 	path = Runes/bifrost-gateway
 	url = https://github.com/mecik-arda/bifrost-gateway.git
+[submodule "Runes/fenrir-hash-cracker"]
+	path = Runes/fenrir-hash-cracker
+	url = https://github.com/mecik-arda/fenrir-hash-cracker.git

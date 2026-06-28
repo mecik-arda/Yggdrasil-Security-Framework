@@ -86,24 +86,30 @@ body {
     margin-bottom: 20px;
 }
 
+@keyframes logoPulse {
+    0% { box-shadow: 0 0 15px rgba(208, 135, 112, 0.4), 0 0 30px rgba(136, 192, 208, 0.2); transform: scale(1); }
+    50% { box-shadow: 0 0 25px rgba(208, 135, 112, 0.8), 0 0 50px rgba(136, 192, 208, 0.5); transform: scale(1.03); }
+    100% { box-shadow: 0 0 15px rgba(208, 135, 112, 0.4), 0 0 30px rgba(136, 192, 208, 0.2); transform: scale(1); }
+}
+
 #project-logo {
     display: block;
     margin: 0 auto 20px auto;
-    max-width: 400px;
+    max-width: 180px;
     height: auto;
     border-radius: 50%;
     border: 3px solid rgba(208, 135, 112, 0.4);
-    box-shadow: 0 0 25px var(--wood-light), 0 0 50px rgba(136, 192, 208, 0.4);
+    box-shadow: 0 0 15px rgba(208, 135, 112, 0.4), 0 0 30px rgba(136, 192, 208, 0.2);
     filter: sepia(20%) contrast(110%) brightness(90%);
     transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
+    animation: logoPulse 4s infinite ease-in-out;
 }
 
 #project-logo:hover {
     filter: sepia(0%) contrast(120%) brightness(110%);
-    box-shadow: 0 0 40px var(--highlight-color), 0 0 80px var(--wood-light);
-    transform: scale(1.02) rotate(1deg);
     border-color: var(--highlight-color);
+    animation-play-state: paused;
 }
 
 h1 {
