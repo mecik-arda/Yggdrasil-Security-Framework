@@ -74,6 +74,8 @@ The Yggdrasil Security Framework integrates **25 core features and modules** div
 | **SnoopDork OSINT V3 (ᛞ)** | Launch SnoopDork OSINT | Dynamic Target-Oriented OSINT Dork Generator | No | Linux/Win | Browser-based GUI |
 | **Packet Injector (ᛇ)** | Packet Injector | Raw packet crafter, TCP SYN/ARP injector, and sniffer engine | Yes | Linux | `sudo python3 Runes/packet-injector/main.py` |
 | **Bifrost Gateway (ᛒ)** | Bifrost Gateway | High-performance, cybersecurity-focused API Gateway built with Spring Boot | No | Linux/Win | `mvn spring-boot:run` (in bifrost dir) |
+| **Muninn Scanner (ᛗ)** | Muninn Scanner (Go) | High-speed concurrent port and service scanner written in Go | Yes | Linux/Win | `muninn_scan` handler |
+| **Huginn Transfer (ᚺ)** | Huginn SecureTransfer | Encrypted P2P file transfer tool with JavaFX UI & Spring Boot Web | No | Linux/Win | `huginn_ui` / `huginn_web` |
 | **System Operations (⚙️)** | Sync All Runes | Synchronize local tool repos with upstream GitHub releases | No | Custom | `update_modules` handler |
 
 ---
@@ -95,7 +97,9 @@ We have expanded the framework with specialized, custom-built tools compiled und
 7. **Packet Injector:** Advanced raw socket packet crafter and injector tool. Supports TCP SYN injection, ARP Poison crafting, operation rate limits, bursts, and standalone packet sniffing/ARP detection on raw ethernet interfaces.
 8. **Mimir Scanner:** A full-stack Real-time Network Traffic Analyzer. Uses a Spring Boot backend with pcap4j and GeoIP2 mapping to capture packets, delivering real-time flows to a React frontend via WebSockets.
 9. **Bifrost Gateway:** A high-performance, cybersecurity-focused API Gateway built with Spring Boot. Operates as a stateless security intermediary intercepting malicious traffic. Features a robust WAF (Mjolnir) capable of inspecting Request Bodies (JSON/XML) and Headers, along with DoS protection utilizing Caffeine Cache for rapid IP eviction and token-bucket rate limiting.
-10. **Dependency Manager (Runic Installation Ritual):** Scans the host system for missing dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs. Features full **Windows Subsystem for Linux (WSL)** integration to dynamically install and execute Linux-native tools seamlessly on Windows.
+10. **Muninn Scanner (Go):** A high-speed, highly concurrent network port and service scanner written in Go. Features robust timeout handling, lightweight goroutine execution, and seamless integration for rapid reconnaissance.
+11. **Huginn SecureTransfer:** A fully encrypted peer-to-peer file transfer utility. Includes both a JavaFX Desktop UI client and a Spring Boot Web backend, ensuring secure and seamless data exfiltration or transfer.
+12. **Dependency Manager (Runic Installation Ritual):** Scans the host system for missing dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs. Features full **Windows Subsystem for Linux (WSL)** integration to dynamically install and execute Linux-native tools seamlessly on Windows.
 
 ---
 
