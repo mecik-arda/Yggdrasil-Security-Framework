@@ -1,4 +1,5 @@
-import subprocess
+from .utils import run_command_safely
+
 
 def handle_packet_injector(target, data):
     action = data.get('packet_action', 'sniff') if data else 'sniff'
@@ -52,11 +53,4 @@ def handle_packet_injector(target, data):
             arp_op = data.get('arp_op')
             if arp_op: cmd.extend(['--arp-op', str(arp_op)])
         
-    try:
-        return subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=120).decode('utf-8')
-    except subprocess.TimeoutExpired:
-        return "TIMEOUT: Process took too long"
-    except subprocess.CalledProcessError as e:
-        return f"Execution Error:\n{e.output.decode('utf-8')}"
-    except Exception as e:
-        return f"System Error: {str(e)}"
+    return run_command_safely(cmd, timeout=120)

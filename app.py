@@ -85,10 +85,11 @@ def is_private_ip(ip_str):
         return False
 
 def validate_target(target):
-    # Allows IPv4, IPv6, Domains, and none
-    if not target or target.lower() == 'none':
+    if not target:
         return True
-    pattern = r'^[\w\.\-\:]+$'
+    
+    # Allow alphanumeric, dot, hyphen, colon, and @ (for emails)
+    pattern = r'^[\w\.\-\:\@]+$'
     if not re.match(pattern, target):
         return False
         
@@ -124,38 +125,89 @@ def update_db_stats(target, tool):
     conn.commit()
     conn.close()
 
+WSL_CONFIG_FILE = 'wsl_config.json'
+
+def get_wsl_distros():
+    if platform.system() != 'Windows':
+        return []
+    try:
+        output = subprocess.check_output(['wsl.exe', '--list', '--quiet'], stderr=subprocess.STDOUT)
+        decoded = output.decode('utf-16le', errors='ignore').strip()
+        return [d.strip() for d in decoded.split('\n') if d.strip()]
+    except Exception:
+        pass
+    return []
+
+def get_preferred_wsl():
+    if os.path.exists(WSL_CONFIG_FILE):
+        try:
+            with open(WSL_CONFIG_FILE, 'r') as f:
+                data = json.load(f)
+                distro = data.get('wsl_distro')
+                if distro in get_wsl_distros():
+                    return distro
+        except Exception:
+            pass
+    distros = get_wsl_distros()
+    return distros[0] if distros else None
+
 from tools_config import TOOLS_CONFIG
 
 def check_tool_status(tool_key):
     config = TOOLS_CONFIG.get(tool_key, {})
     if not config:
         return False
-        
-    if tool_key == 'fenrir':
-        exe = '.exe' if platform.system() == 'Windows' else ''
-        path1 = os.path.join('Runes', 'fenrir-hash-cracker', 'build', f'fenrir{exe}')
-        path2 = os.path.join('Runes', 'fenrir-hash-cracker', 'build', 'Release', f'fenrir{exe}')
-        has_git = os.path.exists(os.path.join('Runes', 'fenrir-hash-cracker', '.git'))
-        return has_git and (os.path.exists(path1) or os.path.exists(path2))
-        
+    check_type = config.get('check_type')
+    if check_type == 'runes_repo':
+        check_path = config.get('check_path', '')
+        if check_path.startswith('Runes/'):
+            repo_name = check_path.split('/')[1]
+            repo_path = os.path.join('Runes', repo_name)
+            if not os.path.exists(os.path.join(repo_path, '.git')):
+                return False
+        # Check compiled binaries if specified in config (e.g. Fenrir)
+        binaries = config.get('check_binaries', [])
+        if binaries:
+            exe = '.exe' if platform.system() == 'Windows' else ''
+            resolved = [b.format(exe=exe) for b in binaries]
+            if not any(os.path.exists(b) for b in resolved):
+                return False
+        return True
+
     tool_bin = config.get('bin')
     if not tool_bin:
         check_path = config.get('check_path')
         if check_path:
-            if check_path.startswith('Runes/'):
-                repo_path = os.path.join('Runes', check_path.split('/')[1])
-                if not os.path.exists(os.path.join(repo_path, '.git')):
-                    return False
             return os.path.exists(check_path)
         return True
-    return shutil.which(tool_bin) is not None
+        
+    if shutil.which(tool_bin) is not None:
+        return True
+        
+    if platform.system() == 'Windows':
+        wsl = get_preferred_wsl()
+        if wsl:
+            try:
+                subprocess.check_output(['wsl.exe', '-d', wsl, '-u', 'root', '-e', 'which', tool_bin], stderr=subprocess.DEVNULL)
+                return True
+            except Exception:
+                pass
+    return False
 
 def install_tool_system(tool_key):
     config = TOOLS_CONFIG.get(tool_key, {})
     current_os = platform.system()
     
+    is_wsl = False
+    wsl_distro = None
+    
     if current_os == "Windows":
         cmd = config.get('install_windows')
+        if not cmd:
+            cmd = config.get('install_linux')
+            wsl_distro = get_preferred_wsl()
+            if cmd and wsl_distro:
+                is_wsl = True
     else:
         cmd = config.get('install_linux')
         
@@ -167,6 +219,11 @@ def install_tool_system(tool_key):
 
     try:
         cmd_list = shlex.split(cmd)
+        if is_wsl:
+            if cmd_list[0] == 'sudo':
+                cmd_list = cmd_list[1:]
+            cmd_list = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--'] + cmd_list
+            
         output = subprocess.check_output(cmd_list, stderr=subprocess.STDOUT).decode('utf-8')
         return True, f"Installation output:\n{output}"
     except subprocess.CalledProcessError as e:
@@ -191,8 +248,10 @@ def remove_tool_system(tool_key):
     current_os = platform.system()
     
     check_path = config.get('check_path', '')
-    if check_path.startswith('Runes/') or tool_key == 'fenrir':
-        repo_name = 'fenrir-hash-cracker' if tool_key == 'fenrir' else check_path.split('/')[1]
+    check_type = config.get('check_type', 'default')
+    
+    if check_type == 'runes_repo':
+        repo_name = check_path.split('/')[1]
         repo_path = os.path.join('Runes', repo_name)
         if os.path.exists(repo_path):
             try:
@@ -205,7 +264,18 @@ def remove_tool_system(tool_key):
                 return False, f"Failed to delete {repo_name}: {str(e)}"
         return False, f"Repository {repo_name} not found."
         
-    cmd = config.get('install_windows') if current_os == "Windows" else config.get('install_linux')
+    is_wsl = False
+    wsl_distro = None
+    if current_os == "Windows":
+        cmd = config.get('install_windows')
+        if not cmd:
+            cmd = config.get('install_linux')
+            wsl_distro = get_preferred_wsl()
+            if cmd and wsl_distro:
+                is_wsl = True
+    else:
+        cmd = config.get('install_linux')
+        
     if not cmd:
         return False, "Uninstallation command cannot be inferred (Install command missing)."
         
@@ -223,6 +293,11 @@ def remove_tool_system(tool_key):
     else:
         return False, f"Automated removal not supported for this installation type: {cmd}"
         
+    if is_wsl:
+        if remove_cmd[0] == 'sudo':
+            remove_cmd = remove_cmd[1:]
+        remove_cmd = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--'] + remove_cmd
+        
     try:
         output = subprocess.check_output(remove_cmd, stderr=subprocess.STDOUT).decode('utf-8')
         return True, f"Removal output:\n{output}"
@@ -236,28 +311,44 @@ def update_tool_system(tool_key):
     current_os = platform.system()
     
     check_path = config.get('check_path', '')
-    if check_path.startswith('Runes/') or tool_key == 'fenrir':
-        repo_name = 'fenrir-hash-cracker' if tool_key == 'fenrir' else check_path.split('/')[1]
+    check_type = config.get('check_type', 'default')
+    
+    if check_type == 'runes_repo':
+        repo_name = check_path.split('/')[1]
         repo_path = os.path.join('Runes', repo_name)
-        if os.path.exists(os.path.join(repo_path, '.git')):
+        if os.path.exists(repo_path):
             try:
-                output = subprocess.check_output(['git', 'pull'], cwd=repo_path, stderr=subprocess.STDOUT).decode('utf-8')
-                
+                subprocess.check_output(["git", "pull"], cwd=repo_path, stderr=subprocess.STDOUT)
+
+                # Fenrir needs recompilation after source update
                 if tool_key == 'fenrir':
                     if current_os == 'Windows':
-                        subprocess.check_call(['cmake', '..'], cwd=os.path.join(repo_path, 'build'))
-                        subprocess.check_call(['cmake', '--build', '.', '--config', 'Release'], cwd=os.path.join(repo_path, 'build'))
+                        build_dir = os.path.join(repo_path, 'build')
+                        if not os.path.exists(build_dir): os.makedirs(build_dir)
+                        subprocess.check_output(["cmake", ".."], cwd=build_dir, stderr=subprocess.STDOUT)
+                        subprocess.check_output(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir, stderr=subprocess.STDOUT)
                     else:
-                        subprocess.check_call(['cmake', '..'], cwd=os.path.join(repo_path, 'build'))
-                        subprocess.check_call(['make'], cwd=os.path.join(repo_path, 'build'))
-                    output += "\nRecompiled Fenrir successfully."
-                    
-                return True, f"Update output:\n{output}"
-            except subprocess.CalledProcessError as e:
-                return False, f"Update failed:\n{e.output.decode('utf-8') if e.output else str(e)}"
-        return False, f"Repository {repo_name} not found or not a git repository."
+                        subprocess.check_output(["make"], cwd=repo_path, stderr=subprocess.STDOUT)
 
-    cmd = config.get('install_windows') if current_os == "Windows" else config.get('install_linux')
+                return True, f"Successfully updated {repo_name} from git repository."
+            except subprocess.CalledProcessError as e:
+                return False, f"Update failed for {repo_name}:\n{e.output.decode('utf-8')}"
+            except Exception as e:
+                return False, f"Update error for {repo_name}: {str(e)}"
+        return False, f"Repository {repo_name} not found."
+
+    is_wsl = False
+    wsl_distro = None
+    if current_os == "Windows":
+        cmd = config.get('install_windows')
+        if not cmd:
+            cmd = config.get('install_linux')
+            wsl_distro = get_preferred_wsl()
+            if cmd and wsl_distro:
+                is_wsl = True
+    else:
+        cmd = config.get('install_linux')
+        
     if not cmd:
         return False, "Update command cannot be inferred."
         
@@ -276,6 +367,11 @@ def update_tool_system(tool_key):
         update_cmd = shlex.split(cmd) 
     else:
         return False, f"Automated update not supported for this installation type: {cmd}"
+        
+    if is_wsl:
+        if update_cmd[0] == 'sudo':
+            update_cmd = update_cmd[1:]
+        update_cmd = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--'] + update_cmd
         
     try:
         output = subprocess.check_output(update_cmd, stderr=subprocess.STDOUT).decode('utf-8')
@@ -303,8 +399,11 @@ def check_runes_updates():
         return None
 
     items = os.listdir(runes_dir)
+    results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        results = executor.map(check_repo, items)
+        futures = [executor.submit(check_repo, item) for item in items]
+        for f in concurrent.futures.as_completed(futures):
+            results.append(f.result())
         
     return [r for r in results if r]
 
@@ -356,6 +455,14 @@ def execute_tool(tool_key, target, data=None):
     elif tool_type in ['cli', 'script']:
         cmd_template = config.get('cmd', [])
         cmd = [arg.format(target=target) if '{target}' in arg else arg for arg in cmd_template]
+        
+        current_os = platform.system()
+        supported = config.get('supported_os', [])
+        if current_os.lower() not in supported and current_os == 'Windows':
+            wsl_distro = get_preferred_wsl()
+            if wsl_distro:
+                cmd = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--'] + cmd
+                
         try:
             result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=120).decode('utf-8')
             return result
@@ -424,17 +531,95 @@ def get_stats():
 def get_dependencies():
     current_os = platform.system().lower()
     deps = []
-    for key, val in TOOLS_CONFIG.items():
+    
+    def process_tool(item):
+        key, val = item
         if val.get('bin') or val.get('install_linux') or val.get('install_windows'):
             supported_os = val.get('supported_os', [])
             is_supported = current_os in supported_os if supported_os else True
-            deps.append({
+            
+            wsl_distro = get_preferred_wsl()
+            is_wsl = False
+            if not is_supported and current_os == 'windows' and wsl_distro and val.get('install_linux'):
+                is_supported = True
+                is_wsl = True
+                
+            return {
                 'tool_key': key,
                 'name': val.get('name', key),
                 'installed': check_tool_status(key),
-                'supported': is_supported
-            })
+                'supported': is_supported,
+                'is_wsl': is_wsl
+            }
+        return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        results = executor.map(process_tool, TOOLS_CONFIG.items())
+        
+    for r in results:
+        if r:
+            deps.append(r)
+            
     return jsonify(deps)
+
+@app.route('/api/wsl/distros', methods=['GET'])
+@login_required
+def api_wsl_distros():
+    distros = get_wsl_distros()
+    preferred = get_preferred_wsl()
+    return jsonify({'distros': distros, 'preferred': preferred})
+
+@app.route('/api/wsl/config', methods=['POST'])
+@login_required
+def api_wsl_config():
+    distro = request.json.get('distro')
+    if distro in get_wsl_distros() or not distro:
+        with open(WSL_CONFIG_FILE, 'w') as f:
+            json.dump({'wsl_distro': distro}, f)
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error', 'message': 'Invalid distro'})
+
+import uuid
+
+ASYNC_TASKS = {}
+
+def run_async_task(task_id, tool, target, data, action):
+    try:
+        if action == 'run':
+            target_val = target if target else 'NONE'
+            update_db_stats(target_val, tool.upper())
+            config = TOOLS_CONFIG.get(tool)
+            if config and config.get('type') == 'custom_html':
+                output = execute_tool(tool, target, data)
+                type_val = 'html' if tool in ['google_dorks'] else 'text'
+            else:
+                output = execute_tool(tool, target, data)
+                type_val = 'text'
+            ASYNC_TASKS[task_id] = {'status': 'success', 'output': output, 'type': type_val}
+            
+        elif action == 'install':
+            success, msg = install_tool_system(tool)
+            ASYNC_TASKS[task_id] = {'status': 'success' if success else 'error', 'message': msg}
+            
+        elif action == 'update':
+            success, msg = update_tool_system(tool)
+            ASYNC_TASKS[task_id] = {'status': 'success' if success else 'error', 'message': msg}
+            
+        elif action == 'remove':
+            success, msg = remove_tool_system(tool)
+            ASYNC_TASKS[task_id] = {'status': 'success' if success else 'error', 'message': msg}
+            
+    except Exception as e:
+        ASYNC_TASKS[task_id] = {'status': 'error', 'message': str(e)}
+
+@app.route('/api/task_status', methods=['GET'])
+@login_required
+def get_task_status():
+    task_id = request.args.get('task_id')
+    task = ASYNC_TASKS.get(task_id)
+    if not task:
+        return jsonify({'status': 'error', 'message': 'Task not found'})
+    return jsonify(task)
 
 @app.route('/api/action', methods=['POST'])
 @login_required
@@ -444,7 +629,6 @@ def handle_action():
     target = data.get('target')
     action = data.get('action')
 
-    # Validate target for SSRF/Argument Injection protection
     if not validate_target(target):
         return jsonify({'status': 'error', 'message': '>> INVALID TARGET. BANNED CHARACTERS DETECTED.'})
 
@@ -460,29 +644,13 @@ def handle_action():
         output = apply_runes_updates()
         return jsonify({'status': 'success', 'output': output, 'type': 'html'})
 
-    elif action == 'install':
-        success, msg = install_tool_system(tool)
-        return jsonify({'status': 'success' if success else 'error', 'message': msg})
-
-    elif action == 'update':
-        success, msg = update_tool_system(tool)
-        return jsonify({'status': 'success' if success else 'error', 'message': msg})
-
-    elif action == 'remove':
-        success, msg = remove_tool_system(tool)
-        return jsonify({'status': 'success' if success else 'error', 'message': msg})
-
-    elif action == 'run':
-        target_val = target if target else 'NONE'
-        update_db_stats(target_val, tool.upper())
-        
-        config = TOOLS_CONFIG.get(tool)
-        if config and config.get('type') == 'custom_html':
-            output = execute_tool(tool, target, data)
-            return jsonify({'status': 'success', 'output': output, 'type': 'html' if tool in ['google_dorks'] else 'text'})
-            
-        output = execute_tool(tool, target, data)
-        return jsonify({'status': 'success', 'output': output, 'type': 'text'})
+    elif action in ['run', 'install', 'update', 'remove']:
+        task_id = str(uuid.uuid4())
+        ASYNC_TASKS[task_id] = {'status': 'running'}
+        thread = threading.Thread(target=run_async_task, args=(task_id, tool, target, data, action))
+        thread.daemon = True
+        thread.start()
+        return jsonify({'status': 'pending', 'task_id': task_id})
 
     return jsonify({'status': 'error', 'message': 'Invalid action'})
 

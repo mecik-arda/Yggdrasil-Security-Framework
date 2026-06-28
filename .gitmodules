@@ -25,3 +25,9 @@
 [submodule "Runes/fenrir-hash-cracker"]
 	path = Runes/fenrir-hash-cracker
 	url = https://github.com/mecik-arda/fenrir-hash-cracker.git
+[submodule "Runes/muninn-scanner"]
+	path = Runes/muninn-scanner
+	url = https://github.com/mecik-arda/muninn-scanner.git
+[submodule "Runes/Huginn-SecureTransfer"]
+	path = Runes/Huginn-SecureTransfer
+	url = https://github.com/mecik-arda/Huginn-SecureTransfer.git

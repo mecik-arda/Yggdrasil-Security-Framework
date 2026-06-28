@@ -110,6 +110,9 @@
                     <button type="button" onclick="openDependencyManager()">
                         {{ t('dep_manager') }}
                     </button>
+                    <button type="button" onclick="openWslSettings()" style="margin-top: 10px;">
+                        ⚙️ WSL SETTINGS
+                    </button>
                 </div>
 
                 <div class="creator-zone">
@@ -527,6 +530,40 @@
         </div>
     </div>
 
+    <div id="muninnScannerModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; width: 90%; text-align: left;">
+            <h2 style="color: var(--wood-light); margin-top:0;">[ ᛗ ] MUNINN SCANNER</h2>
+            <div style="margin-bottom: 15px;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Scan Options:</label>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptAll" value="true"> --all (Run passive + active scans)</label>
+                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptNuclei" value="true"> --nuclei (Run Vuln scan)</label>
+                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptNmap" value="true"> --nmap (Run Port scan)</label>
+                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptMonitor" value="true"> --monitor (Continuous diff mode)</label>
+                </div>
+            </div>
+            <button onclick="submitMuninnScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('start_scan') }}</button>
+            <button onclick="closeMuninnModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
+        </div>
+    </div>
+
+    <div id="wslSettingsModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <h2 style="color: var(--wood-light); margin-top:0;">WSL SETTINGS</h2>
+            <p style="color: var(--text-color); margin-bottom: 20px;">Select your preferred Windows Subsystem for Linux (WSL) distribution for Linux-native tools.</p>
+            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 4px; border: 1px solid var(--accent-color); margin-bottom: 20px;">
+                <label for="wslDistroSelect" style="display: block; margin-bottom: 10px; color: var(--wood-light); font-weight: bold;">Available Distros:</label>
+                <select id="wslDistroSelect" class="form-input" style="width: 100%;">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveWslSettings()" class="btn-install" style="flex: 1; min-width: 120px;">SAVE</button>
+                <button onclick="closeWslSettings()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color);">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
     <div id="depManagerModal" class="modal">
         <div class="modal-content" style="max-width: 800px; width: 90%;">
             <h2 style="color: var(--wood-light); margin-top:0;">{{ t('dep_manager') }}</h2>
@@ -549,16 +586,16 @@
             </div>
 
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="installSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: var(--highlight-color); border-color: var(--highlight-color);">{{ t('dep_install_selected') | default('Install Selected') }}</button>
-                <button onclick="updateSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: #5E81AC; border-color: #5E81AC;">{{ t('dep_update_selected') | default('Update Selected') }}</button>
-                <button onclick="removeSelectedDependencies()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color);">{{ t('dep_remove_selected') | default('Uninstall Selected') }}</button>
-                <button onclick="closeDependencyManager()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: #4C566A; border-color: #4C566A;">{{ t('dep_close') }}</button>
+                <button onclick="installSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: var(--highlight-color); border-color: var(--highlight-color); color: var(--bg-dark);">INSTALL</button>
+                <button onclick="updateSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: #5E81AC; border-color: #5E81AC; color: white;">UPDATE</button>
+                <button onclick="removeSelectedDependencies()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color); color: white;">UNINSTALL</button>
+                <button onclick="closeDependencyManager()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: #4C566A; border-color: #4C566A; color: white;">CLOSE</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CSRF Token Global Injector
+        // CSRF & Async Task Polling Global Injector
         const originalFetch = window.fetch;
         window.fetch = async function() {
             let [resource, config] = arguments;
@@ -566,7 +603,30 @@
                 config.headers = config.headers || {};
                 config.headers['X-CSRFToken'] = '{{ csrf_token() }}';
             }
-            return originalFetch(resource, config);
+            
+            const res = await originalFetch(resource, config);
+            
+            if (resource === '/api/action') {
+                const clone = res.clone();
+                try {
+                    const data = await clone.json();
+                    if (data.status === 'pending' && data.task_id) {
+                        const taskId = data.task_id;
+                        while (true) {
+                            await new Promise(r => setTimeout(r, 1000));
+                            const pollRes = await originalFetch('/api/task_status?task_id=' + taskId);
+                            const pollData = await pollRes.json();
+                            if (pollData.status !== 'running') {
+                                return new Response(JSON.stringify(pollData), {
+                                    status: 200,
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                            }
+                        }
+                    }
+                } catch(e) { }
+            }
+            return res;
         };
 
         const translations = {{ js_translations | tojson | safe }};
@@ -644,6 +704,8 @@
                                     openKnockpyModal();
                                 } else if (toolKey === 'gobuster_dns') {
                                     openGobusterDnsModal();
+                                } else if (toolKey === 'muninn_scanner') {
+                                    openMuninnModal();
                                 } else {
                                     openSynModal();
                                 }
@@ -686,10 +748,10 @@
                     const statusColor = dep.installed ? '#a3be8c' : 'var(--danger-color)';
                     const statusText = dep.installed ? t('dep_installed') : t('dep_missing');
                     
-                    const supportColor = dep.supported ? 'var(--highlight-color)' : '#888';
-                    const supportText = dep.supported ? t('dep_native') : t('dep_manual');
+                    const supportColor = dep.supported ? (dep.is_wsl ? '#b48ead' : 'var(--highlight-color)') : '#888';
+                    const supportText = dep.supported ? (dep.is_wsl ? 'NATIVE (WSL)' : t('dep_native')) : t('dep_manual');
 
-                    const disabledAttr = !dep.supported ? 'disabled' : '';
+                    const disabledAttr = '';
 
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(136, 192, 208, 0.2)';
@@ -713,7 +775,7 @@
 
         function toggleSelectAllDeps() {
             const selectAll = document.getElementById('selectAllDeps').checked;
-            const checkboxes = document.querySelectorAll('.dep-checkbox:not([disabled])');
+            const checkboxes = document.querySelectorAll('.dep-checkbox');
             checkboxes.forEach(cb => cb.checked = selectAll);
         }
 
@@ -745,13 +807,14 @@
                     
                     const msg = data.message || "Unknown error";
                     if (data.status === 'success') {
-                        typeWriter(contentDiv, '\n' + t('dep_success') + '\n\n' + msg, contentDiv.innerText.length);
+                        contentDiv.innerText += '\n' + t('dep_success') + '\n\n' + msg;
                     } else {
-                        typeWriter(contentDiv, '\n' + t('dep_err_seq') + '\n\n' + msg, contentDiv.innerText.length);
+                        contentDiv.innerText += '\n' + t('dep_err_seq') + '\n\n' + msg;
                     }
                 } catch (error) {
-                    typeWriter(contentDiv, '\n' + t('dep_sys_err') + error, contentDiv.innerText.length);
+                    contentDiv.innerText += '\n' + t('dep_sys_err') + error;
                 }
+                contentDiv.scrollTop = contentDiv.scrollHeight;
             }
         }
 
@@ -783,13 +846,14 @@
                     
                     const msg = data.message || "Unknown error";
                     if (data.status === 'success') {
-                        typeWriter(contentDiv, '\n[+] UPDATE SUCCESSFUL:\n\n' + msg, contentDiv.innerText.length);
+                        contentDiv.innerText += '\n[+] UPDATE SUCCESSFUL:\n\n' + msg;
                     } else {
-                        typeWriter(contentDiv, '\n[-] UPDATE FAILED:\n\n' + msg, contentDiv.innerText.length);
+                        contentDiv.innerText += '\n[-] UPDATE FAILED:\n\n' + msg;
                     }
                 } catch (error) {
-                    typeWriter(contentDiv, '\n[!] SYSTEM ERROR: ' + error, contentDiv.innerText.length);
+                    contentDiv.innerText += '\n[!] SYSTEM ERROR: ' + error;
                 }
+                contentDiv.scrollTop = contentDiv.scrollHeight;
             }
         }
 
@@ -823,13 +887,14 @@
                     
                     const msg = data.message || "Unknown error";
                     if (data.status === 'success') {
-                        typeWriter(contentDiv, '\n[+] REMOVAL SUCCESSFUL:\n\n' + msg, contentDiv.innerText.length);
+                        contentDiv.innerText += '\n[-] UNINSTALL SUCCESSFUL:\n\n' + msg;
                     } else {
-                        typeWriter(contentDiv, '\n[-] REMOVAL FAILED:\n\n' + msg, contentDiv.innerText.length);
+                        contentDiv.innerText += '\n[!] UNINSTALL FAILED:\n\n' + msg;
                     }
                 } catch (error) {
-                    typeWriter(contentDiv, '\n[!] SYSTEM ERROR: ' + error, contentDiv.innerText.length);
+                    contentDiv.innerText += '\n[!] SYSTEM ERROR: ' + error;
                 }
+                contentDiv.scrollTop = contentDiv.scrollHeight;
             }
         }
 
@@ -854,6 +919,9 @@
             
             const win = document.createElement('div');
             win.className = 'terminal-window';
+            if (title.toUpperCase().includes('INSTALLING') || title.toUpperCase().includes('UPDATING') || title.toUpperCase().includes('REMOVING')) {
+                win.classList.add('terminal-install');
+            }
             
             const header = document.createElement('div');
             header.className = 'terminal-header';
@@ -1030,11 +1098,33 @@
             
             const formData = new FormData();
             formData.append('target', target);
-            formData.append('action', 'gobuster_dns');
+            formData.append('tool', 'gobuster_dns');
+            formData.append('action', 'run');
             formData.append('threads', threads);
             formData.append('wordlist', wordlist);
             
             runCustomHandler('gobuster_dns', formData, `[ GOBUSTER DNS - ${target} ]`);
+        }
+
+        // Muninn Scanner Functions
+        function openMuninnModal() { document.getElementById('muninnScannerModal').style.display = 'block'; }
+        function closeMuninnModal() { document.getElementById('muninnScannerModal').style.display = 'none'; }
+        async function submitMuninnScan() {
+            const target = document.getElementById('target-input').value;
+            if (!target) { alert(t('err_target')); return; }
+            closeMuninnModal();
+            
+            const formData = new FormData();
+            formData.append('target', target);
+            formData.append('tool', 'muninn_scanner');
+            formData.append('action', 'run');
+            
+            if (document.getElementById('muninnOptAll').checked) formData.append('all', 'true');
+            if (document.getElementById('muninnOptNuclei').checked) formData.append('nuclei', 'true');
+            if (document.getElementById('muninnOptNmap').checked) formData.append('nmap', 'true');
+            if (document.getElementById('muninnOptMonitor').checked) formData.append('monitor', 'true');
+            
+            runCustomHandler('muninn_scan', formData, `[ MUNINN SCAN - ${target} ]`);
         }
 
         async function runCustomHandler(action, formData, title) {
@@ -1611,6 +1701,53 @@
                 console.error('Error:', error);
                 statusDiv.innerText = t('err_network');
             });
+        }
+        async function openWslSettings() {
+            document.getElementById('wslSettingsModal').style.display = 'block';
+            const select = document.getElementById('wslDistroSelect');
+            select.innerHTML = '<option value="">Loading...</option>';
+            try {
+                const res = await fetch('/api/wsl/distros');
+                const data = await res.json();
+                select.innerHTML = '<option value="">-- Auto-Detect / Default --</option>';
+                data.distros.forEach(distro => {
+                    const opt = document.createElement('option');
+                    opt.value = distro;
+                    opt.textContent = distro;
+                    if (data.preferred === distro) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                select.innerHTML = '<option value="">Failed to load distros</option>';
+            }
+        }
+
+        function closeWslSettings() {
+            document.getElementById('wslSettingsModal').style.display = 'none';
+        }
+
+        async function saveWslSettings() {
+            const select = document.getElementById('wslDistroSelect');
+            const distro = select.value;
+            try {
+                const res = await fetch('/api/wsl/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ distro: distro })
+                });
+                const data = await res.json();
+                const statusDiv = document.getElementById('status-display');
+                if(data.status === 'success') {
+                    statusDiv.innerText = 'WSL configuration updated successfully.';
+                } else {
+                    statusDiv.innerText = 'Failed to update WSL configuration: ' + data.message;
+                }
+            } catch (err) {
+                document.getElementById('status-display').innerText = 'Error saving WSL configuration.';
+            }
+            closeWslSettings();
         }
     </script>
 </body>

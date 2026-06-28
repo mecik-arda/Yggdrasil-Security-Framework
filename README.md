@@ -1,6 +1,6 @@
 # ᚛᚜ Yggdrasil Security Framework ᚛᚜
 
-![Dashboard Overview](screenshots/1.png?v=3)
+![Dashboard Overview](screenshots/2.png?v=3)
 
 [ 🇬🇧 English ](#-english) | [ 🇹🇷 Türkçe ](#-türkçe)
 
@@ -18,8 +18,8 @@ This repository features an advanced security reconnaissance and vulnerability a
 * This ensures that reconnaissance data is visualized and logged in real-time within a cohesive operational environment.
 
 #### 2. What challenges did I face?
-* **Subprocess Management**: Handling multiple concurrent security tools required a robust subprocess execution logic to prevent the Flask backend from hanging during intensive scans.
-* **Dependency Orchestration**: I implemented a "Runic Installation Ritual" (Automated Dependency Checker) to detect missing system tools and install them dynamically without manual user intervention.
+* **Subprocess Management & Async Architecture**: Initially, running intensive scans via `subprocess.Popen` or `check_output` blocked the Flask worker threads, causing the frontend to hang. To solve this, I designed an **Asynchronous Task Manager** (`uuid` based polling). The frontend fires a request, receives a `task_id` in a `pending` state, and dynamically polls a `/api/task_status` endpoint without freezing the UI. This allows multiple reconnaissance modules to execute truly concurrently.
+* **Dependency Orchestration & WSL Integration**: I implemented a "Runic Installation Ritual" to detect missing system tools dynamically. On Windows platforms, the framework intelligently queries the **Windows Subsystem for Linux (WSL)** (`wsl.exe --list`), allows users to configure their preferred WSL distribution via the UI, and automatically routes Linux-native security tool execution through the `wsl.exe -d <distro> -u root --` pipeline.
 * **Output Streaming**: Implementing the typewriter effect for real-time output rendering was a challenge in managing asynchronous JavaScript data streams within a synchronous HTML environment.
 
 #### 3. How did I manage the Security Arsenal?
@@ -95,7 +95,7 @@ We have expanded the framework with specialized, custom-built tools compiled und
 7. **Packet Injector:** Advanced raw socket packet crafter and injector tool. Supports TCP SYN injection, ARP Poison crafting, operation rate limits, bursts, and standalone packet sniffing/ARP detection on raw ethernet interfaces.
 8. **Mimir Scanner:** A full-stack Real-time Network Traffic Analyzer. Uses a Spring Boot backend with pcap4j and GeoIP2 mapping to capture packets, delivering real-time flows to a React frontend via WebSockets.
 9. **Bifrost Gateway:** A high-performance, cybersecurity-focused API Gateway built with Spring Boot. Operates as a stateless security intermediary intercepting malicious traffic. Features a robust WAF (Mjolnir) capable of inspecting Request Bodies (JSON/XML) and Headers, along with DoS protection utilizing Caffeine Cache for rapid IP eviction and token-bucket rate limiting.
-10. **Dependency Manager (Runic Installation Ritual):** Scans the host system for missing dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs.
+10. **Dependency Manager (Runic Installation Ritual):** Scans the host system for missing dependencies (Nmap, Sqlmap, Cargo, Maven, etc.) and provides a one-click automated installation across Linux and Windows environments through consecutive animated terminal outputs. Features full **Windows Subsystem for Linux (WSL)** integration to dynamically install and execute Linux-native tools seamlessly on Windows.
 
 ---
 
@@ -168,10 +168,10 @@ Bu depo, ofansif güvenlik operasyonlarını tek bir merkezde toplamak için gel
 * Python Flask tabanlı bir backend ile dinamik bir "Runic Dashboard"u entegre ederek, araç başlatma ve raporlama sürelerini ciddi oranda düşüren, merkezi ve web tabanlı bir yönetim sistemi kurmayı başardım.
 * Bu yapı, keşif verilerinin bütünleşik bir operasyonel ortamda eşzamanlı olarak (real-time) görselleştirilmesini ve loglanmasını sağlıyor.
 
-#### 2. Ne Tür Zorluklarla Karşılaştım?
-* **Subprocess (Alt Süreç) Yönetimi**: Eşzamanlı çalışan çok sayıda güvenlik aracını idare etmek, Flask sunucusunun yoğun taramalar sırasında çökmemesi veya kilitlenmemesi adına güçlü bir subprocess çalışma mantığı gerektirdi.
-* **Bağımlılık (Dependency) Orkestrasyonu**: Sistemde eksik olan araçları otomatik tespit eden ve manuel müdahale olmaksızın kurulumlarını gerçekleştiren "Runic Installation Ritual" (Otomatik Bağımlılık Yöneticisi) sistemini kurdum.
-* **Canlı Veri Akışı**: Terminal çıktılarının tarayıcıya yansıtılması (typewriter animasyonu ile), senkron çalışan bir HTML yapısı içinde asenkron JavaScript veri akışlarını yönetmeyi zorunlu kıldı.
+#### 2. Hangi Zorluklarla Karşılaştım?
+* **Subprocess Yönetimi ve Asenkron Mimari**: Başlangıçta yoğun taramaları `subprocess` ile çalıştırmak Flask işçi iş parçacıklarını (worker threads) blokluyor ve arayüzün kilitlenmesine neden oluyordu. Bunu çözmek için **Asenkron Görev Yöneticisi (Async Task Manager)** mimarisini tasarladım. Arayüz artık `task_id` üzerinden `/api/task_status` uç noktasını periyodik olarak sorguluyor (polling). Böylece UI donmadan aynı anda birden fazla aracın eşzamanlı çalıştırılabilmesi sağlandı.
+* **Bağımlılık Orkestrasyonu & WSL Entegrasyonu**: Sisteme eksik araçları tespit edip dinamik yükleyen "Runic Installation Ritual" eklendi. Windows ortamında **Windows Subsystem for Linux (WSL)** (`wsl.exe --list`) entegrasyonu sayesinde kullanıcı arayüzden Linux dağıtımını seçebiliyor ve sadece Linux destekli güvenlik araçları Windows üzerinden sorunsuzca çalıştırılabiliyor.
+* **Output Streaming (Çıktı Akışı)**: HTML ortamında asenkron verileri gerçek zamanlı "daktilo (typewriter)" efektiyle göstermek, terminal hissini yaratmak için özel JavaScript akış (stream) mantığı gerektirdi.
 
 #### 3. Güvenlik Arsenalini Nasıl Yönettim?
 * **Modüler Entegrasyon**: Nmap, Sqlmap, Nikto ve WPScan gibi araçların kendilerine has argümanlarını en verimli tarama sonuçları için işleyebilen, modüler bir komut çalıştırma motoru tasarladım.
@@ -246,7 +246,7 @@ Framework, **Runes** dizini altında derlenen özel yapım araçlarla genişleti
 7. **Packet Injector:** Gelişmiş raw socket paket üretici ve enjektörü. TCP SYN enjeksiyonu, ARP Zehirlemesi (ARP Poisoning), gönderim hızı sınırlandırma (rate limits) ve ağ kartlarında bağımsız dinleme (sniffing) / ARP tespiti yapabilme özelliklerini destekler.
 8. **Mimir Scanner:** Spring Boot arka uç (backend), pcap4j ve GeoIP2 altyapısıyla canlı paket dinleme ve WebSockets üzerinden React önyüzüne aktarım (real-time stream) sağlayan Ağ Trafik Analizörü.
 9. **Bifrost Gateway:** Spring Boot tabanlı yüksek performanslı siber güvenlik API Ağ Geçidi (Gateway). Mjolnir WAF entegrasyonu sayesinde JSON/XML gövdelerini, Header'ları analiz eder; Caffeine Cache destekli Token-Bucket algoritmasıyla IP tabanlı Rate-Limiting ve DoS koruması sağlar.
-10. **Dependency Manager (Runic Installation Ritual):** Kullanıcı sistemini (Windows/Linux) tarayarak eksik olan araçları tespit eder ve animasyonlu terminal arayüzü eşliğinde tüm bağımlılıkları tek tuşla otomatik olarak kurar.
+10. **Dependency Manager (Runic Installation Ritual):** Kullanıcı sistemini (Windows/Linux) tarayarak eksik olan araçları tespit eder ve animasyonlu terminal arayüzü eşliğinde tüm bağımlılıkları tek tuşla otomatik olarak kurar. **Tam donanımlı WSL (Windows Subsystem for Linux) entegrasyonu** sayesinde yalnızca Linux destekli araçları Windows üzerinde yerelmiş gibi kurup sorunsuzca çalıştırabilir.
 
 ---
 
