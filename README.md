@@ -229,6 +229,8 @@ Yggdrasil Security Framework, 7 farklı taktiksel kategoriye ayrılmış **25 an
 | **SnoopDork OSINT V3 (ᛞ)** | Launch SnoopDork OSINT | Dinamik ve Hedef odaklı OSINT Dork Üretici | Hayır | Linux/Win | Browser-based GUI |
 | **Paket Enjektörü (ᛇ)** | Packet Injector | TCP SYN/ARP paketleri oluşturma ve enjekte etme aracı | Evet | Linux | `sudo python3 Runes/packet-injector/main.py` |
 | **Bifrost Gateway (ᛒ)** | Bifrost Gateway | Spring Boot tabanlı yüksek performanslı siber güvenlik API Gateway'i | Hayır | Linux/Win | `mvn spring-boot:run` (in bifrost dir) |
+| **Muninn Scanner (ᛗ)** | Muninn Scanner (Go) | Go dilinde yazılmış yüksek hızlı eşzamanlı port ve servis tarayıcı | Evet | Linux/Win | `muninn_scan` handler |
+| **Huginn Transfer (ᚺ)** | Huginn SecureTransfer | JavaFX UI ve Spring Boot Web destekli şifreli P2P dosya transfer aracı | Hayır | Linux/Win | `huginn_ui` / `huginn_web` |
 | **Sistem İşlemleri (⚙️)** | Sync All Runes | Yerel araç depolarını (Github) güncel sürümlerle senkronize etme | Hayır | Özel | `update_modules` handler |
 
 ---
@@ -250,7 +252,9 @@ Framework, **Runes** dizini altında derlenen özel yapım araçlarla genişleti
 7. **Packet Injector:** Gelişmiş raw socket paket üretici ve enjektörü. TCP SYN enjeksiyonu, ARP Zehirlemesi (ARP Poisoning), gönderim hızı sınırlandırma (rate limits) ve ağ kartlarında bağımsız dinleme (sniffing) / ARP tespiti yapabilme özelliklerini destekler.
 8. **Mimir Scanner:** Spring Boot arka uç (backend), pcap4j ve GeoIP2 altyapısıyla canlı paket dinleme ve WebSockets üzerinden React önyüzüne aktarım (real-time stream) sağlayan Ağ Trafik Analizörü.
 9. **Bifrost Gateway:** Spring Boot tabanlı yüksek performanslı siber güvenlik API Ağ Geçidi (Gateway). Mjolnir WAF entegrasyonu sayesinde JSON/XML gövdelerini, Header'ları analiz eder; Caffeine Cache destekli Token-Bucket algoritmasıyla IP tabanlı Rate-Limiting ve DoS koruması sağlar.
-10. **Dependency Manager (Runic Installation Ritual):** Kullanıcı sistemini (Windows/Linux) tarayarak eksik olan araçları tespit eder ve animasyonlu terminal arayüzü eşliğinde tüm bağımlılıkları tek tuşla otomatik olarak kurar. **Tam donanımlı WSL (Windows Subsystem for Linux) entegrasyonu** sayesinde yalnızca Linux destekli araçları Windows üzerinde yerelmiş gibi kurup sorunsuzca çalıştırabilir.
+10. **Muninn Scanner (Go):** Go ile yazılmış yüksek hızlı, çok iş parçacıklı (highly concurrent) ağ port ve servis tarayıcısı. Sağlam zaman aşımı (timeout) yönetimi ve hafif goroutine yürütme yapısıyla hızlı keşif sağlar.
+11. **Huginn SecureTransfer:** Tamamen şifrelenmiş peer-to-peer (P2P) dosya transfer aracı. Hem JavaFX Masaüstü arayüzüne hem de Spring Boot Web arka ucuna sahip olup güvenli ve kesintisiz veri aktarımı sağlar.
+12. **Dependency Manager (Runic Installation Ritual):** Kullanıcı sistemini (Windows/Linux) tarayarak eksik olan araçları tespit eder ve animasyonlu terminal arayüzü eşliğinde tüm bağımlılıkları tek tuşla otomatik olarak kurar. **Tam donanımlı WSL (Windows Subsystem for Linux) entegrasyonu** sayesinde yalnızca Linux destekli araçları Windows üzerinde yerelmiş gibi kurup sorunsuzca çalıştırabilir.
 
 ---
 
