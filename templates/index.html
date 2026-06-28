@@ -548,9 +548,11 @@
                 </table>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <button onclick="installSelectedDependencies()" class="btn-install" style="flex: 1;">{{ t('dep_install_selected') }}</button>
-                <button onclick="closeDependencyManager()" class="btn-cancel" style="flex: 1;">{{ t('dep_close') }}</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="installSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: var(--highlight-color); border-color: var(--highlight-color);">{{ t('dep_install_selected') | default('Install Selected') }}</button>
+                <button onclick="updateSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: #5E81AC; border-color: #5E81AC;">{{ t('dep_update_selected') | default('Update Selected') }}</button>
+                <button onclick="removeSelectedDependencies()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color);">{{ t('dep_remove_selected') | default('Uninstall Selected') }}</button>
+                <button onclick="closeDependencyManager()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: #4C566A; border-color: #4C566A;">{{ t('dep_close') }}</button>
             </div>
         </div>
     </div>
@@ -687,7 +689,7 @@
                     const supportColor = dep.supported ? 'var(--highlight-color)' : '#888';
                     const supportText = dep.supported ? t('dep_native') : t('dep_manual');
 
-                    const disabledAttr = dep.installed || !dep.supported ? 'disabled' : '';
+                    const disabledAttr = !dep.supported ? 'disabled' : '';
 
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(136, 192, 208, 0.2)';
@@ -749,6 +751,84 @@
                     }
                 } catch (error) {
                     typeWriter(contentDiv, '\n' + t('dep_sys_err') + error, contentDiv.innerText.length);
+                }
+            }
+        }
+
+        async function updateSelectedDependencies() {
+            const checkboxes = document.querySelectorAll('.dep-checkbox:checked');
+            const toolsToInstall = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (toolsToInstall.length === 0) {
+                alert(t('dep_err_select') || "Please select at least one tool.");
+                return;
+            }
+
+            closeDependencyManager();
+
+            for (const tool of toolsToInstall) {
+                const contentDiv = createTerminalWindow("UPDATING: " + tool.toUpperCase());
+                const statusDiv = document.getElementById('status-display');
+                statusDiv.innerText = ">> UPDATING " + tool.toUpperCase() + "...";
+                
+                typeWriter(contentDiv, "Sending update command for " + tool + '...\n', 0);
+
+                const formData = new FormData();
+                formData.append('tool', tool);
+                formData.append('action', 'update');
+
+                try {
+                    const response = await fetch('/api/action', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    
+                    const msg = data.message || "Unknown error";
+                    if (data.status === 'success') {
+                        typeWriter(contentDiv, '\n[+] UPDATE SUCCESSFUL:\n\n' + msg, contentDiv.innerText.length);
+                    } else {
+                        typeWriter(contentDiv, '\n[-] UPDATE FAILED:\n\n' + msg, contentDiv.innerText.length);
+                    }
+                } catch (error) {
+                    typeWriter(contentDiv, '\n[!] SYSTEM ERROR: ' + error, contentDiv.innerText.length);
+                }
+            }
+        }
+
+        async function removeSelectedDependencies() {
+            const checkboxes = document.querySelectorAll('.dep-checkbox:checked');
+            const toolsToInstall = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (toolsToInstall.length === 0) {
+                alert(t('dep_err_select') || "Please select at least one tool.");
+                return;
+            }
+
+            if(!confirm("Are you sure you want to remove the selected tools?")) return;
+
+            closeDependencyManager();
+
+            for (const tool of toolsToInstall) {
+                const contentDiv = createTerminalWindow("REMOVING: " + tool.toUpperCase());
+                const statusDiv = document.getElementById('status-display');
+                statusDiv.innerText = ">> REMOVING " + tool.toUpperCase() + "...";
+                
+                typeWriter(contentDiv, "Sending removal command for " + tool + '...\n', 0);
+
+                const formData = new FormData();
+                formData.append('tool', tool);
+                formData.append('action', 'remove');
+
+                try {
+                    const response = await fetch('/api/action', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    
+                    const msg = data.message || "Unknown error";
+                    if (data.status === 'success') {
+                        typeWriter(contentDiv, '\n[+] REMOVAL SUCCESSFUL:\n\n' + msg, contentDiv.innerText.length);
+                    } else {
+                        typeWriter(contentDiv, '\n[-] REMOVAL FAILED:\n\n' + msg, contentDiv.innerText.length);
+                    }
+                } catch (error) {
+                    typeWriter(contentDiv, '\n[!] SYSTEM ERROR: ' + error, contentDiv.innerText.length);
                 }
             }
         }

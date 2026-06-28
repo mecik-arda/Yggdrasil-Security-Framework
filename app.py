@@ -135,12 +135,17 @@ def check_tool_status(tool_key):
         exe = '.exe' if platform.system() == 'Windows' else ''
         path1 = os.path.join('Runes', 'fenrir-hash-cracker', 'build', f'fenrir{exe}')
         path2 = os.path.join('Runes', 'fenrir-hash-cracker', 'build', 'Release', f'fenrir{exe}')
-        return os.path.exists(path1) or os.path.exists(path2)
+        has_git = os.path.exists(os.path.join('Runes', 'fenrir-hash-cracker', '.git'))
+        return has_git and (os.path.exists(path1) or os.path.exists(path2))
         
     tool_bin = config.get('bin')
     if not tool_bin:
         check_path = config.get('check_path')
         if check_path:
+            if check_path.startswith('Runes/'):
+                repo_path = os.path.join('Runes', check_path.split('/')[1])
+                if not os.path.exists(os.path.join(repo_path, '.git')):
+                    return False
             return os.path.exists(check_path)
         return True
     return shutil.which(tool_bin) is not None
@@ -166,6 +171,117 @@ def install_tool_system(tool_key):
         return True, f"Installation output:\n{output}"
     except subprocess.CalledProcessError as e:
         return False, f"Installation failed:\n{e.output.decode('utf-8')}"
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+def get_pkg_name(cmd_str):
+    parts = shlex.split(cmd_str)
+    if 'apt-get' in parts or 'apt' in parts:
+        return parts[parts.index('install') + 1] if 'install' in parts else parts[-1]
+    if 'winget' in parts:
+        return parts[parts.index('install') + 1] if 'install' in parts else parts[-1]
+    if 'pip' in parts:
+        return parts[parts.index('install') + 1] if 'install' in parts else parts[-1]
+    if 'go' in parts and 'install' in parts:
+        return parts[-1]
+    return ""
+
+def remove_tool_system(tool_key):
+    config = TOOLS_CONFIG.get(tool_key, {})
+    current_os = platform.system()
+    
+    check_path = config.get('check_path', '')
+    if check_path.startswith('Runes/') or tool_key == 'fenrir':
+        repo_name = 'fenrir-hash-cracker' if tool_key == 'fenrir' else check_path.split('/')[1]
+        repo_path = os.path.join('Runes', repo_name)
+        if os.path.exists(repo_path):
+            try:
+                def rm_error(func, path, exc_info):
+                    os.chmod(path, 0o777)
+                    func(path)
+                shutil.rmtree(repo_path, onerror=rm_error)
+                return True, f"Successfully removed {repo_name} repository."
+            except Exception as e:
+                return False, f"Failed to delete {repo_name}: {str(e)}"
+        return False, f"Repository {repo_name} not found."
+        
+    cmd = config.get('install_windows') if current_os == "Windows" else config.get('install_linux')
+    if not cmd:
+        return False, "Uninstallation command cannot be inferred (Install command missing)."
+        
+    pkg = get_pkg_name(cmd)
+    if not pkg:
+        return False, "Could not determine package name for removal."
+        
+    remove_cmd = []
+    if 'apt-get' in cmd:
+        remove_cmd = ['sudo', 'apt-get', 'remove', '-y', pkg]
+    elif 'winget' in cmd:
+        remove_cmd = ['winget', 'uninstall', pkg]
+    elif 'pip' in cmd:
+        remove_cmd = ['pip', 'uninstall', '-y', pkg]
+    else:
+        return False, f"Automated removal not supported for this installation type: {cmd}"
+        
+    try:
+        output = subprocess.check_output(remove_cmd, stderr=subprocess.STDOUT).decode('utf-8')
+        return True, f"Removal output:\n{output}"
+    except subprocess.CalledProcessError as e:
+        return False, f"Removal failed:\n{e.output.decode('utf-8')}"
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+def update_tool_system(tool_key):
+    config = TOOLS_CONFIG.get(tool_key, {})
+    current_os = platform.system()
+    
+    check_path = config.get('check_path', '')
+    if check_path.startswith('Runes/') or tool_key == 'fenrir':
+        repo_name = 'fenrir-hash-cracker' if tool_key == 'fenrir' else check_path.split('/')[1]
+        repo_path = os.path.join('Runes', repo_name)
+        if os.path.exists(os.path.join(repo_path, '.git')):
+            try:
+                output = subprocess.check_output(['git', 'pull'], cwd=repo_path, stderr=subprocess.STDOUT).decode('utf-8')
+                
+                if tool_key == 'fenrir':
+                    if current_os == 'Windows':
+                        subprocess.check_call(['cmake', '..'], cwd=os.path.join(repo_path, 'build'))
+                        subprocess.check_call(['cmake', '--build', '.', '--config', 'Release'], cwd=os.path.join(repo_path, 'build'))
+                    else:
+                        subprocess.check_call(['cmake', '..'], cwd=os.path.join(repo_path, 'build'))
+                        subprocess.check_call(['make'], cwd=os.path.join(repo_path, 'build'))
+                    output += "\nRecompiled Fenrir successfully."
+                    
+                return True, f"Update output:\n{output}"
+            except subprocess.CalledProcessError as e:
+                return False, f"Update failed:\n{e.output.decode('utf-8') if e.output else str(e)}"
+        return False, f"Repository {repo_name} not found or not a git repository."
+
+    cmd = config.get('install_windows') if current_os == "Windows" else config.get('install_linux')
+    if not cmd:
+        return False, "Update command cannot be inferred."
+        
+    pkg = get_pkg_name(cmd)
+    if not pkg:
+        return False, "Could not determine package name for update."
+        
+    update_cmd = []
+    if 'apt-get' in cmd:
+        update_cmd = ['sudo', 'apt-get', '--only-upgrade', 'install', '-y', pkg]
+    elif 'winget' in cmd:
+        update_cmd = ['winget', 'upgrade', pkg]
+    elif 'pip' in cmd:
+        update_cmd = ['pip', 'install', '--upgrade', pkg]
+    elif 'go' in cmd and 'install' in cmd:
+        update_cmd = shlex.split(cmd) 
+    else:
+        return False, f"Automated update not supported for this installation type: {cmd}"
+        
+    try:
+        output = subprocess.check_output(update_cmd, stderr=subprocess.STDOUT).decode('utf-8')
+        return True, f"Update output:\n{output}"
+    except subprocess.CalledProcessError as e:
+        return False, f"Update failed:\n{e.output.decode('utf-8')}"
     except Exception as e:
         return False, f"Error: {str(e)}"
 
@@ -346,6 +462,14 @@ def handle_action():
 
     elif action == 'install':
         success, msg = install_tool_system(tool)
+        return jsonify({'status': 'success' if success else 'error', 'message': msg})
+
+    elif action == 'update':
+        success, msg = update_tool_system(tool)
+        return jsonify({'status': 'success' if success else 'error', 'message': msg})
+
+    elif action == 'remove':
+        success, msg = remove_tool_system(tool)
         return jsonify({'status': 'success' if success else 'error', 'message': msg})
 
     elif action == 'run':
