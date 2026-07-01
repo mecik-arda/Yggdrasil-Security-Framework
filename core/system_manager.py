@@ -38,6 +38,8 @@ def install_tool_system(tool_key):
             wsl_distro = get_preferred_wsl()
             if cmd and wsl_distro:
                 is_wsl = True
+            else:
+                cmd = None
     else:
         cmd = config.get('install_linux')
         
