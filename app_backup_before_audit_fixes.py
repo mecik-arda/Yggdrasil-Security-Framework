@@ -4,7 +4,6 @@ import shutil
 import json
 import platform
 import threading
-import html
 import re
 import sqlite3
 import shlex
@@ -15,8 +14,7 @@ import concurrent.futures
 import uuid
 import psutil
 from functools import wraps
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
-from flask_cors import CORS
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 
 # Monkey-patch subprocess.Popen to track spawned processes per thread
 original_popen = subprocess.Popen
@@ -31,7 +29,6 @@ class TrackedPopen(original_popen):
         ACTIVE_PROCESSES[thread_id].append(self)
 
 subprocess.Popen = TrackedPopen
-from flask_cors import CORS
 from handlers import dispatch_handler
 from handlers.ai_engine import (
     list_models, chat_completion, pull_model, remove_model, get_ai_profile_tiers,
@@ -45,8 +42,7 @@ from handlers.agent_loop import (
     start_agent, get_agent_status, stop_agent, list_agent_sessions
 )
 from handlers.valkyrie_reporter import (
-    generate_report, generate_report_from_agent, generate_report_from_terminals,
-    markdown_to_html
+    generate_report_from_agent, generate_report_from_terminals, markdown_to_html
 )
 from handlers.loki_engine import (
     mutate_payload, list_techniques, analyze_waf_response

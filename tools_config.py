@@ -1,4 +1,3 @@
-import platform
 TOOLS_CONFIG = {
     'nmap': {'name': 'Nmap (Full Scan)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sV', '-F', '--version-light', '{target}']},
     'nmap_stealth': {'name': 'Nmap (Stealth/Bypass)', 'category': 'nmap_scans', 'requires_target': True, 'type': 'cli', 'bin': 'nmap', 'install_linux': 'sudo apt-get install nmap -y', 'install_windows': 'winget install Insecure.Nmap', 'supported_os': ['linux', 'windows'], 'cmd': ['nmap', '-sS', '-T2', '-f', '--data-length', '24', '--spoof-mac', '0', '--decoy', 'RND:5', '{target}']},

@@ -1,4 +1,5 @@
-import base64, ctypes, os
+import base64
+import ctypes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 

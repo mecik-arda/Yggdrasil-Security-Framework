@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request
 from core.task_manager import create_task, get_async_tasks
 from core.db import log_scan_start, update_db_stats, log_scan_end
 from core.system_manager import validate_target, check_tool_status, check_runes_updates, apply_runes_updates, install_tool_system, update_tool_system, remove_tool_system

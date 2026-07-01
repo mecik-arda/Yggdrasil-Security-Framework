@@ -8,7 +8,6 @@ Also analyzes HTTP error responses (403/406) to suggest bypass strategies.
 import re
 import random
 import urllib.parse
-import codecs
 TECHNIQUES = {
     "url_double": {
         "name": "Double URL Encoding",

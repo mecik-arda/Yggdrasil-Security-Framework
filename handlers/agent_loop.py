@@ -31,8 +31,6 @@ def _get_tool_config(tool_key):
     return TOOLS_CONFIG.get(tool_key, {})
 def _run_tool_direct(tool_key, target, extra_data=None):
     import subprocess
-    import platform
-    import shlex
     config = _get_tool_config(tool_key)
     if not config:
         return f"Error: Unknown tool '{tool_key}'"

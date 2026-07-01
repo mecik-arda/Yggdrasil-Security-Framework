@@ -2,15 +2,14 @@ from flask import Blueprint, jsonify, request, session
 from handlers.team_server import (
     register_user, remove_user, get_user_list,
     add_team_message, get_team_messages,
-    register_event_handler, unregister_event_handler,
-    broadcast_event
+    register_event_handler, broadcast_event
 )
 import json
 
 team_bp = Blueprint('team_routes', __name__)
 
 try:
-    from flask_socketio import SocketIO, emit, disconnect
+    from flask_socketio import SocketIO, emit
     socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
     SOCKETIO_AVAILABLE = True
 except ImportError:
@@ -103,6 +102,6 @@ if SOCKETIO_AVAILABLE:
 
     @socketio.on('subscribe')
     def handle_subscribe(data):
-        channel = data.get('channel', 'all')
+        data.get('channel', 'all')
         handler_id = str(id(request.sid))
         register_event_handler(handler_id, lambda payload: emit('event', json.loads(payload)) if isinstance(payload, str) else emit('event', payload))

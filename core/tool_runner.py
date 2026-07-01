@@ -3,7 +3,6 @@ import platform
 import shlex
 import json
 import os
-import sqlite3
 from tools_config import TOOLS_CONFIG
 from handlers import dispatch_handler
 

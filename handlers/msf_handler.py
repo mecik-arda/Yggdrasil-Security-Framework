@@ -1,9 +1,6 @@
 import subprocess
 import os
 import uuid
-import json
-import time
-import tempfile
 
 MSF_PAYLOADS = {
     "windows": {
@@ -221,7 +218,7 @@ $client.Close()"""
     }
 
     plat_payloads = payloads.get(platform, payloads["linux"])
-    ext = list(plat_payloads.keys())[0]
+    list(plat_payloads.keys())[0]
     filename, content = list(plat_payloads.values())[0]
 
     _ensure_output_dir()

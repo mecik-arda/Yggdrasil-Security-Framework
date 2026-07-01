@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, current_app
-import os
 import time
 
 auth_bp = Blueprint('auth', __name__)
