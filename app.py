@@ -2,6 +2,8 @@ import os
 import secrets
 import json
 import logging
+import threading
+import webbrowser
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -160,4 +162,5 @@ if __name__ == '__main__':
           __/ | __/ |
          |___/ |___/     Security Framework v2.0.0
     """)
+    threading.Timer(1.5, lambda: webbrowser.open_new("http://127.0.0.1:5000")).start()
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)

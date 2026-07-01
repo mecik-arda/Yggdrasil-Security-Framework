@@ -147,7 +147,13 @@ const originalFetch = window.fetch;
                 tbody.innerHTML = '';
                 deps.forEach(dep => {
                     const statusColor = dep.installed ? '#a3be8c' : 'var(--danger-color)';
-                    const statusText = dep.installed ? t('dep_installed') : t('dep_missing');
+                    let statusText = t('dep_missing');
+                    if (dep.installed) {
+                        if (dep.installed_platform === 'wsl') statusText = t('dep_installed') + " (WSL)";
+                        else if (dep.installed_platform === 'windows') statusText = t('dep_installed') + " (Windows)";
+                        else if (dep.installed_platform === 'linux') statusText = t('dep_installed') + " (Linux)";
+                        else statusText = t('dep_installed');
+                    }
                     const supportColor = dep.supported ? (dep.is_wsl ? '#b48ead' : 'var(--highlight-color)') : '#888';
                     const supportText = dep.supported ? (dep.is_wsl ? 'NATIVE (WSL)' : t('dep_native')) : t('dep_manual');
                     const disabledAttr = '';
@@ -781,6 +787,11 @@ const originalFetch = window.fetch;
                 statusDiv.innerText = t('err_target');
                 statusDiv.style.color = "var(--danger-color)";
                 statusDiv.style.borderColor = "var(--danger-color)";
+                const targetInput = document.getElementById('target-input');
+                targetInput.style.border = "2px solid var(--danger-color)";
+                targetInput.focus();
+                alert(t('err_target') + " - Please enter a target (domain/IP) in the left panel before running this tool.");
+                setTimeout(() => targetInput.style.border = "", 3000);
                 return;
             }
             statusDiv.style.color = "var(--wood-light)";

@@ -68,6 +68,15 @@ def execute_tool(tool_key, target, data=None, task_id=None):
         
         current_os = platform.system()
         supported = config.get('supported_os', [])
+        is_windows_supported = ('windows' in supported) if supported else True
+        
+        if current_os == 'Windows' and is_windows_supported and cmd:
+            import shutil
+            if shutil.which(cmd[0]) is None:
+                if os.path.exists(os.path.join('venv', 'Scripts', f"{cmd[0]}.exe")):
+                    cmd[0] = os.path.join('venv', 'Scripts', f"{cmd[0]}.exe")
+                elif cmd[0] == 'tshark' and os.path.exists(r"C:\Program Files\Wireshark\tshark.exe"):
+                    cmd[0] = r"C:\Program Files\Wireshark\tshark.exe"
         
         if current_os.lower() not in supported and current_os == 'Windows':
             wsl_distro = get_preferred_wsl()

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from core.task_manager import create_task, get_async_tasks
 from core.db import log_scan_start, update_db_stats, log_scan_end
-from core.system_manager import validate_target, check_tool_status, check_runes_updates, apply_runes_updates, install_tool_system, update_tool_system, remove_tool_system
+from core.system_manager import sanitize_target, validate_target, check_tool_status, check_runes_updates, apply_runes_updates, install_tool_system, update_tool_system, remove_tool_system
 from core.tool_runner import execute_tool
 from tools_config import TOOLS_CONFIG
 import threading
@@ -68,6 +68,8 @@ def handle_action():
     data = request.form
     tool = data.get('tool')
     target = data.get('target')
+    if target:
+        target = sanitize_target(target)
     action = data.get('action')
     
     if not validate_target(target):

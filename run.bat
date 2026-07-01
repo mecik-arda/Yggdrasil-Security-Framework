@@ -25,6 +25,5 @@ call venv\Scripts\activate
 echo Installing/updating dependencies...
 pip install -r requirements.txt
 echo Starting Yggdrasil Security Framework...
-start "" "http://127.0.0.1:5000"
 python app.py
 pause

@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from core.system_manager import check_tool_status
+from core.system_manager import check_tool_status_detail
 from core.tool_runner import get_preferred_wsl, get_wsl_distros
 from tools_config import TOOLS_CONFIG
 import concurrent.futures
@@ -43,10 +43,12 @@ def check_dependencies():
             if current_os == 'Windows' and 'linux' in supported:
                 is_supported = True
                 is_wsl = True
+        status_detail = check_tool_status_detail(key)
         return {
             'tool_key': key,
             'name': val.get('name', key),
-            'installed': check_tool_status(key),
+            'installed': status_detail != 'missing',
+            'installed_platform': status_detail,
             'supported': is_supported,
             'is_wsl': is_wsl
         }

@@ -51,6 +51,13 @@ def install_tool_system(tool_key):
         install_cmd = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--'] + install_cmd
         
     try:
+        # Run apt-get update if needed
+        if 'apt-get install' in cmd:
+            update_cmd = ['sudo', 'apt-get', 'update']
+            if is_wsl:
+                update_cmd = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--', 'apt-get', 'update']
+            subprocess.check_output(update_cmd, stderr=subprocess.STDOUT)
+            
         output = subprocess.check_output(install_cmd, stderr=subprocess.STDOUT).decode('utf-8', errors='replace')
         return True, f"Installation output:\n{output}"
     except subprocess.CalledProcessError as e:
@@ -234,44 +241,81 @@ def apply_runes_updates():
     thread.start()
     return "<div style='font-family: monospace;'><p style='color: #a3be8c;'>Updates started in the background. Tools will be synced shortly.</p></div>"
 
-def check_tool_status(tool_key):
+def check_tool_status_detail(tool_key):
     config = TOOLS_CONFIG.get(tool_key, {})
     if not config:
-        return False
+        return 'missing'
+    current_os = platform.system()
     check_type = config.get('check_type')
+    
     if check_type == 'runes_repo':
         check_path = config.get('check_path', '')
         if check_path.startswith('Runes/'):
             repo_name = check_path.split('/')[1]
             repo_path = os.path.join('Runes', repo_name)
             if not os.path.exists(os.path.join(repo_path, '.git')):
-                return False
+                return 'missing'
         binaries = config.get('check_binaries', [])
         if binaries:
-            exe = '.exe' if platform.system() == 'Windows' else ''
+            exe = '.exe' if current_os == 'Windows' else ''
             resolved = [b.format(exe=exe) for b in binaries]
             if not any(os.path.exists(b) for b in resolved):
-                return False
-        return True
+                return 'missing'
+        return 'windows' if current_os == 'Windows' else 'linux'
+        
     tool_bin = config.get('bin')
     if not tool_bin:
         check_path = config.get('check_path')
         if check_path:
-            return os.path.exists(check_path)
-        return True
-    if shutil.which(tool_bin) is not None:
-        return True
-    return False
+            return 'windows' if os.path.exists(check_path) else 'missing'
+        return 'windows' if current_os == 'Windows' else 'linux'
+        
+    supported = config.get('supported_os', [])
+    is_windows_supported = ('windows' in supported) if supported else True
+    
+    if current_os == 'Windows':
+        if is_windows_supported:
+            if shutil.which(tool_bin) is not None:
+                return 'windows'
+            venv_bin = os.path.join('venv', 'Scripts', f"{tool_bin}.exe")
+            if os.path.exists(venv_bin):
+                return 'windows'
+            if tool_bin == 'tshark' and os.path.exists(r"C:\Program Files\Wireshark\tshark.exe"):
+                return 'windows'
+                
+        wsl_distro = get_preferred_wsl()
+        if wsl_distro:
+            try:
+                res = subprocess.run(['wsl.exe', '-d', wsl_distro, '-u', 'root', '--', 'which', tool_bin], capture_output=True, text=True)
+                if res.returncode == 0 and res.stdout.strip():
+                    return 'wsl'
+            except:
+                pass
+        return 'missing'
+    else:
+        if shutil.which(tool_bin) is not None:
+            return 'linux'
+        return 'missing'
+
+def check_tool_status(tool_key):
+    return check_tool_status_detail(tool_key) != 'missing'
 
 import re
-def validate_target(target):
+
+def sanitize_target(target):
     if not target:
-        return True
+        return target
     if target.startswith("http://") or target.startswith("https://"):
         target = target.split("://", 1)[1]
     if "/" in target:
         target = target.split("/", 1)[0]
     target = target.split(":")[0] if ":" in target and not target.count(":") > 1 else target
+    return target
+
+def validate_target(target):
+    if not target:
+        return True
+    target = sanitize_target(target)
     pattern = r'^[\w\.\-]+(:\d+)?$'
     if not re.match(pattern, target):
         return False
