@@ -162,6 +162,21 @@
                         {{ t('btn_kvasir') }}
                     </button>
                 </div>
+                <div class="tool-group" data-category="exploitation">
+                    <h3>{{ t('cat_exploitation') }}</h3>
+                    <button type="button" onclick="openC2Modal()" style="margin-top: 10px; border-color: #88c0d0; color: #88c0d0;">
+                        {{ t('btn_c2_shell') }}
+                    </button>
+                    <button type="button" onclick="openMsfModal()" style="margin-top: 10px; border-color: #b48ead; color: #b48ead;">
+                        {{ t('btn_payload_crafter') }}
+                    </button>
+                    <button type="button" onclick="openAutoExploitPanel()" style="margin-top: 10px; border-color: #bf616a; color: #bf616a;">
+                        {{ t('btn_auto_red_team') }}
+                    </button>
+                    <button type="button" onclick="openAttackGraphModal()" style="margin-top: 10px; border-color: #ebcb8b; color: #ebcb8b;">
+                        {{ t('btn_attack_graph') }}
+                    </button>
+                </div>
                 <div class="creator-zone">
                     <div class="creator-title">{{ t('architect') }}</div>
                     <a href="https://github.com/mecik-arda" target="_blank" class="creator-name">
@@ -252,6 +267,10 @@
         {% include 'modals/ai_modals.html' %}
 
         {% include 'modals/custom_modals.html' %}
+
+        {% include 'modals/c2_modals.html' %}
+
+        {% include 'modals/msf_modals.html' %}
 
     
     

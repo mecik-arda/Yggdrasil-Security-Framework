@@ -32,7 +32,7 @@ This repository features an advanced security reconnaissance and vulnerability a
 
 ### ᚛᚜ Complete Integrated Arsenal & Features ᚛᚜
 
-The Yggdrasil Security Framework integrates **25 core features and modules** divided into 7 distinct tactical categories:
+The Yggdrasil Security Framework integrates **40+ core features and modules** divided into 10 distinct tactical categories:
 
 | Runic Category | Tool Name | Description | Target Req. | OS Support | Command / Handler |
 | :--- | :--- | :--- | :---: | :---: | :--- |
@@ -78,6 +78,15 @@ The Yggdrasil Security Framework integrates **25 core features and modules** div
 | **Bifrost Gateway (ᛒ)** | Bifrost Gateway | High-performance, cybersecurity-focused API Gateway built with Spring Boot | No | Linux/Win | `mvn spring-boot:run` (in bifrost dir) |
 | **Muninn Scanner (ᛗ)** | Muninn Scanner (Go) | High-speed concurrent port and service scanner written in Go | Yes | Linux/Win | `muninn_scan` handler |
 | **Huginn Transfer (ᚺ)** | Huginn SecureTransfer | Encrypted P2P file transfer tool with JavaFX UI & Spring Boot Web | No | Linux/Win | `huginn_ui` / `huginn_web` |
+| **C2 & Exploitation (💀)** | C2 Listener | Multi-listener TCP reverse shell server with magic byte auth | No | Linux/Win | `c2_listener` handler |
+| | C2 Payload Generator | One-click reverse shell payloads (Python/Bash/NC/PHP/Ruby/Perl/PS) | No | Linux/Win | `c2_listener` handler |
+| | Auto Post-Exploitation | Zombie auto-enumeration (whoami/netstat/ps/SUID scan) | No | Custom | `_auto_enum_zombie` |
+| | Beacon Implant | HTTP/HTTPS encrypted beacon with AES-Fernet + sleep/jitter | Yes | Linux/Win | `beacon_handler` |
+| **Payload & Evasion (🔐)** | MSF Payload Crafter | msfvenom multi-platform payload generation (EXE/ELF/APK) | Yes | Linux/Win | `msf_handler` |
+| | Shellcode Crypter | AES-256-CBC / XOR / Polymorphic encryption with C/Python/PS loaders | Yes | Linux/Win | `evasion_crafter` handler |
+| **Team Ops (👥)** | Team Server | Flask-SocketIO multi-user collaboration with real-time events | No | Linux/Win | `team_server` handler |
+| | Team Chat | Shared operator chat with message history | No | Linux/Win | `team_server` handler |
+| **Attack Graph (🕸️)** | Attack Graph | Interactive canvas-based vulnerability map with auto-population | No | Linux/Win | `attack_graph` handler |
 | **System Operations (⚙️)** | Sync All Runes | Synchronize local tool repos with upstream GitHub releases | No | Custom | `update_modules` handler |
 
 ---
@@ -158,6 +167,62 @@ Yggdrasil integrates a fully local, privacy-first AI offensive assistant powered
   - Target input validation against injection attacks
 - **Live progress dashboard:** Real-time polling with animated step cards, phase indicators, and final summary
 
+### 🚀 V2.0.0 Updates — C2, Red Team & Evasion (July 2026)
+
+#### 🕷️ C2 Command & Control — Reverse Shell Manager
+- **Multi-listener TCP server** with configurable ports, bind addresses, and authentication
+- **Magic byte authentication** (`YGG!`) on all incoming connections — rejects unauthenticated TCP handshakes
+- **Interactive web terminal** for each connected zombie with real-time output streaming
+- **One-click payload generator** — Python, Bash, Netcat, PHP, Ruby, Perl, PowerShell reverse shells with embedded auth tokens
+- **Autonomous post-exploitation**: Zombie connects → auto-runs `whoami`, `hostname`, `ipconfig/ifconfig`, `netstat`, `ps aux/tasklist`, enumerates users/SUID files — all results auto-populate the Attack Graph
+- **Active Zombie Systems** panel showing OS type, IP, hostname, connection time
+
+#### 🤖 Autonomous Red Team AI — Auto-Exploitation Mode
+- **Dedicated Red Team mode** (`mode: redteam`) with 15-step autonomous operations
+- **Full attack chain**: nmap TCP scan → vulnerability detection → service enumeration → auto `sqlmap` on SQL services → auto `hydra` on SSH → Nuclei CVE scanning → Exploit-DB search
+- **Service fingerprinting**: Automatically detects web, SQL, SSH, SMB services and selects appropriate exploitation tools
+- **Attack Graph auto-population**: Every discovered target, port, subdomain, and vulnerability is automatically added as a node
+
+#### 💣 Metasploit & Payload Crafter Integration
+- **msfvenom payload generation** for Windows (x64/x86), Linux, Android, macOS, and Web (PHP/Python/Java)
+- **Encoder support**: `shikata_ga_nai`, `xor`, `powershell_base64` with configurable iterations
+- **Standalone fallback** — generates functional payloads even when msfvenom is not installed
+- **Built-in msfconsole command execution** with strict command whitelist security policy
+
+#### 🔐 Shellcode Crypter & Evasion Module
+- **AES-256-CBC encryption** with auto-generated keys and IVs for raw shellcode
+- **XOR encoding** with entropy analysis and decoder stub generation
+- **Polymorphic multi-layer stubs** (compression + XOR + base64) for AV/EDR evasion
+- **Loader generators**: C (Win32 CryptoAPI), Python (ctypes), PowerShell (AesManaged), C# (.NET)
+- **Sleep/delay randomization** and API call obfuscation in generated stubs
+
+#### 📡 HTTP/HTTPS Beacon Implant
+- **Encrypted HTTP communication** using Fernet (AES-128-CBC + HMAC) symmetric encryption
+- **Beacon callback model** with configurable sleep intervals and jitter (randomization)
+- **Task queue system**: Server assigns tasks → beacon polls and executes → returns encrypted results
+- **Standalone Python implant** — single-file script, compatible with PyInstaller for `.exe` compilation
+- **Server-side beacon tracking** with live status, system info collection, and task history
+
+#### 👥 Team Server — Multi-User Collaboration
+- **Flask-SocketIO WebSocket integration** for real-time event broadcasting
+- **Multi-user awareness**: See who's online, join/leave notifications, shared operation view
+- **Real-time notifications**: Zombie connections, beacon checkins, scan starts/completions, graph updates
+- **Shared team chat** with message history and operator presence
+- **Event subscription system** — clients subscribe to specific channels (c2, scans, beacons, graph)
+
+#### 🕸️ Interactive Attack Graph Visualization
+- **Canvas-based node graph** with color-coded node types (Target, IP, Port, Subdomain, Vulnerability, Exploit)
+- **Click-to-add** and **right-click-to-remove** node interaction
+- **Auto-population from scan history**: Parses nmap, subfinder, nuclei, nikto outputs to build the tree
+- **Hierarchical layout** with parent-child relationships and depth calculation (O(1) complexity)
+- **Zoom and pan support** with persistent session-based graph storage
+
+#### Stability Fixes (July 2026)
+- **Fixed INVALID TARGET validation**: URLs with `https://` prefix and paths are now auto-stripped, domains with dots and hyphens are accepted
+- **Fixed JSON.parse crash loop**: Fetch wrapper rewritten with robust error handling — all server responses are safely parsed, malformed responses return structured errors instead of crashing the UI
+- **Fixed 429 rate limiting on API**: Flask-Limiter removed from all API routes; manual IP-based brute-force protection retained on login only (5 attempts/min)
+- **Fixed orphan process blocking**: Old server processes on port 5000 are now properly detected and terminated before startup
+
 ### 🚀 V2.0.0 Updates & Dashboard Redesign (June 2026)
 - **Advanced Action Bar:** Completely rebuilt global action menu using responsive CSS Grid layouts, introducing centralized workspace controls.
 - **Global Kill Switch & Purge Workspace (☠️ / 🧹):** Dedicated capabilities to instantly terminate all running async Python tasks (`psutil` recursive kill) across the framework and reset UI components, active target memory, and Valkyrie mapping traces.
@@ -216,6 +281,64 @@ python app.py
 
 ---
 
+### Antivirus Warning — Windows Defender & False Positives
+
+This is a **penetration testing and offensive security framework**. It contains tools that generate reverse shells, craft payloads, encrypt shellcode, inject packets, and manage C2 (Command & Control) connections. These are legitimate security testing tools, but **antivirus software will flag them as malware**.
+
+#### Why Does This Happen?
+
+Antivirus engines use signature-based detection. The framework includes:
+- **Reverse shell payloads** (Python, Bash, PowerShell, Netcat one-liners) — these match known RAT (Remote Access Trojan) patterns
+- **msfvenom payload generation** — generates the same payloads used by real malware
+- **Shellcode encryption and loader stubs** (AES, XOR, polymorphic) — matches crypto-malware behavior
+- **Packet injection and ARP poisoning scripts** — matches network attack signatures
+- **Compiled binaries in Runes/** (Fenrir hash cracker, SYN scanner) — unsigned executables with low prevalence
+- **C2 listener with zombie management** — matches C2 framework patterns (Cobalt Strike, Sliver, etc.)
+
+This is expected behavior for any security toolkit (Metasploit, Empire, Covenant, Mythic all trigger the same alerts).
+
+#### How to Fix — Add an Exclusion
+
+**Windows Defender (Windows 10/11):**
+1. Open **Windows Security** → **Virus & threat protection**
+2. Click **Manage settings** under "Virus & threat protection settings"
+3. Scroll down to **Exclusions** → Click **Add or remove exclusions**
+4. Click **Add an exclusion** → Select **Folder**
+5. Browse to and select: `C:\Users\<your-username>\Desktop\Yggdrasil-Security-Framework`
+6. Click **Select Folder** — the entire project directory is now excluded
+
+**Alternative — PowerShell (Admin):**
+```powershell
+Add-MpPreference -ExclusionPath "C:\Users\$env:USERNAME\Desktop\Yggdrasil-Security-Framework"
+```
+
+**Third-party AV (Kaspersky, Bitdefender, Malwarebytes, Norton, etc.):**
+- Open your AV application → **Settings** → **Exclusions** or **Whitelist**
+- Add the project folder to the exclusion list
+- If files are already quarantined: go to **Quarantine/Threat History** → **Restore** the files → then add exclusion
+
+#### What Gets Flagged (And Why It's Safe)
+
+| File/Module | Why AV Flags It | What It Actually Does |
+|---|---|---|
+| `handlers/c2_listener.py` | Reverse shell server, payload generator | Educational C2 framework for authorized pentesting |
+| `handlers/msf_handler.py` | msfvenom wrapper, malware generation | Payload crafting for authorized exploitation |
+| `handlers/evasion_crafter.py` | Shellcode encryption, AV evasion stubs | Teaches how AV evasion works for defense |
+| `handlers/beacon_handler.py` | HTTP beacon implant generator | C2 communication research for red teams |
+| `handlers/agent_loop.py` | Autonomous attack decision engine | Automated pentesting workflow (with permission) |
+| `Runes/fenrir-hash-cracker/` | Password hash cracker (CPU/GPU) | Password security auditing tool |
+| `Runes/packet-injector/` | Raw socket packet crafting | Network security testing and research |
+| `Runes/Advanced-SYN-Scanner/` | Custom SYN port scanner | Network recon for authorized assessments |
+| `generated_payloads/` | Contains generated `.exe`/`.elf`/`.apk` files | Output of the Payload Crafter module |
+
+#### Important Notes
+- **Never run this framework on a machine without antivirus exclusions** — files will be silently quarantined during operation
+- **The framework's own code is open source** — every file is human-readable Python, JavaScript, HTML, and CSS. Nothing is obfuscated or hidden
+- **Generated payloads are for authorized targets only** — they will be detected by any competent AV/EDR. They are proof-of-concept tools, not production evasion implants
+- **If you see alerts**: Do NOT panic. This is normal. Add the exclusion, restore any quarantined files, and continue
+
+---
+
 ### Disclaimer
 This framework is developed for educational purposes and authorized penetration testing only. The author is not responsible for any misuse of this tool.
 
@@ -252,7 +375,7 @@ Bu depo, ofansif güvenlik operasyonlarını tek bir merkezde toplamak için gel
 
 ### ᚛᚜ Entegre Arsenal ve Tüm Özellikler ᚛᚜
 
-Yggdrasil Security Framework, 7 farklı taktiksel kategoriye ayrılmış **25 ana özellik ve modül** barındırmaktadır:
+Yggdrasil Security Framework, 10 farklı taktiksel kategoriye ayrılmış **40+ ana özellik ve modül** barındırmaktadır:
 
 | Runic Kategori | Araç İsmi | Açıklama | Hedef (Target) Zorunlu mu? | İşletim Sistemi (OS) Desteği | Komut / Handler |
 | :--- | :--- | :--- | :---: | :---: | :--- |
@@ -298,6 +421,15 @@ Yggdrasil Security Framework, 7 farklı taktiksel kategoriye ayrılmış **25 an
 | **Bifrost Gateway (ᛒ)** | Bifrost Gateway | Spring Boot tabanlı yüksek performanslı siber güvenlik API Gateway'i | Hayır | Linux/Win | `mvn spring-boot:run` (in bifrost dir) |
 | **Muninn Scanner (ᛗ)** | Muninn Scanner (Go) | Go dilinde yazılmış yüksek hızlı eşzamanlı port ve servis tarayıcı | Evet | Linux/Win | `muninn_scan` handler |
 | **Huginn Transfer (ᚺ)** | Huginn SecureTransfer | JavaFX UI ve Spring Boot Web destekli şifreli P2P dosya transfer aracı | Hayır | Linux/Win | `huginn_ui` / `huginn_web` |
+| **C2 & Sömürü (💀)** | C2 Dinleyici | Magic byte kimlik doğrulamalı çoklu TCP reverse shell sunucusu | Hayır | Linux/Win | `c2_listener` handler |
+| | C2 Payload Üretici | Tek tıkla reverse shell payload'ları (Python/Bash/NC/PHP/Ruby/Perl/PS) | Hayır | Linux/Win | `c2_listener` handler |
+| | Oto Post-Exploitation | Zombie otomatik keşif (whoami/netstat/ps/SUID taraması) | Hayır | Özel | `_auto_enum_zombie` |
+| | Beacon Implant | AES-Fernet + uyku/jitter ile şifreli HTTP/HTTPS beacon | Evet | Linux/Win | `beacon_handler` |
+| **Payload & Atlatma (🔐)** | MSF Payload Crafter | msfvenom çoklu platform payload üretimi (EXE/ELF/APK) | Evet | Linux/Win | `msf_handler` |
+| | Shellcode Crypter | AES-256-CBC / XOR / Polimorfik şifreleme, C/Python/PS loader | Evet | Linux/Win | `evasion_crafter` handler |
+| **Takım Operasyonları (👥)** | Team Server | Flask-SocketIO çok kullanıcılı işbirliği, gerçek zamanlı olaylar | Hayır | Linux/Win | `team_server` handler |
+| | Takım Sohbeti | Mesaj geçmişi ile ortak operatör sohbeti | Hayır | Linux/Win | `team_server` handler |
+| **Saldırı Grafı (🕸️)** | Attack Graph | Otomatik popülasyonlu interaktif canvas tabanlı zafiyet haritası | Hayır | Linux/Win | `attack_graph` handler |
 | **Sistem İşlemleri (⚙️)** | Sync All Runes | Yerel araç depolarını (Github) güncel sürümlerle senkronize etme | Hayır | Özel | `update_modules` handler |
 
 ---
@@ -378,6 +510,62 @@ Yggdrasil, **Ollama** ile çalışan, tamamen yerel ve gizlilik odaklı bir yapa
   - Enjeksiyon saldırılarına karşı hedef girdi doğrulaması
 - **Canlı ilerleme paneli:** Animasyonlu adım kartları, faz göstergeleri ve nihai özet ile gerçek zamanlı izleme
 
+### 🚀 V2.0.0 Güncellemeleri — C2, Red Team & Evasion (Temmuz 2026)
+
+#### 🕷️ C2 Komuta ve Kontrol — Reverse Shell Yöneticisi
+- **Çoklu dinleyici TCP sunucusu** — yapılandırılabilir port, bağlantı adresi ve kimlik doğrulama
+- **Magic byte kimlik doğrulaması** (`YGG!`) — yetkisiz TCP bağlantılarını otomatik reddeder
+- **Her zombie için interaktif web terminali** — gerçek zamanlı çıktı akışı
+- **Tek tıkla payload üretici** — Python, Bash, Netcat, PHP, Ruby, Perl, PowerShell reverse shell'leri (auth token gömülü)
+- **Otonom post-exploitation**: Zombie bağlandığında → otomatik `whoami`, `hostname`, `ipconfig/ifconfig`, `netstat`, `ps aux/tasklist` çalıştırır, kullanıcıları/SUID dosyalarını listeler — tüm bulgular Attack Graph'e eklenir
+- **Aktif Zombi Sistemler** paneli — işletim sistemi, IP, hostname, bağlantı süresi
+
+#### 🤖 Otonom Kırmızı Takım AI — Oto-Sömürü Modu
+- **Özel Red Team modu** (`mode: redteam`) ile 15 adımlı otonom operasyon
+- **Tam saldırı zinciri**: nmap TCP taraması → zafiyet tespiti → servis keşfi → SQL servislerinde otomatik `sqlmap` → SSH'de otomatik `hydra` → Nuclei CVE taraması → Exploit-DB araması
+- **Servis parmak izi**: Web, SQL, SSH, SMB servislerini otomatik tespit eder ve uygun sömürü araçlarını seçer
+- **Attack Graph otomatik popülasyon**: Keşfedilen her hedef, port, subdomain ve zafiyet otomatik node olarak eklenir
+
+#### 💣 Metasploit & Payload Crafter Entegrasyonu
+- **msfvenom payload üretimi** — Windows (x64/x86), Linux, Android, macOS ve Web (PHP/Python/Java)
+- **Encoder desteği**: `shikata_ga_nai`, `xor`, `powershell_base64` — yapılandırılabilir iterasyon
+- **Bağımsız yedek mod** — msfvenom kurulu olmasa bile çalışan payload üretir
+- **Dahili msfconsole komut çalıştırma** — sıkı komut beyaz listesi güvenlik politikası ile
+
+#### 🔐 Shellcode Crypter & Atlatma Modülü
+- **AES-256-CBC şifreleme** — otomatik üretilen anahtar ve IV ile ham shellcode şifreleme
+- **XOR kodlama** — entropi analizi ve decoder stub üretimi
+- **Polimorfik çok katmanlı stub'lar** (sıkıştırma + XOR + base64) — AV/EDR atlatma için
+- **Loader üreteçleri**: C (Win32 CryptoAPI), Python (ctypes), PowerShell (AesManaged), C# (.NET)
+- **Uyku/gecikme rastgeleleştirme** ve API çağrısı gizleme
+
+#### 📡 HTTP/HTTPS Beacon Implant
+- **Şifreli HTTP haberleşmesi** — Fernet (AES-128-CBC + HMAC) simetrik şifreleme ile
+- **Beacon callback modeli** — yapılandırılabilir uyku aralıkları ve jitter (rastgeleleştirme)
+- **Görev kuyruğu sistemi**: Sunucu görev atar → beacon sorgular ve çalıştırır → şifreli sonuç döner
+- **Bağımsız Python implant** — tek dosya script, PyInstaller ile `.exe` derlemesine uygun
+- **Sunucu tarafı beacon takibi** — canlı durum, sistem bilgisi toplama ve görev geçmişi
+
+#### 👥 Team Server — Çok Kullanıcılı İşbirliği
+- **Flask-SocketIO WebSocket entegrasyonu** — gerçek zamanlı olay yayını
+- **Çok kullanıcı farkındalığı**: Kimler çevrimiçi, katılma/ayrılma bildirimleri, ortak operasyon görünümü
+- **Gerçek zamanlı bildirimler**: Zombie bağlantıları, beacon checkin'leri, tarama başlangıç/bitişleri, graf güncellemeleri
+- **Ortak ekip sohbeti** — mesaj geçmişi ve operatör varlığı ile
+- **Olay abonelik sistemi** — istemciler belirli kanallara abone olabilir (c2, scans, beacons, graph)
+
+#### 🕸️ Interaktif Saldırı Grafı Görselleştirmesi
+- **Canvas tabanlı node grafı** — renk kodlu node tipleri (Hedef, IP, Port, Subdomain, Zafiyet, Exploit)
+- **Tıkla-ekle** ve **sağ tıkla-sil** node etkileşimi
+- **Tarama geçmişinden otomatik popülasyon**: nmap, subfinder, nuclei, nikto çıktılarını ayrıştırarak ağacı oluşturur
+- **Hiyerarşik düzen** — ebeveyn-çocuk ilişkileri ve derinlik hesaplaması (O(1) karmaşıklık)
+- **Yakınlaştırma ve kaydırma desteği** — kalıcı oturum tabanlı graf depolama
+
+#### Kararlılık Düzeltmeleri (Temmuz 2026)
+- **INVALID TARGET hatası düzeltildi**: `https://` ön eki ve path'ler otomatik temizleniyor, nokta ve tire içeren domain'ler kabul ediliyor
+- **JSON.parse çökme döngüsü düzeltildi**: Fetch wrapper sağlam hata yönetimiyle yeniden yazıldı — tüm sunucu cevapları güvenle işleniyor
+- **API'lerde 429 rate limiting kaldırıldı**: Flask-Limiter tüm API route'larından çıkarıldı; sadece login'de IP tabanlı manuel koruma aktif (dakikada 5 deneme)
+- **Artık process engellemesi düzeltildi**: Port 5000'deki eski sunucu process'leri başlangıçta tespit edilip sonlandırılıyor
+
 ### 🚀 V2.0.0 Güncellemeleri & Arayüz Yenilenmesi (Haziran 2026)
 - **Gelişmiş Aksiyon Çubuğu:** Ana operasyon menüsü CSS Grid yapısı kullanılarak, merkezi çalışma alanı kontrolleri eklenecek şekilde tamamen baştan yazıldı.
 - **Acil Durum Kesici & Alanı Sıfırla (☠️ / 🧹):** Çalışan tüm asenkron Python işlemlerini (`psutil` recursive kill) anında öldüren "Kill Switch" ve arayüzü, hedef geçmişini, Valkyrie haritasını tamamen temizleyen yeni butonlar eklendi.
@@ -433,6 +621,64 @@ python app.py
 2. **Adım 2**: Sol kısımdaki kategorilerden belirli bir "Rune" (Araç) seçin.
 3. **Adım 3**: Sistemdeki genel durumu "Status Bar" üzerinden, aktif süreç ve çıktıları ise "Output Area" (Terminal) üzerinden izleyin.
 4. **Adım 4**: İşlem tamamlandığında, bulgularınızı güvenli bir şekilde saklamak için "Artifact Export" butonlarını kullanın.
+
+---
+
+### Antivirüs Uyarısı — Windows Defender ve Yanlış Pozitifler (False Positives)
+
+Bu bir **sızma testi (pentest) ve ofansif güvenlik framework'üdür**. Reverse shell üreten, zararlı yazılım (payload) oluşturan, shellcode şifreleyen, paket enjekte eden ve C2 (Command & Control) bağlantılarını yöneten araçlar içerir. Bunlar meşru güvenlik test araçlarıdır, ancak **antivirüs yazılımları bunları zararlı olarak işaretleyecektir**.
+
+#### Neden Oluyor?
+
+Antivirüs motorları imza tabanlı (signature-based) tespit kullanır. Bu framework'ün içerdikleri:
+- **Reverse shell payload'ları** (Python, Bash, PowerShell, Netcat tek satırlıkları) — bilinen RAT (Uzaktan Erişim Truva Atı) kalıplarıyla eşleşir
+- **msfvenom zararlı yazılım üretimi** — gerçek zararlı yazılımların kullandığı payload'ların aynısını üretir
+- **Shellcode şifreleme ve loader taslakları** (AES, XOR, polimorfik) — kripto-zararlı yazılım davranışıyla eşleşir
+- **Paket enjeksiyonu ve ARP zehirleme betikleri** — ağ saldırısı imzalarıyla eşleşir
+- **Runes/ altındaki derlenmiş binary'ler** (Fenrir hash kırıcı, SYN tarayıcı) — imzasız, düşük yaygınlıklı çalıştırılabilir dosyalar
+- **Zombie yönetimli C2 dinleyici** — C2 framework kalıplarıyla eşleşir (Cobalt Strike, Sliver vb.)
+
+Bu, herhangi bir güvenlik araç seti için beklenen bir durumdur (Metasploit, Empire, Covenant, Mythic aynı uyarıları tetikler).
+
+#### Nasıl Düzeltilir — Hariç Tutma (Exclusion) Ekleme
+
+**Windows Defender (Windows 10/11):**
+1. **Windows Güvenliği** → **Virüs ve tehdit koruması**'nı açın
+2. "Virüs ve tehdit koruması ayarları" altında **Ayarları yönet**'e tıklayın
+3. Aşağı kaydırın → **Hariç Tutmalar** → **Hariç tutma ekle veya kaldır**'a tıklayın
+4. **Hariç tutma ekle** → **Klasör**'ü seçin
+5. Şu konuma gidin ve seçin: `C:\Users\<kullanıcı-adınız>\Desktop\Yggdrasil-Security-Framework`
+6. **Klasör seç**'e tıklayın — tüm proje dizini artık hariç tutuluyor
+
+**Alternatif — PowerShell (Yönetici olarak):**
+```powershell
+Add-MpPreference -ExclusionPath "C:\Users\$env:USERNAME\Desktop\Yggdrasil-Security-Framework"
+```
+
+**Üçüncü parti AV (Kaspersky, Bitdefender, Malwarebytes, Norton, ESET vb.):**
+- AV uygulamanızı açın → **Ayarlar** → **Hariç Tutmalar** veya **Beyaz Liste**
+- Proje klasörünü hariç tutma listesine ekleyin
+- Dosyalar zaten karantinaya alındıysa: **Karantina/Tehdit Geçmişi**'ne gidin → Dosyaları **Geri Yükle**yin → ardından hariç tutma ekleyin
+
+#### Hangi Dosyalar İşaretlenir (Ve Neden Zararsızdır)
+
+| Dosya/Modül | AV Neden İşaretler | Aslında Ne Yapar |
+|---|---|---|
+| `handlers/c2_listener.py` | Reverse shell sunucusu, payload üretici | Yetkili pentest için eğitim amaçlı C2 framework'ü |
+| `handlers/msf_handler.py` | msfvenom sarmalayıcı, zararlı yazılım üretimi | Yetkili sömürü için payload oluşturma |
+| `handlers/evasion_crafter.py` | Shellcode şifreleme, AV atlatma taslakları | Savunma amaçlı AV atlatma eğitimi |
+| `handlers/beacon_handler.py` | HTTP beacon implant üretici | Red team'ler için C2 haberleşme araştırması |
+| `handlers/agent_loop.py` | Otonom saldırı karar motoru | İzinli otomatik pentest iş akışı |
+| `Runes/fenrir-hash-cracker/` | Parola hash kırıcı (CPU/GPU) | Parola güvenliği denetim aracı |
+| `Runes/packet-injector/` | Raw socket paket üretici | Ağ güvenliği testi ve araştırma |
+| `Runes/Advanced-SYN-Scanner/` | Özel SYN port tarayıcı | Yetkili ağ keşif değerlendirmeleri |
+| `generated_payloads/` | Üretilmiş `.exe`/`.elf`/`.apk` dosyalarını içerir | Payload Crafter modülünün çıktısı |
+
+#### Önemli Notlar
+- **Bu framework'ü antivirüs hariç tutması olmadan asla çalıştırmayın** — dosyalar çalışma sırasında sessizce karantinaya alınacaktır
+- **Framework'ün kendi kodu açık kaynaktır** — her dosya insan tarafından okunabilir Python, JavaScript, HTML ve CSS'den oluşur. Hiçbir şey gizlenmiş veya şifrelenmiş değildir
+- **Üretilen payload'lar yalnızca yetkili hedefler içindir** — yetkin herhangi bir AV/EDR tarafından tespit edileceklerdir. Bunlar kavram kanıtlama (PoC) araçlarıdır, üretim seviyesi atlatma implantları değildir
+- **Uyarı görürseniz**: Panik yapmayın. Bu normaldir. Hariç tutmayı ekleyin, karantinaya alınan dosyaları geri yükleyin ve devam edin
 
 ---
 

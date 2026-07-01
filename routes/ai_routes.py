@@ -140,12 +140,12 @@ def ai_report_html():
 @ai_bp.route('/api/agent/start', methods=['POST'])
 @login_required
 def agent_start():
-    """Start an autonomous ReAct agent session on a target."""
     data = request.get_json()
     target = data.get('target', '')
+    mode = data.get('mode', 'recon')
     if not target:
         return jsonify({'status': 'error', 'message': 'Target is required.'})
-    result = start_agent(target)
+    result = start_agent(target, mode)
     return jsonify(result)
 
 @ai_bp.route('/api/agent/status', methods=['GET'])

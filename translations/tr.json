@@ -22,6 +22,11 @@
   "rune_bifrost": "[ ᛒ ] BIFROST GATEWAY",
   "sys_ops": "[ ᛊ ] SİSTEM İŞLEMLERİ",
   "ai_ops": "[ 👁️ ] YAPAY ZEKA OTONOMİ",
+  "cat_exploitation": "[ 💀 ] İSTİSMAR & C2",
+  "btn_c2_shell": "C2 REVERSE SHELL",
+  "btn_payload_crafter": "PAYLOAD OLUŞTURUCU",
+  "btn_auto_red_team": "OTONOM RED TEAM",
+  "btn_attack_graph": "SALDIRI HARİTASI",
   "dep_manager": "[ ᛈ ] BAĞIMLILIK YÖNETİCİSİ",
   "architect": "ᛗ SİSTEM MİMARI ᛗ",
   "save_log": "ᛈ LOGU KAYDET (.TXT)",
@@ -161,5 +166,7 @@
   "gtfobins_title": "🕵️‍♂️ GTFOBINS CANLI ARAMA",
   "gtfobins_desc": "Unix/Windows araçlarını kullanarak Yetki Yükseltme (PrivEsc) zafiyetleri için canlı GTFOBins veritabanında arama yapın.",
   "gtfobins_placeholder": "Bir araç ismi aratın (örn: sudo, tar, awk)...",
-  "gtfobins_btn_search": "ARA"
+  "gtfobins_btn_search": "ARA",
+  "Otonom Kirmizi Takim (Red Team)": "Otonom Kırmızı Takım (Red Team)",
+  "Saldiri Haritasi (Attack Graph)": "Saldırı Haritası (Attack Graph)"
 }

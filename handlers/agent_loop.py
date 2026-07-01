@@ -1,9 +1,3 @@
-"""
-Odin Autonomous Agent — ReAct (Reasoning + Acting) Loop
-Odin plans strategy, executes Yggdrasil tools, parses output via Heimdall,
-and iterates until the mission is complete or safety limits are reached.
-Runs in a background thread. Frontend polls /api/agent/status for live updates.
-"""
 import json
 import time
 import threading
@@ -13,6 +7,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from tools_config import TOOLS_CONFIG
 MAX_STEPS = 8
+REDTEAM_MAX_STEPS = 15
 SCOPE_WARNING_STEPS = 6
 ACTIVE_SESSIONS = {}
 ALLOWED_TOOLS = [
@@ -27,14 +22,14 @@ ESCALATION_TOOLS = [
     "hydra", "sqlmap", "commix", "wpscan", "wapiti",
     "fenrir", "erebus",
 ]
+REDTEAM_TOOLS = [
+    "sqlmap", "hydra", "commix", "nuclei", "searchsploit",
+    "nmap_vuln", "nmap_vulners", "nikto", "dirb", "gobuster_dns",
+    "wpscan", "wapiti",
+]
 def _get_tool_config(tool_key):
-    """Get tool config from TOOLS_CONFIG with safe default."""
     return TOOLS_CONFIG.get(tool_key, {})
 def _run_tool_direct(tool_key, target, extra_data=None):
-    """
-    Execute a Yggdrasil tool directly (synchronous, for agent use).
-    Uses the same execution path as app.py's execute_tool.
-    """
     import subprocess
     import platform
     import shlex
@@ -73,10 +68,6 @@ def _run_tool_direct(tool_key, target, extra_data=None):
             return f"Execution Error: {str(e)}"
     return f"Error: Unsupported tool type '{tool_type}'"
 def _odin_decide(session):
-    """
-    Ask Odin (LLM) to decide the next action based on current state.
-    Falls back to rule-based decisions if Ollama is unavailable.
-    """
     from handlers.ai_engine import chat_completion, _check_ollama
     ok, models = _check_ollama()
     if not ok or not models:
@@ -129,11 +120,15 @@ If the mission is complete or you have enough information:
         pass
     return _fallback_decide(session)
 def _fallback_decide(session):
-    """Rule-based fallback when Ollama is unavailable."""
     steps = session["steps"]
     target = session["target"]
     step_count = len(steps)
+    mode = session.get("mode", "recon")
     is_ip = any(c.isdigit() for c in target.replace(".", "")[:4]) and "." in target
+
+    if mode == "redteam":
+        return _redteam_decide(session, steps, target, step_count, is_ip)
+
     if step_count == 0:
         if is_ip:
             return {"action": "RUN", "tool": "nmap", "target": target,
@@ -168,22 +163,130 @@ def _fallback_decide(session):
                     "reasoning": "SSH detected. Grabbing detailed service banners for version fingerprinting."}
         return {"action": "DONE", "summary": (
             f"Completed {step_count+1} steps of automated reconnaissance on {target}. "
-            "Review the findings in the terminal windows. "
-            "Recommend manual verification of discovered services and potential exploitation of identified vulnerabilities."
+            "Review the findings in the terminal windows."
         )}
     if step_count >= 4:
         all_output = " ".join(s.get("output", "") for s in steps).lower()
         if "critical" in all_output or "vulnerability" in all_output:
             return {"action": "DONE", "summary": (
                 f"Autonomous scan complete after {step_count+1} steps on {target}. "
-                "Vulnerabilities detected — review terminal output and consider exploitation phase."
+                "Vulnerabilities detected."
             )}
     return {"action": "DONE", "summary": (
-        f"Mission complete after {step_count+1} automated steps on {target}. "
-        "All scan results are available in the terminal windows for manual review."
+        f"Mission complete after {step_count+1} automated steps on {target}."
+    )}
+
+
+def _redteam_decide(session, steps, target, step_count, is_ip):
+    REDTEAM_STEPS = REDTEAM_MAX_STEPS
+
+    if step_count == 0:
+        if is_ip:
+            return {"action": "RUN", "tool": "nmap_tcp", "target": target,
+                    "reasoning": "[REDTEAM] Full TCP port scan to map entire attack surface."}
+
+    if step_count == 1:
+        output = steps[-1].get("output", "").lower()
+        web_ports = [p for p in ["80/tcp", "443/tcp", "8080/tcp", "8443/tcp", "3000/tcp", "5000/tcp", "8000/tcp", "8888/tcp"] if p in output]
+        if web_ports:
+            session["discovered"] = session.get("discovered", {})
+            session["discovered"]["web_ports"] = web_ports
+        return {"action": "RUN", "tool": "nmap_vuln", "target": target,
+                "reasoning": "[REDTEAM] Vulnerability scan on all discovered services."}
+
+    if step_count == 2:
+        output = " ".join(s.get("output", "") for s in steps).lower()
+        has_web = any(p in output for p in ["80/tcp", "443/tcp", "8080/tcp", "http"])
+        if has_web:
+            session["discovered"] = session.get("discovered", {})
+            session["discovered"]["has_web"] = True
+            return {"action": "RUN", "tool": "nikto", "target": target,
+                    "reasoning": "[REDTEAM] Web server detected. Running Nikto for web vulns."}
+        return {"action": "RUN", "tool": "nuclei", "target": target,
+                "reasoning": "[REDTEAM] Running Nuclei for comprehensive CVE detection."}
+
+    if step_count == 3:
+        has_web = session.get("discovered", {}).get("has_web", False)
+        if has_web:
+            return {"action": "RUN", "tool": "gobuster_dns", "target": target,
+                    "reasoning": "[REDTEAM] DNS brute-force for hidden subdomains."}
+        return {"action": "RUN", "tool": "nuclei", "target": target,
+                "reasoning": "[REDTEAM] Running Nuclei templates."}
+
+    if step_count == 4:
+        has_web = session.get("discovered", {}).get("has_web", False)
+        if has_web:
+            return {"action": "RUN", "tool": "dirb", "target": target,
+                    "reasoning": "[REDTEAM] Directory enumeration on web server."}
+        return {"action": "RUN", "tool": "searchsploit", "target": target,
+                "reasoning": "[REDTEAM] Searching Exploit-DB for known exploits."}
+
+    if step_count == 5:
+        output = " ".join(s.get("output", "") for s in steps).lower()
+        has_web = session.get("discovered", {}).get("has_web", False)
+        has_sql = any(kw in output for kw in ["sql", "mysql", "postgresql", "mariadb", "oracle", "mssql", "3306/tcp", "1433/tcp", "5432/tcp"])
+        has_ssh = "22/tcp" in output or "ssh" in output
+        has_smb = "445/tcp" in output or "smb" in output
+
+        if has_sql and has_web:
+            session["discovered"]["has_sql"] = True
+            return {"action": "RUN", "tool": "sqlmap", "target": target,
+                    "reasoning": "[REDTEAM] SQL service and web detected. Launching SQLMap for SQLi."}
+
+        if has_ssh:
+            session["discovered"]["has_ssh"] = True
+
+        if has_smb:
+            session["discovered"]["has_smb"] = True
+
+        return {"action": "RUN", "tool": "nuclei", "target": target,
+                "reasoning": "[REDTEAM] Additional Nuclei scan with all templates."}
+
+    if step_count in (6, 7):
+        has_ssh = session.get("discovered", {}).get("has_ssh", False)
+        has_smb = session.get("discovered", {}).get("has_smb", False)
+        has_sql = session.get("discovered", {}).get("has_sql", False)
+
+        if has_sql and step_count == 6:
+            return {"action": "RUN", "tool": "sqlmap", "target": target,
+                    "reasoning": "[REDTEAM] Deep SQLMap scan with --dbs enumeration."}
+
+        if has_ssh and step_count == 6:
+            session["discovered"]["hydra_on_ssh"] = True
+            return {"action": "RUN", "tool": "hydra", "target": target,
+                    "reasoning": "[REDTEAM] Initiating Hydra brute-force on SSH."}
+
+        if has_smb and step_count == 7:
+            return {"action": "RUN", "tool": "nmap_vuln", "target": target,
+                    "reasoning": "[REDTEAM] Deep SMB vulnerability scan for EternalBlue and related exploits."}
+
+        return {"action": "RUN", "tool": "nuclei", "target": target,
+                "reasoning": "[REDTEAM] Running comprehensive vulnerability assessment."}
+
+    if step_count >= 8:
+        all_output = " ".join(s.get("output", "") for s in steps).lower()
+        vuln_indicators = ["critical", "cve-", "exploit", "vulnerable", "sql injection", "xss", "rce", "lfi", "bypass"]
+        found_vulns = [v for v in vuln_indicators if v in all_output]
+
+        if found_vulns:
+            session["discovered"] = session.get("discovered", {})
+            session["discovered"]["confirmed_vulns"] = found_vulns
+            if step_count < REDTEAM_STEPS - 2:
+                return {"action": "RUN", "tool": "searchsploit", "target": target,
+                        "reasoning": f"[REDTEAM] Found: {', '.join(found_vulns[:3])}. Searching for exploit code."}
+
+        if step_count < REDTEAM_STEPS - 2:
+            return {"action": "RUN", "tool": "nuclei", "target": target,
+                    "reasoning": "[REDTEAM] Continuing deep scan for additional vulnerabilities."}
+
+    return {"action": "DONE", "summary": (
+        f"[REDTEAM] Autonomous operation complete on {target}. "
+        f"Ran {step_count+1} steps. "
+        + ("Vulnerabilities found: " + ", ".join(session.get("discovered", {}).get("confirmed_vulns", [])) + ". "
+           if session.get("discovered", {}).get("confirmed_vulns") else "No critical vulnerabilities confirmed. ")
+        + "Review all terminal outputs and attack graph for details."
     )}
 def _parse_step_output(output, tool_name):
-    """Try to get a quick summary of tool output (lightweight, no LLM needed)."""
     if not output:
         return "No output"
     lines = output.strip().split("\n")
@@ -209,22 +312,22 @@ def _parse_step_output(output, tool_name):
     meaningful = [l for l in lines if len(l.strip()) > 10][:3]
     summary = " | ".join(meaningful) if meaningful else "Output received"
     return summary[:200]
-def run_agent_loop(session_id, target):
-    """
-    Main ReAct loop. Runs in background thread.
-    Thought → Action → Observation → Thought → ...
-    """
+def run_agent_loop(session_id, target, mode="recon"):
+    max_steps = REDTEAM_MAX_STEPS if mode == "redteam" else MAX_STEPS
     session = {
         "id": session_id,
         "target": target,
         "status": "running",
+        "mode": mode,
         "steps": [],
         "started_at": time.time(),
-        "final_summary": ""
+        "final_summary": "",
+        "discovered": {}
     }
     ACTIVE_SESSIONS[session_id] = session
+    allowed = ALLOWED_TOOLS + (REDTEAM_TOOLS if mode == "redteam" else []) + ESCALATION_TOOLS
     try:
-        while len(session["steps"]) < MAX_STEPS:
+        while len(session["steps"]) < max_steps:
             if session.get("status") != "running":
                 return
             session["current_phase"] = "thinking"
@@ -233,6 +336,7 @@ def run_agent_loop(session_id, target):
                 session["status"] = "completed"
                 session["final_summary"] = decision.get("summary", "Mission complete.")
                 session["current_phase"] = "done"
+                _auto_populate_graph(target, session)
                 return
             if decision.get("action") != "RUN":
                 session["status"] = "completed"
@@ -241,7 +345,7 @@ def run_agent_loop(session_id, target):
                 return
             tool_key = decision.get("tool", "")
             reasoning = decision.get("reasoning", "")
-            if tool_key not in ALLOWED_TOOLS and tool_key not in ESCALATION_TOOLS:
+            if tool_key not in allowed and tool_key not in ESCALATION_TOOLS:
                 session["steps"].append({
                     "step": len(session["steps"]) + 1,
                     "tool": tool_key,
@@ -265,29 +369,42 @@ def run_agent_loop(session_id, target):
             try:
                 output = _run_tool_direct(tool_key, target)
                 step["status"] = "completed"
-                step["output"] = output[:5000]  # Keep storage manageable
+                step["output"] = output[:5000]
             except Exception as e:
                 step["status"] = "error"
                 step["output"] = f"Error: {str(e)}"
             session["current_phase"] = "observing"
             step["summary"] = _parse_step_output(step.get("output", ""), tool_key)
-            if len(session["steps"]) >= SCOPE_WARNING_STEPS:
+            scope_limit = max_steps - 2
+            if len(session["steps"]) >= scope_limit:
                 session["scope_warning"] = (
-                    f"Approaching safety limit ({MAX_STEPS} steps). "
+                    f"Approaching safety limit ({max_steps} steps). "
                     "Agent will complete soon."
                 )
         session["status"] = "completed"
         session["final_summary"] = (
-            f"Maximum steps ({MAX_STEPS}) reached for autonomous scan on {target}. "
+            f"Maximum steps ({max_steps}) reached for autonomous scan on {target}. "
             "Review all terminal outputs for findings."
         )
         session["current_phase"] = "done"
+        _auto_populate_graph(target, session)
     except Exception as e:
         session["status"] = "error"
         session["final_summary"] = f"Agent error: {str(e)}"
         session["current_phase"] = "error"
-def start_agent(target):
-    """Start an autonomous agent session. Returns session_id."""
+
+
+def _auto_populate_graph(target, session):
+    try:
+        from handlers.attack_graph import auto_populate_from_scans
+        mode = session.get("mode", "recon")
+        sid = "redteam_" + session.get("id", "anon") if mode == "redteam" else "recon_" + session.get("id", "anon")
+        auto_populate_from_scans(target, sid)
+    except Exception:
+        pass
+
+
+def start_agent(target, mode="recon"):
     import uuid
     session_id = str(uuid.uuid4())[:8]
     if not target or len(target.strip()) < 2:
@@ -302,36 +419,45 @@ def start_agent(target):
     import re as _re
     if not _re.match(r'^[\w\.\-\:\@]+$', target):
         return {"status": "error", "message": "Invalid target format. Banned characters detected."}
+
+    if mode == "redteam":
+        from handlers.attack_graph import add_graph_node
+        add_graph_node(target, "target", parent_id=None, data={"type": "redteam_root"}, session_id="redteam_" + session_id)
+
+    max_steps = REDTEAM_MAX_STEPS if mode == "redteam" else MAX_STEPS
     thread = threading.Thread(
         target=run_agent_loop,
-        args=(session_id, target),
+        args=(session_id, target, mode),
         daemon=True
     )
     thread.start()
     return {
         "status": "success",
         "session_id": session_id,
-        "message": f"Autonomous agent started on {target}. Max {MAX_STEPS} steps.",
-        "max_steps": MAX_STEPS
+        "message": f"Autonomous agent started on {target}. Max {max_steps} steps. Mode: {mode}.",
+        "max_steps": max_steps,
+        "mode": mode
     }
 def get_agent_status(session_id):
-    """Get current state of an agent session."""
     session = ACTIVE_SESSIONS.get(session_id)
     if not session:
         return {"status": "error", "message": "Session not found."}
+    mode = session.get("mode", "recon")
     return {
         "status": "success",
         "session": {
             "id": session["id"],
             "target": session["target"],
             "status": session["status"],
+            "mode": mode,
             "current_phase": session.get("current_phase", ""),
             "current_tool": session.get("current_tool", ""),
             "current_step": session.get("current_step", 0),
             "total_steps": len(session.get("steps", [])),
-            "max_steps": MAX_STEPS,
+            "max_steps": REDTEAM_MAX_STEPS if mode == "redteam" else MAX_STEPS,
             "final_summary": session.get("final_summary", ""),
             "scope_warning": session.get("scope_warning", ""),
+            "discovered": session.get("discovered", {}),
             "steps": [
                 {
                     "step": s["step"],
@@ -346,7 +472,6 @@ def get_agent_status(session_id):
         }
     }
 def stop_agent(session_id):
-    """Force-stop a running agent session."""
     session = ACTIVE_SESSIONS.get(session_id)
     if not session:
         return {"status": "error", "message": "Session not found."}
@@ -357,7 +482,6 @@ def stop_agent(session_id):
     session["current_phase"] = "stopped"
     return {"status": "success", "message": f"Session {session_id} stopped."}
 def list_agent_sessions():
-    """List all agent sessions (active and completed)."""
     return {
         "status": "success",
         "sessions": [

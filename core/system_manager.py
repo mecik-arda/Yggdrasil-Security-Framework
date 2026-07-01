@@ -267,7 +267,12 @@ import re
 def validate_target(target):
     if not target:
         return True
-    pattern = r'^[\w\.\-\:\@]+$'
+    if target.startswith("http://") or target.startswith("https://"):
+        target = target.split("://", 1)[1]
+    if "/" in target:
+        target = target.split("/", 1)[0]
+    target = target.split(":")[0] if ":" in target and not target.count(":") > 1 else target
+    pattern = r'^[\w\.\-]+(:\d+)?$'
     if not re.match(pattern, target):
         return False
     return True

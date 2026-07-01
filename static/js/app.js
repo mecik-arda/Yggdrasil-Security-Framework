@@ -7,29 +7,41 @@ const originalFetch = window.fetch;
                 config.headers['X-CSRFToken'] = window.csrfToken;
             }
             const res = await originalFetch(resource, config);
-            if (resource === '/api/action') {
-                const clone = res.clone();
+            if (resource === '/api/action' || resource === '/api/action' && resource.indexOf('/api/') === 0) {
+                if (!res.ok) {
+                    return new Response(JSON.stringify({status: 'error', message: 'Server returned ' + res.status}), {status: 200, headers: {'Content-Type': 'application/json'}});
+                }
                 try {
-                    const data = await clone.json();
+                    const text = await res.text();
+                    let data;
+                    try { data = JSON.parse(text); } catch(e) { data = {status: 'error', message: 'Invalid server response'}; }
                     if (data.status === 'pending' && data.task_id) {
                         const taskId = data.task_id;
                         const scanInfo = { ...window._lastScanRequest };
                         while (true) {
                             await new Promise(r => setTimeout(r, 1000));
-                            const pollRes = await originalFetch('/api/task_status?task_id=' + taskId);
-                            const pollData = await pollRes.json();
-                            if (pollData.status !== 'running') {
-                                if (pollData.status === 'success' && pollData.output && pollData.output.trim()) {
-                                    autoAnalyzeScan(pollData.output, scanInfo.tool || 'unknown', scanInfo.target || '');
+                            try {
+                                const pollRes = await originalFetch('/api/task_status?task_id=' + taskId);
+                                if (!pollRes.ok) {
+                                    return new Response(JSON.stringify({status: 'error', message: 'Task polling failed (HTTP ' + pollRes.status + ')'}), {status: 200, headers: {'Content-Type': 'application/json'}});
                                 }
-                                return new Response(JSON.stringify(pollData), {
-                                    status: 200,
-                                    headers: { 'Content-Type': 'application/json' }
-                                });
+                                const pollText = await pollRes.text();
+                                const pollData = (function(t) { try { return JSON.parse(t); } catch(e) { return {status: 'error', message: 'Invalid server response'}; } })(pollText);
+                                if (pollData.status !== 'running') {
+                                    if (pollData.status === 'success' && pollData.output && pollData.output.trim()) {
+                                        try { autoAnalyzeScan(pollData.output, scanInfo.tool || 'unknown', scanInfo.target || ''); } catch(e) {}
+                                    }
+                                    return new Response(JSON.stringify(pollData), {status: 200, headers: {'Content-Type': 'application/json'}});
+                                }
+                            } catch(pollErr) {
+                                return new Response(JSON.stringify({status: 'error', message: 'Poll error: ' + pollErr.message}), {status: 200, headers: {'Content-Type': 'application/json'}});
                             }
                         }
                     }
-                } catch(e) { }
+                    return new Response(JSON.stringify(data), {status: 200, headers: {'Content-Type': 'application/json'}});
+                } catch(e) {
+                    return new Response(JSON.stringify({status: 'error', message: 'Request failed: ' + e.message}), {status: 200, headers: {'Content-Type': 'application/json'}});
+                }
             }
             return res;
         };
@@ -2659,7 +2671,7 @@ const originalFetch = window.fetch;
             const query = document.getElementById('gtfobinsSearch').value.toLowerCase().trim();
             const resultsDiv = document.getElementById('gtfobinsResults');
             if(!query) return;
-            
+
             resultsDiv.innerHTML = '<span style="color:#ebcb8b;">Connecting to GTFOBins Live...</span>';
             try {
                 const res = await fetch('/api/rag/fetch', { method: 'POST' });
@@ -2667,7 +2679,7 @@ const originalFetch = window.fetch;
                 if(data.status === 'success' && data.data && data.data[query]) {
                     const info = data.data[query];
                     let html = `<h3 style="color:#d08770; margin-top:0;">${query}</h3>`;
-                    
+
                     for(const [funcName, funcData] of Object.entries(info)) {
                         html += `<div style="margin-bottom: 15px; border-left: 2px solid #d08770; padding-left: 10px;">
                                     <h4 style="color:#ebcb8b; margin: 0 0 5px 0;">${funcName}</h4>`;
@@ -2686,4 +2698,443 @@ const originalFetch = window.fetch;
             } catch(e) {
                 resultsDiv.innerHTML = `<span style="color:#bf616a;">Connection error.</span>`;
             }
-        }
+        }
+
+        window._c2SelectedZombie = null;
+        window._c2PollInterval = null;
+        window._c2OutputIndex = 0;
+
+        function openC2Modal() {
+            document.getElementById('c2Modal').style.display = 'block';
+            refreshC2Listeners();
+            refreshC2Zombies();
+            window._c2PollInterval = setInterval(refreshC2All, 3000);
+        }
+
+        function closeC2Modal() {
+            document.getElementById('c2Modal').style.display = 'none';
+            if (window._c2PollInterval) { clearInterval(window._c2PollInterval); window._c2PollInterval = null; }
+        }
+
+        function refreshC2All() {
+            refreshC2Listeners();
+            refreshC2Zombies();
+            if (window._c2SelectedZombie) { refreshC2Terminal(window._c2SelectedZombie); }
+        }
+
+        async function refreshC2Listeners() {
+            try {
+                const res = await fetch('/api/c2/listeners');
+                const data = await res.json();
+                const container = document.getElementById('c2ListenersList');
+                if (!data.listeners || data.listeners.length === 0) {
+                    container.innerHTML = '<div style="color: var(--text-dim); font-style: italic;">No active listeners</div>';
+                    return;
+                }
+                let html = '';
+                data.listeners.forEach(l => {
+                    const statusColor = l.status === 'running' ? '#4CAF50' : '#bf616a';
+                    html += `<div style="margin-bottom: 4px; padding: 4px; border: 1px solid rgba(255,255,255,0.1); border-radius: 3px;">
+                        <span style="color: ${statusColor};">●</span> <b>${escapeHtml(l.name)}</b> :${l.port}
+                        <span style="color: var(--text-dim); font-size: 9px;">(${l.zombie_count} zombies)</span>
+                        ${l.status === 'running' ? `<button onclick="stopC2Listener('${l.id}')" style="float:right; font-size: 9px; padding: 1px 5px; border-color: #bf616a; color: #bf616a;">STOP</button>` : ''}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch(e) {}
+        }
+
+        async function refreshC2Zombies() {
+            try {
+                const res = await fetch('/api/c2/zombies');
+                const data = await res.json();
+                const container = document.getElementById('c2ZombiesList');
+                if (!data.zombies || data.zombies.length === 0) {
+                    container.innerHTML = '<div style="color: var(--text-dim); font-style: italic;">No zombies connected</div>';
+                    return;
+                }
+                let html = '';
+                data.zombies.forEach(z => {
+                    const isSelected = window._c2SelectedZombie === z.id;
+                    const bg = isSelected ? 'rgba(136,192,208,0.15)' : 'transparent';
+                    html += `<div onclick="selectC2Zombie('${z.id}')" style="cursor:pointer; margin-bottom: 4px; padding: 6px; border: 1px solid ${isSelected ? '#88c0d0' : 'rgba(191,97,106,0.3)'}; border-radius: 3px; background: ${bg};">
+                        <span style="color: #bf616a;">●</span> <b>${escapeHtml(z.addr)}</b>
+                        <div style="font-size: 9px; color: var(--text-dim);">${z.os_type} | ${z.hostname}</div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch(e) {}
+        }
+
+        async function startC2Listener() {
+            const port = document.getElementById('c2ListenerPort').value;
+            const name = document.getElementById('c2ListenerName').value || 'Listener';
+            try {
+                const res = await fetch('/api/c2/listener/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ port: parseInt(port), name: name })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    setStatus(`C2 Listener started on port ${data.port}`, 'success');
+                    refreshC2Listeners();
+                } else {
+                    setStatus(data.message, 'error');
+                }
+            } catch(e) {
+                setStatus('Failed to start listener', 'error');
+            }
+        }
+
+        async function stopC2Listener(listenerId) {
+            try {
+                await fetch('/api/c2/listener/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ listener_id: listenerId })
+                });
+                refreshC2Listeners();
+                refreshC2Zombies();
+            } catch(e) {}
+        }
+
+        function selectC2Zombie(zombieId) {
+            window._c2SelectedZombie = zombieId;
+            window._c2OutputIndex = 0;
+            document.getElementById('c2TerminalTitle').textContent = 'Zombie: ' + zombieId;
+            document.getElementById('c2DisconnectBtn').style.display = 'inline-block';
+            document.getElementById('c2Terminal').innerHTML = '';
+            refreshC2Zombies();
+            refreshC2Terminal(zombieId);
+        }
+
+        async function refreshC2Terminal(zombieId) {
+            try {
+                const res = await fetch('/api/c2/zombie/output?zombie_id=' + zombieId + '&since=' + window._c2OutputIndex);
+                const data = await res.json();
+                if (data.status !== 'success') return;
+                const terminal = document.getElementById('c2Terminal');
+                data.output.forEach(o => {
+                    const color = o.type === 'command' ? '#a3be8c' : o.type === 'system' ? '#ebcb8b' : '#c0caf5';
+                    terminal.innerHTML += `<div style="color:${color}; margin:2px 0;">${escapeHtml(o.data)}</div>`;
+                });
+                window._c2OutputIndex = data.total;
+                terminal.scrollTop = terminal.scrollHeight;
+                if (data.zombie_status !== 'connected') {
+                    document.getElementById('c2TerminalTitle').textContent = 'Zombie: ' + zombieId + ' [DISCONNECTED]';
+                }
+            } catch(e) {}
+        }
+
+        async function c2SendCommand() {
+            const input = document.getElementById('c2CommandInput');
+            const cmd = input.value.trim();
+            if (!cmd || !window._c2SelectedZombie) return;
+            input.value = '';
+            try {
+                await fetch('/api/c2/zombie/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ zombie_id: window._c2SelectedZombie, command: cmd })
+                });
+                setTimeout(() => refreshC2Terminal(window._c2SelectedZombie), 500);
+            } catch(e) {}
+        }
+
+        async function c2DisconnectSelected() {
+            if (!window._c2SelectedZombie) return;
+            try {
+                await fetch('/api/c2/zombie/disconnect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ zombie_id: window._c2SelectedZombie })
+                });
+                window._c2SelectedZombie = null;
+                document.getElementById('c2DisconnectBtn').style.display = 'none';
+                document.getElementById('c2TerminalTitle').textContent = 'Select a zombie to interact...';
+                refreshC2Zombies();
+            } catch(e) {}
+        }
+
+        async function generateC2Payload() {
+            const ip = document.getElementById('c2PayloadIP').value.trim();
+            const port = document.getElementById('c2ListenerPort').value;
+            const type = document.getElementById('c2PayloadType').value;
+            if (!ip) { setStatus('Enter your IP address', 'error'); return; }
+            try {
+                const res = await fetch('/api/c2/payload/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ listener_ip: ip, listener_port: parseInt(port), payload_type: type })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const out = document.getElementById('c2PayloadOutput');
+                    out.style.display = 'block';
+                    out.textContent = data.payload;
+                    out.onclick = function() { navigator.clipboard.writeText(data.payload); setStatus('Payload copied!', 'success'); };
+                }
+            } catch(e) {}
+        }
+
+        function openMsfModal() {
+            document.getElementById('msfModal').style.display = 'block';
+        }
+        function closeMsfModal() {
+            document.getElementById('msfModal').style.display = 'none';
+        }
+
+        async function generateMsfPayload() {
+            const platform = document.getElementById('msfPlatform').value;
+            const lhost = document.getElementById('msfLhost').value.trim();
+            const lport = parseInt(document.getElementById('msfLport').value) || 4444;
+            const payloadType = document.getElementById('msfPayloadType').value;
+            const encoder = document.getElementById('msfEncoder').value;
+            const iterations = parseInt(document.getElementById('msfIterations').value) || 0;
+            if (!lhost) { setStatus('Enter LHOST', 'error'); return; }
+            const resultDiv = document.getElementById('msfResult');
+            resultDiv.innerHTML = '<div style="color:#ebcb8b;">Generating payload...</div>';
+            try {
+                const res = await fetch('/api/msf/payload/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ platform, lhost, lport, payload_type: payloadType, encoder, iterations })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `<div style="margin-bottom:10px;"><b>Generated:</b> ${escapeHtml(data.filename)} (${data.size_bytes} bytes)</div>
+                        <pre style="background:rgba(0,0,0,0.5);padding:10px;color:#a3be8c;overflow-x:auto;max-height:200px;">${escapeHtml(data.command)}</pre>
+                        <button onclick="downloadMsfPayload('${data.filename}')" style="margin-top:8px;font-size:11px;border-color:#4CAF50;color:#4CAF50;">Download Payload</button>`;
+                } else {
+                    resultDiv.innerHTML = `<div style="color:#bf616a;">${data.message}</div>`;
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div style="color:#bf616a;">msfvenom not found or error generating payload.</div>';
+            }
+        }
+
+        async function downloadMsfPayload(filename) {
+            try {
+                const res = await fetch('/api/msf/payload/download?filename=' + encodeURIComponent(filename));
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = filename; a.click();
+                    URL.revokeObjectURL(url);
+                }
+            } catch(e) {}
+        }
+
+        async function listMsfSessions() {
+            try {
+                const res = await fetch('/api/msf/sessions');
+                const data = await res.json();
+                const container = document.getElementById('msfSessionsList');
+                if (!data.sessions || data.sessions.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-dim);">No active Meterpreter sessions</div>';
+                    return;
+                }
+                let html = '';
+                data.sessions.forEach(s => {
+                    html += `<div style="padding:4px;border:1px solid rgba(255,255,255,0.1);margin-bottom:3px;">
+                        <span style="color:#4CAF50;">●</span> Session ${s.id}: ${s.type} @ ${s.target_host}</div>`;
+                });
+                container.innerHTML = html;
+            } catch(e) {}
+        }
+
+        async function executeMsfCommand() {
+            const cmd = document.getElementById('msfCommandInput').value.trim();
+            if (!cmd) return;
+            try {
+                const res = await fetch('/api/msf/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: cmd })
+                });
+                const data = await res.json();
+                document.getElementById('msfConsoleOutput').innerHTML +=
+                    `<div style="color:#a3be8c;">$ ${escapeHtml(cmd)}</div><div style="color:#c0caf5;">${escapeHtml(data.output || data.message || '')}</div>`;
+            } catch(e) {}
+        }
+
+        function openAutoExploitPanel() {
+            document.getElementById('autoExploitModal').style.display = 'block';
+        }
+        function closeAutoExploitPanel() {
+            document.getElementById('autoExploitModal').style.display = 'none';
+        }
+
+        async function startAutoExploit() {
+            const target = document.getElementById('autoExploitTarget').value.trim();
+            if (!target) { setStatus('Enter a target IP or domain', 'error'); return; }
+            const logDiv = document.getElementById('autoExploitLog');
+            logDiv.innerHTML = '<div style="color:#ebcb8b;">Odin starting autonomous red team operation...</div>';
+            try {
+                const res = await fetch('/api/agent/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: target, mode: 'redteam' })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    logDiv.innerHTML += `<div style="color:#4CAF50;">Session ${data.session_id} started. Monitoring...</div>`;
+                    window._autoExploitSession = data.session_id;
+                    pollAutoExploit();
+                } else {
+                    logDiv.innerHTML += `<div style="color:#bf616a;">${data.message}</div>`;
+                }
+            } catch(e) {
+                logDiv.innerHTML += '<div style="color:#bf616a;">Failed to start autonomous operation.</div>';
+            }
+        }
+
+        async function pollAutoExploit() {
+            if (!window._autoExploitSession) return;
+            try {
+                const res = await fetch('/api/agent/status?session_id=' + window._autoExploitSession);
+                const data = await res.json();
+                if (data.status === 'success' && data.session) {
+                    const s = data.session;
+                    const logDiv = document.getElementById('autoExploitLog');
+                    if (s.steps) {
+                        s.steps.forEach(step => {
+                            if (!window._seenAutoSteps) window._seenAutoSteps = new Set();
+                            if (!window._seenAutoSteps.has(step.step)) {
+                                window._seenAutoSteps.add(step.step);
+                                logDiv.innerHTML += `<div style="margin:3px 0;padding:4px;border-left:2px solid ${step.status==='completed'?'#4CAF50':'#bf616a'};">
+                                    <b>Step ${step.step}:</b> ${escapeHtml(step.tool)} — ${escapeHtml(step.reasoning||'')}
+                                    <span style="font-size:9px;color:var(--text-dim);">[${step.status}]</span></div>`;
+                            }
+                        });
+                    }
+                    if (s.status !== 'running') {
+                        logDiv.innerHTML += `<div style="color:#ebcb8b;margin-top:10px;"><b>${escapeHtml(s.final_summary||'Operation complete.')}</b></div>`;
+                        window._autoExploitSession = null;
+                        window._seenAutoSteps = null;
+                    } else {
+                        setTimeout(pollAutoExploit, 3000);
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function openAttackGraphModal() {
+            document.getElementById('attackGraphModal').style.display = 'block';
+            renderAttackGraph();
+        }
+        function closeAttackGraphModal() {
+            document.getElementById('attackGraphModal').style.display = 'none';
+        }
+
+        async function renderAttackGraph() {
+            try {
+                const res = await fetch('/api/graph/data');
+                const data = await res.json();
+                const canvas = document.getElementById('attackGraphCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const W = canvas.width = canvas.parentElement.clientWidth || 900;
+                const H = canvas.height = 500;
+                ctx.clearRect(0, 0, W, H);
+                ctx.fillStyle = '#05070a';
+                ctx.fillRect(0, 0, W, H);
+                if (!data.nodes || data.nodes.length === 0) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '16px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No attack graph data. Run scans to populate.', W/2, H/2);
+                    return;
+                }
+                const nodes = data.nodes;
+                const levels = {};
+                nodes.forEach(n => {
+                    const d = n.depth || 0;
+                    if (!levels[d]) levels[d] = [];
+                    levels[d].push(n);
+                });
+                const maxDepth = Math.max(...Object.keys(levels).map(Number), 1);
+                const positions = {};
+                nodes.forEach(n => {
+                    const d = n.depth || 0;
+                    const siblings = levels[d] || [n];
+                    const idx = siblings.indexOf(n);
+                    const x = ((idx + 1) / (siblings.length + 1)) * W;
+                    const y = 60 + (d / Math.max(maxDepth, 1)) * (H - 120);
+                    positions[n.id] = { x, y };
+                });
+                const colors = { target: '#bf616a', ip: '#88c0d0', port: '#a3be8c', vuln: '#ebcb8b', subdomain: '#b48ead', exploit: '#d08770', default: '#81a1c1' };
+                nodes.forEach(n => {
+                    if (n.parent_id && positions[n.parent_id]) {
+                        const p = positions[n.parent_id];
+                        const c = positions[n.id];
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(c.x, c.y);
+                        ctx.strokeStyle = 'rgba(136,192,208,0.2)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                });
+                nodes.forEach(n => {
+                    const p = positions[n.id];
+                    const color = colors[n.node_type] || colors.default;
+                    const r = 18;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(5,7,10,0.9)';
+                    ctx.fill();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 11px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const label = n.label.length > 18 ? n.label.substring(0, 16) + '..' : n.label;
+                    ctx.fillText(label, p.x, p.y);
+                });
+                ctx.fillStyle = '#666';
+                ctx.font = '10px monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText('Click nodes to expand | Right-click to remove', W - 10, H - 10);
+            } catch(e) {}
+        }
+
+        async function addGraphNode() {
+            const label = document.getElementById('graphNodeLabel').value.trim();
+            const type = document.getElementById('graphNodeType').value;
+            const parent = document.getElementById('graphNodeParent').value.trim();
+            if (!label) return;
+            try {
+                await fetch('/api/graph/node/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ label, node_type: type, parent_id: parent || null })
+                });
+                document.getElementById('graphNodeLabel').value = '';
+                renderAttackGraph();
+            } catch(e) {}
+        }
+
+        function resetValkyrieTree() {
+            if (confirm('Reset the attack graph? This cannot be undone.')) {
+                fetch('/api/graph/reset', { method: 'POST' }).then(() => renderAttackGraph());
+            }
+        }
+
+        async function stopAutoExploit() {
+            if (window._autoExploitSession) {
+                try {
+                    await fetch('/api/agent/stop', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: window._autoExploitSession })
+                    });
+                } catch(e) {}
+                window._autoExploitSession = null;
+                document.getElementById('autoExploitLog').innerHTML += '<div style="color:#bf616a;">Operation stopped by user.</div>';
+            }
+        }

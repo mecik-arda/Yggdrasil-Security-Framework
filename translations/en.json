@@ -22,6 +22,11 @@
   "rune_bifrost": "[ ᛒ ] BIFROST GATEWAY",
   "sys_ops": "[ ᛊ ] SYSTEM OPERATIONS",
   "ai_ops": "[ 👁️ ] AI AUTONOMOUS OPS",
+  "cat_exploitation": "[ 💀 ] EXPLOITATION & C2",
+  "btn_c2_shell": "C2 REVERSE SHELL",
+  "btn_payload_crafter": "PAYLOAD CRAFTER",
+  "btn_auto_red_team": "AUTONOMOUS RED TEAM",
+  "btn_attack_graph": "ATTACK GRAPH",
   "dep_manager": "[ ᛈ ] DEPENDENCY MANAGER",
   "architect": "ᛗ ARCHITECT OF THE SYSTEM ᛗ",
   "save_log": "ᛈ SAVE LOG (.TXT)",
@@ -161,5 +166,7 @@
   "gtfobins_title": "🕵️‍♂️ GTFOBINS LIVE SEARCH",
   "gtfobins_desc": "Search live GTFOBins data for Privilege Escalation (PrivEsc) bypasses using Unix/Windows binaries.",
   "gtfobins_placeholder": "Search binary (e.g., sudo, tar, awk)...",
-  "gtfobins_btn_search": "SEARCH"
+  "gtfobins_btn_search": "SEARCH",
+  "Otonom Kirmizi Takim (Red Team)": "Autonomous Red Team",
+  "Saldiri Haritasi (Attack Graph)": "Attack Graph"
 }
