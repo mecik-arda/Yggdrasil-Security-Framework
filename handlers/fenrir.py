@@ -2,6 +2,8 @@ from .utils import run_command_safely
 import os
 import platform
 def handle_fenrir_cracker(target, data):
+    if data is None:
+        data = {}
     hash_mode = data.get('fenrir_hash_mode', 'md5')
     attack_mode = data.get('fenrir_attack_mode', 'dict')
     wordlist = data.get('fenrir_wordlist', '')

@@ -116,6 +116,23 @@ app.register_blueprint(team_bp)
 if SOCKETIO_AVAILABLE and team_socketio:
     team_socketio.init_app(app)
 
+    # Wire up monitor → SocketIO heartbeat
+    def _heartbeat_callback(cpu, ram, ping_ms, ollama_online):
+        try:
+            team_socketio.emit('heartbeat', {
+                'cpu': cpu,
+                'ram': ram,
+                'ping': ping_ms,
+                'ollama': ollama_online,
+            })
+        except Exception:
+            pass
+
+    from core.monitor import set_tick_callback
+    set_tick_callback(_heartbeat_callback)
+
+
+
 @app.route('/')
 @login_required
 def home():
@@ -163,4 +180,9 @@ if __name__ == '__main__':
          |___/ |___/     Security Framework v2.0.0
     """)
     threading.Timer(1.5, lambda: webbrowser.open_new("http://127.0.0.1:5000")).start()
-    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+    if SOCKETIO_AVAILABLE and team_socketio:
+        print("[+] SocketIO active — WebSocket real-time mode enabled")
+        team_socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    else:
+        print("[!] SocketIO not available — falling back to polling mode")
+        app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)

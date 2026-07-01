@@ -1,6 +1,8 @@
 from .utils import run_command_safely
 import os
 def handle_knockpy(target, data):
+    if data is None:
+        data = {}
     threads = data.get('threads', '50')
     wordlist = data.get('wordlist', '')
     cmd = ['knockpy', target]

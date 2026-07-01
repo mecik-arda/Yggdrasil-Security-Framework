@@ -128,9 +128,19 @@ def mock_psutil(mocker):
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(autouse=True)
-def _reset_async_tasks():
-    """Clear the module-level ASYNC_TASKS dict before every test."""
-    from core import task_manager
-    task_manager.ASYNC_TASKS.clear()
+def _reset_task_manager():
+    """Re-create the task-manager singleton so tests are isolated."""
+    from core.task_manager import _TaskManager, _manager as old_mgr
+    import core.task_manager as tm
+    try:
+        old_mgr._executor.shutdown(wait=False)
+    except Exception:
+        pass
+    new_mgr = _TaskManager()
+    tm._manager = new_mgr
     yield
-    task_manager.ASYNC_TASKS.clear()
+    try:
+        new_mgr._executor.shutdown(wait=False)
+    except Exception:
+        pass
+    tm._manager = old_mgr

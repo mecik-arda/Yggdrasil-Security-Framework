@@ -1,5 +1,7 @@
 from .utils import run_command_safely
 def handle_hydra_bruteforce(target, data):
+    if data is None:
+        data = {}
     protocol = data.get('protocol', 'ssh')
     port = data.get('port', '')
     threads = data.get('threads', '4')

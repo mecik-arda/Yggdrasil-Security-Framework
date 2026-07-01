@@ -2,6 +2,8 @@ from .utils import run_command_safely
 import subprocess
 import os
 def handle_muninn_scan(target, data):
+    if data is None:
+        data = {}
     if not target or target.lower() == 'none':
         return ">> ERROR: Target domain/IP is required for Muninn Scanner."
     cmd = ['go', 'run', './cmd/subenum/main.go', '-d', str(target)]

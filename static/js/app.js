@@ -45,6 +45,115 @@ const originalFetch = window.fetch;
             }
             return res;
         };
+        // --- SOCKET.IO REAL-TIME LAYER --------------------------------
+        let socket = null;
+        let socketConnected = false;
+        const pendingTasks = {};   // task_id → { contentDiv, statusDiv, win, tool, lines[] }
+
+        function initSocketIO() {
+            try {
+                socket = io({ transports: ['websocket', 'polling'] });
+                socket.on('connect', () => {
+                    socketConnected = true;
+                    console.log('[WS] Connected to Yggdrasil');
+                });
+                socket.on('disconnect', () => {
+                    socketConnected = false;
+                    console.log('[WS] Disconnected – polling fallback active');
+                });
+
+                // -- Scan events --
+                socket.on('scan_start', (data) => {
+                    console.log('[WS] Scan started:', data.tool);
+                });
+
+                socket.on('scan_output', (data) => {
+                    const pt = pendingTasks[data.task_id];
+                    if (pt && pt.contentDiv) {
+                        if (!pt.lines) pt.lines = [];
+                        pt.lines.push(data.line);
+                        // Append line to terminal in real-time
+                        const lineSpan = document.createElement('span');
+                        lineSpan.textContent = data.line + '\n';
+                        pt.contentDiv.appendChild(lineSpan);
+                        pt.contentDiv.scrollTop = pt.contentDiv.scrollHeight;
+                    }
+                });
+
+                socket.on('scan_complete', (data) => {
+                    const pt = pendingTasks[data.task_id];
+                    if (pt) {
+                        if (pt.contentDiv && (!pt.lines || pt.lines.length === 0)) {
+                            // No streaming lines received; render output now
+                            pt.contentDiv.innerHTML = '';
+                            if (data.type === 'html') {
+                                pt.contentDiv.innerHTML = data.output || '';
+                            } else if (data.output) {
+                                typeWriter(pt.contentDiv, data.output, 0);
+                            }
+                        }
+                        if (pt.statusDiv) {
+                            pt.statusDiv.innerText = t('operation_complete');
+                            pt.statusDiv.style.color = 'var(--highlight-color)';
+                            pt.statusDiv.style.borderColor = 'var(--highlight-color)';
+                        }
+                        if (pt.win && data.output) {
+                            parseScanOutput(pt.win._scanTool, pt.win._scanTarget, data.output);
+                        }
+                        updateStats();
+                        delete pendingTasks[data.task_id];
+                    }
+                });
+
+                socket.on('scan_error', (data) => {
+                    const pt = pendingTasks[data.task_id];
+                    if (pt) {
+                        if (pt.statusDiv) {
+                            pt.statusDiv.innerText = 'ERROR: ' + (data.error || '');
+                            pt.statusDiv.style.color = 'var(--danger-color)';
+                            pt.statusDiv.style.borderColor = 'var(--danger-color)';
+                        }
+                        delete pendingTasks[data.task_id];
+                    }
+                });
+
+                // -- Heartbeat (replaces /api/system_resources polling) --
+                socket.on('heartbeat', (data) => {
+                    document.getElementById('heartbeat-cpu-val').innerText = (data.cpu || 0).toFixed(0) + '%';
+                    document.getElementById('heartbeat-cpu-bar').style.width = (data.cpu || 0) + '%';
+                    document.getElementById('heartbeat-ram-val').innerText = (data.ram || 0).toFixed(0) + '%';
+                    document.getElementById('heartbeat-ram-bar').style.width = (data.ram || 0) + '%';
+                    const pingEl = document.getElementById('heartbeat-ping-val');
+                    if (data.ping != null) {
+                        pingEl.innerText = 'ONLINE (' + data.ping + 'ms)';
+                        pingEl.style.color = '#a3be8c';
+                    } else {
+                        pingEl.innerText = 'OFFLINE';
+                        pingEl.style.color = '#bf616a';
+                    }
+                    const aiEl = document.getElementById('heartbeat-ai-val');
+                    if (data.ollama) {
+                        aiEl.innerText = 'ONLINE';
+                        aiEl.style.color = '#a3be8c';
+                    } else {
+                        aiEl.innerText = 'OFFLINE';
+                        aiEl.style.color = '#bf616a';
+                    }
+                });
+
+                // -- Stats (replaces /api/stats polling) --
+                socket.on('stats_update', (data) => {
+                    document.getElementById('stat-scans').innerText = data.total_scans || 0;
+                    document.getElementById('stat-target').innerText = data.last_target || 'NONE';
+                });
+
+            } catch (e) {
+                console.log('[WS] Init failed – using polling fallback:', e.message);
+                socketConnected = false;
+            }
+        }
+        initSocketIO();
+
         const translations = window.jsTranslations;
         function t(key, params={}) {
             let text = translations[key] || key;
@@ -135,8 +244,11 @@ const originalFetch = window.fetch;
                 document.getElementById('stat-target').innerText = stats.last_target;
             } catch (e) {}
         }
-        setInterval(updateStats, 5000);
         updateStats();
+        // Stats come via SocketIO heartbeat when connected; poll as fallback
+        if (!socketConnected) {
+            setInterval(updateStats, 5000);
+        }
         async function openDependencyManager() {
             document.getElementById('depManagerModal').style.display = 'block';
             const tbody = document.getElementById('depTableBody');
@@ -418,38 +530,82 @@ const originalFetch = window.fetch;
         function handleTaskResponse(data, contentDiv, statusDiv, win) {
             if (data.status === 'pending') {
                 if (win) win._taskId = data.task_id;
-                const checkStatus = setInterval(async () => {
-                    try {
-                        const res = await fetch(`/api/task_status?task_id=${data.task_id}`);
-                        const statusData = await res.json();
-                        if (statusData.status === 'success' || statusData.status === 'error') {
-                            clearInterval(checkStatus);
-                            updateStats();
-                            if (contentDiv) {
-                                contentDiv.innerHTML = ""; 
-                                if (statusData.type === 'html') {
-                                    contentDiv.innerHTML = statusData.output || statusData.message;
-                                } else {
-                                    typeWriter(contentDiv, statusData.output || statusData.message, 0);
-                                }
-                                if (win && statusData.status === 'success') {
-                                    parseScanOutput(win._scanTool, win._scanTarget, statusData.output);
-                                }
-                            }
-                            if (statusDiv) {
-                                statusDiv.innerText = t('operation_complete');
-                                statusDiv.style.color = "var(--highlight-color)";
-                                statusDiv.style.borderColor = "var(--highlight-color)";
-                            }
+                // Register for SocketIO real-time streaming
+                if (socketConnected) {
+                    pendingTasks[data.task_id] = {
+                        contentDiv: contentDiv,
+                        statusDiv: statusDiv,
+                        win: win,
+                        lines: [],
+                    };
+                    // Fallback poll (in case SocketIO misses the completion event)
+                    const fallbackCheck = setInterval(async () => {
+                        if (!pendingTasks[data.task_id]) {
+                            clearInterval(fallbackCheck);
+                            return;
                         }
-                    } catch (err) {
-                        console.error(err);
-                    }
-                }, 1000);
+                        try {
+                            const res = await fetch('/api/task_status?task_id=' + data.task_id);
+                            const statusData = await res.json();
+                            if (statusData.status === 'success' || statusData.status === 'error') {
+                                clearInterval(fallbackCheck);
+                                const pt = pendingTasks[data.task_id];
+                                if (pt) {
+                                    if (pt.contentDiv && (!pt.lines || pt.lines.length === 0)) {
+                                        pt.contentDiv.innerHTML = '';
+                                        if (statusData.type === 'html') {
+                                            pt.contentDiv.innerHTML = statusData.output || statusData.message;
+                                        } else {
+                                            typeWriter(pt.contentDiv, statusData.output || statusData.message, 0);
+                                        }
+                                    }
+                                    if (pt.statusDiv) {
+                                        pt.statusDiv.innerText = t('operation_complete');
+                                        pt.statusDiv.style.color = 'var(--highlight-color)';
+                                        pt.statusDiv.style.borderColor = 'var(--highlight-color)';
+                                    }
+                                    if (pt.win && statusData.status === 'success') {
+                                        parseScanOutput(pt.win._scanTool, pt.win._scanTarget, statusData.output);
+                                    }
+                                    delete pendingTasks[data.task_id];
+                                }
+                                updateStats();
+                            }
+                        } catch (err) { console.error(err); }
+                    }, 3000);  // slower fallback — 3s instead of 1s
+                } else {
+                    // No SocketIO — use 1s polling
+                    const checkStatus = setInterval(async () => {
+                        try {
+                            const res = await fetch('/api/task_status?task_id=' + data.task_id);
+                            const statusData = await res.json();
+                            if (statusData.status === 'success' || statusData.status === 'error') {
+                                clearInterval(checkStatus);
+                                updateStats();
+                                if (contentDiv) {
+                                    contentDiv.innerHTML = '';
+                                    if (statusData.type === 'html') {
+                                        contentDiv.innerHTML = statusData.output || statusData.message;
+                                    } else {
+                                        typeWriter(contentDiv, statusData.output || statusData.message, 0);
+                                    }
+                                    if (win && statusData.status === 'success') {
+                                        parseScanOutput(win._scanTool, win._scanTarget, statusData.output);
+                                    }
+                                }
+                                if (statusDiv) {
+                                    statusDiv.innerText = t('operation_complete');
+                                    statusDiv.style.color = 'var(--highlight-color)';
+                                    statusDiv.style.borderColor = 'var(--highlight-color)';
+                                }
+                            }
+                        } catch (err) { console.error(err); }
+                    }, 1000);
+                }
             } else {
                 updateStats();
                 if (contentDiv) {
-                    contentDiv.innerHTML = ""; 
+                    contentDiv.innerHTML = '';
                     if (data.type === 'html') {
                         contentDiv.innerHTML = data.output || data.message;
                     } else {
@@ -461,8 +617,8 @@ const originalFetch = window.fetch;
                 }
                 if (statusDiv) {
                     statusDiv.innerText = t('operation_complete');
-                    statusDiv.style.color = "var(--highlight-color)";
-                    statusDiv.style.borderColor = "var(--highlight-color)";
+                    statusDiv.style.color = 'var(--highlight-color)';
+                    statusDiv.style.borderColor = 'var(--highlight-color)';
                 }
             }
         }
@@ -930,27 +1086,60 @@ const originalFetch = window.fetch;
                 
                 if (data.status === 'pending') {
                     win._taskId = data.task_id;
-                    const checkStatus = setInterval(async () => {
-                        try {
-                            const res = await fetch(`/api/task_status?task_id=${data.task_id}`);
-                            const statusData = await res.json();
-                            if (statusData.status === 'success' || statusData.status === 'error') {
-                                clearInterval(checkStatus);
-                                updateStats();
-                                contentDiv.innerHTML = ""; 
-                                if (statusData.type === 'html') {
-                                    contentDiv.innerHTML = statusData.output || statusData.message;
-                                } else {
-                                    typeWriter(contentDiv, statusData.output || statusData.message, 0);
+                    if (socketConnected) {
+                        pendingTasks[data.task_id] = {
+                            contentDiv: contentDiv,
+                            statusDiv: statusDiv,
+                            win: win,
+                            lines: [],
+                        };
+                        // Slower fallback poll
+                        const fbCheck = setInterval(async () => {
+                            if (!pendingTasks[data.task_id]) { clearInterval(fbCheck); return; }
+                            try {
+                                const res = await fetch('/api/task_status?task_id=' + data.task_id);
+                                const sd = await res.json();
+                                if (sd.status === 'success' || sd.status === 'error') {
+                                    clearInterval(fbCheck);
+                                    const pt = pendingTasks[data.task_id];
+                                    if (pt) {
+                                        if (pt.contentDiv && (!pt.lines || pt.lines.length === 0)) {
+                                            pt.contentDiv.innerHTML = '';
+                                            if (sd.type === 'html') pt.contentDiv.innerHTML = sd.output || sd.message;
+                                            else typeWriter(pt.contentDiv, sd.output || sd.message, 0);
+                                        }
+                                        if (pt.statusDiv) {
+                                            pt.statusDiv.innerText = t('operation_complete');
+                                            pt.statusDiv.style.color = 'var(--highlight-color)';
+                                            pt.statusDiv.style.borderColor = 'var(--highlight-color)';
+                                        }
+                                        delete pendingTasks[data.task_id];
+                                    }
+                                    updateStats();
                                 }
-                                statusDiv.innerText = t('operation_complete');
-                                statusDiv.style.color = "var(--highlight-color)";
-                                statusDiv.style.borderColor = "var(--highlight-color)";
-                            }
-                        } catch (err) {
-                            console.error(err);
-                        }
-                    }, 1000);
+                            } catch (err) { console.error(err); }
+                        }, 3000);
+                    } else {
+                        const checkStatus = setInterval(async () => {
+                            try {
+                                const res = await fetch('/api/task_status?task_id=' + data.task_id);
+                                const statusData = await res.json();
+                                if (statusData.status === 'success' || statusData.status === 'error') {
+                                    clearInterval(checkStatus);
+                                    updateStats();
+                                    contentDiv.innerHTML = '';
+                                    if (statusData.type === 'html') {
+                                        contentDiv.innerHTML = statusData.output || statusData.message;
+                                    } else {
+                                        typeWriter(contentDiv, statusData.output || statusData.message, 0);
+                                    }
+                                    statusDiv.innerText = t('operation_complete');
+                                    statusDiv.style.color = 'var(--highlight-color)';
+                                    statusDiv.style.borderColor = 'var(--highlight-color)';
+                                }
+                            } catch (err) { console.error(err); }
+                        }, 1000);
+                    }
                 } else {
                     updateStats();
                     contentDiv.innerHTML = ""; 
@@ -2243,8 +2432,11 @@ const originalFetch = window.fetch;
 
         // --- YGGDRASIL HEARTBEAT & SCANS TRACKER ---
         function startHeartbeatMonitor() {
+            // SocketIO handles heartbeat pushes; only poll as fallback
             updateHeartbeat();
-            setInterval(updateHeartbeat, 3000);
+            if (!socketConnected) {
+                setInterval(updateHeartbeat, 3000);
+            }
         }
 
         async function updateHeartbeat() {

@@ -1,6 +1,8 @@
 from .utils import run_command_safely
 import os
 def handle_gobuster_dns(target, data):
+    if data is None:
+        data = {}
     threads = data.get('threads', '10')
     wordlist = data.get('wordlist', '')
     cmd = ['gobuster', 'dns', '-d', target]

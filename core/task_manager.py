@@ -1,83 +1,288 @@
+"""
+Async Task Manager — ThreadPoolExecutor with bounded concurrency and FIFO queuing.
+
+Replaces the previous unbounded ``threading.Thread``-per-task model with a
+configurable worker pool.  When all workers are busy, new tasks are queued
+and scheduled automatically as slots free up.
+
+Backward-compatible public API:
+    create_task, set_task_process, kill_task, kill_all_tasks, get_async_tasks
+"""
+import threading
+import time
 import uuid
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor, Future
+
 import psutil
 
-ASYNC_TASKS = {}
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+MAX_CONCURRENT_SCANS = 5  # maximum simultaneous tool executions
 
-def get_async_tasks():
-    return ASYNC_TASKS
+
+# ---------------------------------------------------------------------------
+# Task data-class
+# ---------------------------------------------------------------------------
+
+class Task:
+    """Lightweight task record stored in the in-memory registry."""
+    __slots__ = (
+        'id', 'tool', 'target', 'action', 'status', 'process',
+        'output', 'message', 'type', 'created_at', '_future',
+    )
+
+    def __init__(self, task_id, tool, target, action):
+        self.id = task_id
+        self.tool = tool
+        self.target = target
+        self.action = action
+        self.status = 'pending'      # pending → running → success | error
+        self.process = None          # subprocess.Popen handle (if any)
+        self.output = ''
+        self.message = ''
+        self.type = 'text'
+        self.created_at = time.time()
+        self._future = None          # concurrent.futures.Future (internal)
+
+
+# ---------------------------------------------------------------------------
+# Singleton task registry + executor
+# ---------------------------------------------------------------------------
+
+class _TaskManager:
+    """Thread-safe singleton that owns the executor, queue, and task dict."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._executor = ThreadPoolExecutor(
+            max_workers=MAX_CONCURRENT_SCANS,
+            thread_name_prefix='ygg-task',
+        )
+        self._queue: deque[Task] = deque()         # explicit pending-task visibility
+        self._tasks: dict[str, Task] = {}           # all tasks ever created
+        self._active_futures: dict[str, Future] = {}  # currently-running futures
+
+    # -- read-only helpers --------------------------------------------------
+
+    @property
+    def active_count(self):
+        with self._lock:
+            return len(self._active_futures)
+
+    @property
+    def queued_count(self):
+        with self._lock:
+            return len(self._queue)
+
+    def get_stats(self):
+        """Return a snapshot of queue / active counts."""
+        with self._lock:
+            return {
+                'active': len(self._active_futures),
+                'queued': len(self._queue),
+                'total': len(self._tasks),
+                'max_workers': MAX_CONCURRENT_SCANS,
+            }
+
+    # -- task lifecycle -----------------------------------------------------
+
+    def create_task(self, tool, target, action):
+        """Create a *pending* task and return its UUID."""
+        task_id = str(uuid.uuid4())
+        task = Task(task_id, tool, target, action)
+        with self._lock:
+            self._tasks[task_id] = task
+        return task_id
+
+    def submit(self, task_id, func, *args, **kwargs):
+        """Run ``func(*args, **kwargs)`` inside the thread pool."""
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task is None:
+                return False
+            task.status = 'running'
+            self._active_futures[task_id] = None  # placeholder; set inside wrapper
+
+        def _wrapper():
+            with self._lock:
+                task.status = 'running'
+            try:
+                func(*args, **kwargs)
+            finally:
+                with self._lock:
+                    self._active_futures.pop(task_id, None)
+
+        future = self._executor.submit(_wrapper)
+        with self._lock:
+            task._future = future
+            self._active_futures[task_id] = future
+        return True
+
+    def set_task_process(self, task_id, process):
+        """Attach a ``subprocess.Popen`` handle so the task can be killed."""
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task:
+                task.process = process
+
+    def kill_task(self, task_id):
+        """Kill a running task (process tree) or cancel a queued one."""
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task is None:
+                return False, "Task not found"
+            future = task._future
+
+        # Cancel if not yet started
+        if future is not None and not future.done():
+            cancelled = future.cancel()
+            if cancelled:
+                with self._lock:
+                    task.status = 'error'
+                    task.message = 'Task cancelled from queue.'
+                    task.output = '[!] TASK CANCELLED FROM QUEUE.'
+                    self._active_futures.pop(task_id, None)
+                return True, 0
+
+        # Kill process tree
+        process = task.process
+        killed = 0
+        if process:
+            try:
+                parent = psutil.Process(process.pid)
+                for child in parent.children(recursive=True):
+                    try:
+                        child.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+                parent.kill()
+                killed += 1
+            except psutil.NoSuchProcess:
+                pass
+            except Exception as e:
+                print(f"Error killing process {process.pid}: {e}")
+
+        with self._lock:
+            task.status = 'error'
+            task.message = 'Task aborted by user.'
+            if task.output:
+                task.output += "\n\n[!] PROCESS ABORTED BY USER."
+            else:
+                task.output = "[!] PROCESS ABORTED BY USER."
+
+        return True, killed
+
+    def kill_all_tasks(self):
+        """Kill every running task and cancel all queued futures."""
+        total_killed = 0
+        with self._lock:
+            # Cancel all active futures
+            for task_id, future in list(self._active_futures.items()):
+                if future is not None and not future.done():
+                    future.cancel()
+
+            # Kill all tasks that have a process handle and are still active
+            for task_id, task in list(self._tasks.items()):
+                if task.status in ('pending', 'running') and task.process:
+                    try:
+                        parent = psutil.Process(task.process.pid)
+                        for child in parent.children(recursive=True):
+                            try:
+                                child.kill()
+                            except psutil.NoSuchProcess:
+                                pass
+                        parent.kill()
+                        total_killed += 1
+                    except psutil.NoSuchProcess:
+                        pass
+                    except Exception:
+                        pass
+                if task.status in ('pending', 'running'):
+                    task.status = 'error'
+                    task.message = 'Aborted by Global Kill Switch.'
+                    if task.output:
+                        task.output += "\n\n[!] PROCESS ABORTED BY GLOBAL KILL SWITCH."
+                    else:
+                        task.output = "[!] PROCESS ABORTED BY GLOBAL KILL SWITCH."
+
+            self._active_futures.clear()
+        return total_killed
+
+    def as_dict(self, task_id):
+        """Return a JSON-safe dict for a task (strips internal fields)."""
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task is None:
+                return None
+            return {
+                'status': task.status,
+                'tool': task.tool,
+                'target': task.target,
+                'action': task.action,
+                'output': task.output,
+                'message': task.message,
+                'type': getattr(task, 'type', 'text'),
+            }
+
+    def all_dicts(self):
+        """Return a JSON-safe dict of all tasks keyed by task_id."""
+        with self._lock:
+            return {
+                tid: {
+                    'status': t.status,
+                    'tool': t.tool,
+                    'target': t.target,
+                    'action': t.action,
+                    'output': t.output,
+                    'message': t.message,
+                    'type': getattr(t, 'type', 'text'),
+                }
+                for tid, t in self._tasks.items()
+            }
+
+    def get_task(self, task_id):
+        with self._lock:
+            return self._tasks.get(task_id)
+
+
+# ---------------------------------------------------------------------------
+# Module-level singleton
+# ---------------------------------------------------------------------------
+
+_manager = _TaskManager()
+
+
+# ---------------------------------------------------------------------------
+# Public API (backward-compatible with v1 task_manager)
+# ---------------------------------------------------------------------------
 
 def create_task(tool, target, action):
-    task_id = str(uuid.uuid4())
-    ASYNC_TASKS[task_id] = {
-        'status': 'running',
-        'tool': tool,
-        'target': target,
-        'action': action,
-        'process': None
-    }
-    return task_id
+    """Create a pending async task and return its UUID."""
+    return _manager.create_task(tool, target, action)
+
 
 def set_task_process(task_id, process):
-    if task_id in ASYNC_TASKS:
-        ASYNC_TASKS[task_id]['process'] = process
+    """Attach a subprocess handle to a running task."""
+    _manager.set_task_process(task_id, process)
+
 
 def kill_task(task_id):
-    task = ASYNC_TASKS.get(task_id)
-    if not task:
-        return False, "Task not found"
-        
-    process = task.get('process')
-    killed = 0
-    
-    if process:
-        try:
-            parent = psutil.Process(process.pid)
-            for child in parent.children(recursive=True):
-                try:
-                    child.kill()
-                except psutil.NoSuchProcess:
-                    pass
-            parent.kill()
-            killed += 1
-        except psutil.NoSuchProcess:
-            pass
-        except Exception as e:
-            print(f"Error killing process {process.pid}: {e}")
-            
-    task['status'] = 'error'
-    task['message'] = 'Task aborted by user.'
-    if 'output' in task:
-        task['output'] += "\n\n[!] PROCESS ABORTED BY USER."
-    else:
-        task['output'] = "[!] PROCESS ABORTED BY USER."
-        
-    return True, killed
+    """Kill (or cancel) a task.  Returns ``(success: bool, detail)``."""
+    return _manager.kill_task(task_id)
+
 
 def kill_all_tasks():
-    total_killed = 0
-    for task_id, task in list(ASYNC_TASKS.items()):
-        if task.get('status') == 'running':
-            process = task.get('process')
-            if process:
-                try:
-                    parent = psutil.Process(process.pid)
-                    for child in parent.children(recursive=True):
-                        try:
-                            child.kill()
-                        except psutil.NoSuchProcess:
-                            pass
-                    parent.kill()
-                    total_killed += 1
-                except psutil.NoSuchProcess:
-                    pass
-                except Exception:
-                    pass
-            
-            task['status'] = 'error'
-            task['message'] = 'Aborted by Global Kill Switch.'
-            if 'output' in task:
-                task['output'] += "\n\n[!] PROCESS ABORTED BY GLOBAL KILL SWITCH."
-            else:
-                task['output'] = "[!] PROCESS ABORTED BY GLOBAL KILL SWITCH."
-                
-    return total_killed
+    """Kill every running task and cancel all queued futures.  Returns count killed."""
+    return _manager.kill_all_tasks()
+
+
+def get_async_tasks():
+    """Return a JSON-safe snapshot of all tasks (backward-compatible)."""
+    return _manager.all_dicts()
+
+
+def get_task_manager():
+    """Return the singleton ``_TaskManager`` instance (for advanced use)."""
+    return _manager

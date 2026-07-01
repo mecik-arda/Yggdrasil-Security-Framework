@@ -51,25 +51,31 @@ def system_resources():
     import core.monitor as monitor
     cpu = monitor.CURRENT_CPU
     ram = psutil.virtual_memory().percent
-    
+
     active_scans = []
     for task_id, task in list(get_async_tasks().items()):
         if task.get('status') == 'running' and task.get('action') == 'run':
-            process = task.get('process')
-            pids = [process.pid] if process else []
             active_scans.append({
                 'task_id': task_id,
                 'tool': task.get('tool'),
                 'target': task.get('target'),
-                'pids': pids
             })
-            
+
+    # Queue stats from the new task manager
+    queue_stats = {}
+    try:
+        from core.task_manager import get_task_manager
+        queue_stats = get_task_manager().get_stats()
+    except Exception:
+        pass
+
     return jsonify({
         'cpu': cpu,
         'ram': ram,
         'ping': monitor.PING_MS,
         'ollama': monitor.OLLAMA_ONLINE,
-        'active_scans': active_scans
+        'active_scans': active_scans,
+        'queue': queue_stats,
     })
 
 @api_bp.route('/api/history', methods=['GET'])
