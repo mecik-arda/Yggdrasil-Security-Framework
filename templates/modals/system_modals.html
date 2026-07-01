@@ -1,0 +1,156 @@
+<div id="wslSettingsModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <h2 style="color: var(--wood-light); margin-top:0;">WSL SETTINGS</h2>
+            <p style="color: var(--text-color); margin-bottom: 20px;">{{ t('wsl_desc') }}</p>
+            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 4px; border: 1px solid var(--accent-color); margin-bottom: 20px;">
+                <label for="wslDistroSelect" style="display: block; margin-bottom: 10px; color: var(--wood-light); font-weight: bold;">{{ t('wsl_distros') }}</label>
+                <select id="wslDistroSelect" class="form-input" style="width: 100%;">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveWslSettings()" class="btn-install" style="flex: 1; min-width: 120px;">{{ t('btn_save') }}</button>
+                <button onclick="closeWslSettings()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color); color: var(--bg-dark); font-weight: bold;">{{ t('btn_close') }}</button>
+            </div>
+        </div>
+    </div>
+
+<div id="agentModal" class="modal">
+        <div class="modal-content" style="max-width: 750px; width: 95%; max-height: 90vh; overflow-y: auto; text-align: left; padding: 30px; border: 2px solid #bf616a; box-shadow: 0 0 40px rgba(191, 97, 106, 0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(191, 97, 106, 0.3); padding-bottom: 15px;">
+                <h2 style="color: #bf616a; margin: 0; font-size: 22px; letter-spacing: 2px;">ᛏ ODIN AUTONOMOUS AGENT</h2>
+                <button onclick="closeAgentPanel()" class="btn-cancel" style="width: auto; margin: 0; padding: 5px 15px;">✕</button>
+            </div>
+            <div id="agentIdleView">
+                <p style="color: var(--text-color); margin-bottom: 20px;">
+                    Odin will autonomously plan and execute security scans on your target.
+                    The agent uses <strong style="color: #ebcb8b;">ReAct reasoning</strong> (Thought → Action → Observation → Thought)
+                    to decide which tools to run next based on discovered results.
+                </p>
+                <div style="background: rgba(191, 97, 106, 0.06); border: 1px solid rgba(191, 97, 106, 0.2); border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="color: #d08770; margin: 0 0 10px 0;">⚡ Safety Limits</h4>
+                    <ul style="color: var(--text-dim); font-size: 13px; margin: 0; padding-left: 18px;">
+                        <li>Maximum <strong>8 steps</strong> per session</li>
+                        <li>Only whitelisted reconnaissance tools in early phases</li>
+                        <li>Escalation tools unlocked after initial recon</li>
+                        <li>Stop button available at any time</li>
+                    </ul>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="agentTargetInput" placeholder="Target IP or Domain" value=""
+                        style="flex: 1; padding: 12px; background: var(--bg-dark); color: white; border: 1px solid rgba(191, 97, 106, 0.4); font-family: monospace; font-size: 14px; margin-bottom: 0;">
+                    <button onclick="startAgentScan()" id="btnStartAgent" class="btn-install" style="width: auto; margin: 0; padding: 12px 30px; background: #bf616a; color: white;">
+                        ᛏ START MISSION
+                    </button>
+                </div>
+            </div>
+            <div id="agentActiveView" style="display: none;">
+                <div id="agentStatusBar" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; padding: 15px; background: rgba(10, 12, 18, 0.9); border: 1px solid rgba(191, 97, 106, 0.3); border-radius: 4px; flex-wrap: wrap;">
+                    <span style="color: #bf616a; font-weight: bold;">🎯 <span id="agentTargetDisplay"></span></span>
+                    <span id="agentPhaseBadge" style="background: rgba(235, 203, 139, 0.2); color: #ebcb8b; padding: 3px 10px; border-radius: 3px; font-size: 12px; text-transform: uppercase;"></span>
+                    <span id="agentStepCounter" style="color: var(--accent-color); font-size: 12px;"></span>
+                    <span style="flex: 1;"></span>
+                    <button onclick="stopAgentScan()" id="btnStopAgent" class="btn-cancel" style="width: auto; margin: 0; padding: 8px 20px; white-space: nowrap;">⏹ STOP</button>
+                </div>
+                <div id="agentStepLog" style="max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px;">
+                </div>
+                <div id="agentFinalSummary" style="display: none; margin-top: 20px; padding: 18px; border: 2px solid #a3be8c; border-radius: 4px; background: rgba(163, 190, 140, 0.06);">
+                    <h3 style="color: #a3be8c; margin: 0 0 10px 0;">✅ Mission Complete</h3>
+                    <div id="agentSummaryText" style="color: #d8dee9; line-height: 1.6;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div id="themeSettingsModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid rgba(180, 142, 173, 0.4); box-shadow: 0 0 20px rgba(180, 142, 173, 0.1);">
+            <h2 style="color: #b48ead; margin-top:0;">{{ t('theme_settings') }}</h2>
+            <p style="color: var(--text-color); margin-bottom: 20px;">{{ t('theme_desc') }}</p>
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px solid var(--accent-color);">
+                    <input type="radio" name="themeSelect" value="standard" onclick="applyTheme('standard')" style="accent-color: #a3be8c; transform: scale(1.2);">
+                    <div style="text-align: left;">
+                        <strong style="color: #a3be8c; display: block;">{{ t('theme_standard') }}</strong>
+                        <span style="font-size: 12px; color: var(--text-dim);">{{ t('theme_standard_desc') }}</span>
+                    </div>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px solid #b48ead;">
+                    <input type="radio" name="themeSelect" value="dark-matte" onclick="applyTheme('dark-matte')" style="accent-color: #b48ead; transform: scale(1.2);">
+                    <div style="text-align: left;">
+                        <strong style="color: #b48ead; display: block;">{{ t('theme_matte') }}</strong>
+                        <span style="font-size: 12px; color: var(--text-dim);">{{ t('theme_matte_desc') }}</span>
+                    </div>
+                </label>
+            </div>
+            <div style="margin-bottom: 25px; text-align: left;">
+                <label style="display: block; color: var(--accent-color); margin-bottom: 10px;">{{ t('sidebar_layout') }}</label>
+                <select id="sidebarLayoutSelect" onchange="applyLayout(this.value)" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--accent-color); border-radius: 4px; font-family: 'Cinzel', serif; outline: none; cursor: pointer;">
+                    <option value="default">{{ t('layout_default') }}</option>
+                    <option value="accordion">{{ t('layout_accordion') }}</option>
+                    <option value="tabbed">{{ t('layout_tabbed') }}</option>
+                    <option value="grid">{{ t('layout_grid') }}</option>
+                    <option value="flyout">{{ t('layout_flyout') }}</option>
+                </select>
+            </div>
+            <button onclick="closeThemeSettingsModal()" class="btn-cancel" style="width: 100%; margin: 0; background-color: #4C566A; border-color: #4C566A; color: white;">{{ t('btn_close') }}</button>
+        </div>
+    </div>
+
+<div id="depManagerModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <h2 style="color: var(--wood-light); margin-top:0;">{{ t('dep_manager') }}</h2>
+            <p style="color: var(--text-color); margin-bottom: 20px;">{{ t('dep_desc') }}</p>
+            <div style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px; border: 1px solid var(--accent-color); padding: 10px; background: rgba(0,0,0,0.3);">
+                <table id="depTable" style="width: 100%; border-collapse: collapse; color: white; text-align: left; font-family: 'Courier New', Courier, monospace; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--accent-color);">
+                            <th style="padding: 10px;"><input type="checkbox" id="selectAllDeps" onclick="toggleSelectAllDeps()"></th>
+                            <th style="padding: 10px;">{{ t('dep_col_tool') }}</th>
+                            <th style="padding: 10px;">{{ t('dep_col_used_for') }}</th>
+                            <th style="padding: 10px;">{{ t('dep_col_status') }}</th>
+                            <th style="padding: 10px;">{{ t('dep_col_os') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depTableBody">
+                    </tbody>
+                </table>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="installSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: var(--highlight-color); border-color: var(--highlight-color); color: var(--bg-dark); font-weight: bold;">{{ t('btn_install') }}</button>
+                <button onclick="updateSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: #5E81AC; border-color: #5E81AC; color: white;">{{ t('btn_update') }}</button>
+                <button onclick="removeSelectedDependencies()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color); color: white;">{{ t('btn_uninstall') }}</button>
+                <button onclick="closeDependencyManager()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: #4C566A; border-color: #4C566A; color: var(--bg-dark); font-weight: bold;">{{ t('btn_close') }}</button>
+            </div>
+        </div>
+    </div>
+
+<div id="historyModal" class="modal">
+    <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto;">
+        <h2 style="color: var(--wood-light); margin-top:0; font-family: 'Cinzel', serif; letter-spacing: 2px;">📜 INCURSIONS LOG (SCAN HISTORY)</h2>
+        <p style="color: var(--text-dim); margin-bottom: 20px;">Review the scroll of past incursions and retrieve their scroll outputs.</p>
+        
+        <div style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px; border: 1px solid rgba(136, 192, 208, 0.3); padding: 10px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+            <table style="width: 100%; border-collapse: collapse; color: white; text-align: left; font-family: monospace; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(136, 192, 208, 0.4); color: #88c0d0;">
+                        <th style="padding: 10px; width: 20%;">Timestamp</th>
+                        <th style="padding: 10px; width: 20%;">Rune / Tool</th>
+                        <th style="padding: 10px; width: 25%;">Target</th>
+                        <th style="padding: 10px; width: 15%;">Status</th>
+                        <th style="padding: 10px; width: 20%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr>
+                        <td colspan="5" style="padding: 20px; text-align: center; color: var(--text-dim); font-style: italic;">No logs found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="clearScanHistory()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color); color: white;">🗑️ PURGE HISTORY</button>
+            <button onclick="closeHistoryModal()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: #4C566A; border-color: #4C566A; color: white;">{{ t('btn_close') }}</button>
+        </div>
+    </div>
+</div>

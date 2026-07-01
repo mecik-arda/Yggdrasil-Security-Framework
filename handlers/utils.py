@@ -1,5 +1,4 @@
 import subprocess
-
 def run_command_safely(cmd, timeout=120, cwd=None, errors='replace'):
     try:
         result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=timeout, cwd=cwd).decode('utf-8', errors=errors)

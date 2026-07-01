@@ -1,9 +1,7 @@
 import html
-
 def handle_generate_dorks(target, data):
     if not target or target == 'none':
         return "<p style='color: red;'>Error: Target is required for Google Dorks.</p>"
-        
     target_escaped = html.escape(str(target))
     dorks = [
         f"site:{target_escaped}",
@@ -22,7 +20,6 @@ def handle_generate_dorks(target, data):
         html_out += f"<a href='{url}' target='_blank' style='background:#333; padding:10px; color:#88c0d0; text-decoration:none; border:1px solid #4c566a;'>{d}</a>"
     html_out += "</div>"
     return html_out
-
 def handle_wayback(target, data):
     if not target or target == 'none':
         return "Error: Target is required."

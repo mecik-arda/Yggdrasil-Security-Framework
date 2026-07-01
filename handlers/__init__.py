@@ -10,8 +10,6 @@ from .knockpy import handle_knockpy
 from .gobuster_dns import handle_gobuster_dns
 from .fenrir import handle_fenrir_cracker
 from .muninn_scanner import handle_muninn_scan
-
-# Map handler string names to actual Python functions
 HANDLER_MAP = {
     'packet_injector': handle_packet_injector,
     'erebus_scan': handle_erebus_scan,
@@ -27,7 +25,6 @@ HANDLER_MAP = {
     'fenrir_cracker': handle_fenrir_cracker,
     'muninn_scan': handle_muninn_scan
 }
-
 def dispatch_handler(handler_name, target, data):
     handler_func = HANDLER_MAP.get(handler_name)
     if handler_func:

@@ -1,6 +1,6 @@
-# ᚛᚜ Yggdrasil Security Framework ᚛᚜
+# ᚛᚜ Yggdrasil Security Framework v2.0.0 ᚛᚜
 
-![Dashboard Overview](screenshots/2.png?v=3)
+![Dashboard Overview](screenshots/3.png?v=3)
 
 [ 🇬🇧 English ](#-english) | [ 🇹🇷 Türkçe ](#-türkçe)
 
@@ -19,7 +19,9 @@ This repository features an advanced security reconnaissance and vulnerability a
 
 #### 2. What challenges did I face?
 * **Subprocess Management & Async Architecture**: Initially, running intensive scans via `subprocess.Popen` or `check_output` blocked the Flask worker threads, causing the frontend to hang. To solve this, I designed an **Asynchronous Task Manager** (`uuid` based polling). The frontend fires a request, receives a `task_id` in a `pending` state, and dynamically polls a `/api/task_status` endpoint without freezing the UI. This allows multiple reconnaissance modules to execute truly concurrently.
+* **Cross-Platform Process Termination**: A major challenge was cleanly killing deep-running asynchronous scans directly from the UI without leaving orphan processes. I engineered a thread-tracking mechanism in Python mapped to `psutil`, which allows the framework to recursively terminate any tool and its child processes across Windows, Linux, and macOS whenever a user clicks the abort (X) button on the web terminal.
 * **Dependency Orchestration & WSL Integration**: I implemented a "Runic Installation Ritual" to detect missing system tools dynamically. On Windows platforms, the framework intelligently queries the **Windows Subsystem for Linux (WSL)** (`wsl.exe --list`), allows users to configure their preferred WSL distribution via the UI, and automatically routes Linux-native security tool execution through the `wsl.exe -d <distro> -u root --` pipeline.
+* **Smart Authentication**: Implemented a caching mechanism (`.yggdrasil_auth`) for the startup scripts (`run.bat`/`run.sh`), ensuring the framework only prompts for the master password once upon initial setup.
 * **Output Streaming**: Implementing the typewriter effect for real-time output rendering was a challenge in managing asynchronous JavaScript data streams within a synchronous HTML environment.
 
 #### 3. How did I manage the Security Arsenal?
@@ -103,6 +105,69 @@ We have expanded the framework with specialized, custom-built tools compiled und
 
 ---
 
+### 👁️ Odin's Eye AI — Autonomous Offensive Intelligence
+
+Yggdrasil integrates a fully local, privacy-first AI offensive assistant powered by **Ollama** — no data ever leaves the user's machine. The system operates across three specialized agents:
+
+#### 🧠 Local AI Engine (Ollama Integration)
+- Communicates with locally running Ollama instance via REST API (`/api/chat`, `/api/tags`)
+- **3-Tier Hardware Profiles:** Automatic model recommendations based on system specs:
+  - **Tier 1 (CPU):** `llama3.2:3b`, `qwen2.5-coder:7b` — 16 GB RAM, 10-15 tok/s
+  - **Tier 2 (GPU):** `deepseek-r1:14b`, `qwen2.5-coder:7b` — 32 GB RAM + 12-16 GB VRAM, 40-70 tok/s
+  - **Tier 3 (Enterprise):** `deepseek-r1:70b`, `qwen2.5-coder:32b` — 64 GB+ RAM + 24 GB+ VRAM, 80+ tok/s
+- **Model Management:** Pull, remove, and list models directly from the dashboard UI
+- Models are **never downloaded automatically** — the user explicitly triggers installation via the Package Manager
+
+#### ⚔️ Heimdall — Live Output Parser & Smart Suggestions
+- Every scan result (Nmap, Nikto, Nuclei, etc.) is automatically intercepted and sent to the local LLM for analysis
+- Returns **structured JSON findings**: open ports, detected services, vulnerabilities with severity levels, and recommended next steps
+- Smart model selection cascade: `qwen2.5-coder → deepseek-r1 → mistral → llama3.2` (picks the best available)
+- Output truncation at 8K characters to stay within LLM context windows
+- **Auto-trigger in Odin Mode:** When Odin Mode is active, analysis is launched automatically after every scan completes
+
+#### 📜 Kvasir — Offline RAG Knowledge Base
+- **43 curated entries** across 3 collections, fully offline and internet-independent:
+  - **GTFOBins (21 entries):** Privilege escalation vectors — `find`, `vim`, `awk`, `python`, `docker`, `crontab`, and more
+  - **Exploit-DB (10 entries):** Critical CVEs — EternalBlue, BlueKeep, ZeroLogon, DirtyCow, PwnKit, DirtyPipe
+  - **Payloads (12 entries):** SQLi, XSS, LFI, RCE, XXE, SSTI attack vectors with context
+- **Dual search mode:**
+  - 🧠 **Vector Search:** ChromaDB + Ollama `nomic-embed-text` embeddings for semantic similarity
+  - 📖 **Keyword Fallback:** Weighted keyword matching — works with zero dependencies
+- Dedicated Kvasir modal with live search, collection filters, and relevance scoring
+
+#### 🌑 Odin Mode — Nordic Dark Combat Theme
+- **Toggle button** (top-left 👁️) activates a full UI transformation with animated Nordic dark theme
+- Custom CSS variables: Deep black (`#0d0f18`), Gold accents (`#ebcb8b`), Rune blue (`#5E81AC`)
+- **Glassmorphism** effects with `backdrop-filter: blur()` on containers, sidebars, and modals
+- **Rune corner animations**, eye pulse effects, and golden glow toggle
+- **Performance mode** (⚙️ gear icon): Disables all animations + GPU-heavy filters for low-end devices
+- Tool panel auto-dimming: Manual tool groups fade to 25% opacity; AI-compatible tools stay prominent
+- State persisted in `localStorage` — survives page reloads
+
+#### 🚀 Odin Autonomous Agent — ReAct Decision Loop
+- **Fully autonomous penetration testing:** Enter a target, press 🚀 AUTONOMOUS SCAN, and Odin conducts the entire engagement
+- **ReAct architecture:** `💭 Thought → ⚡ Action → 👁️ Observation → loop` — up to 8 steps per session
+- **Dual decision engine:**
+  - 🧠 **LLM-powered** (Ollama): Odin analyzes prior results and strategically selects the next tool
+  - 📋 **Rule-based fallback:** Works perfectly without any AI model — uses heuristic port/service detection
+- **Security layers:**
+  - Tool whitelist (25+ safe tools) with separate escalation tier unlocked after 2 steps
+  - Max 8 steps per session with scope warning at step 6
+  - Session isolation — only one active scan per target
+  - Emergency STOP button for immediate termination
+  - Target input validation against injection attacks
+- **Live progress dashboard:** Real-time polling with animated step cards, phase indicators, and final summary
+
+### 🚀 V2.0.0 Updates & Dashboard Redesign (June 2026)
+- **Advanced Action Bar:** Completely rebuilt global action menu using responsive CSS Grid layouts, introducing centralized workspace controls.
+- **Global Kill Switch & Purge Workspace (☠️ / 🧹):** Dedicated capabilities to instantly terminate all running async Python tasks (`psutil` recursive kill) across the framework and reset UI components, active target memory, and Valkyrie mapping traces.
+- **Loki Payload Crafter (🐍):** Integrated the `loki_engine` directly into the UI via an interactive modal. Instantly generate, mutate, and obfuscate WAF-evading payloads (XSS, SQLi, LFI) using backend hex, base64, and unicode mapping techniques.
+- **GTFOBins Live Search (🕵️‍♂️):** Connected the `rag_engine`'s GTFOBins GitHub fetcher to a specialized search modal. Penetration testers can seamlessly query for active Unix/Windows binaries to escalate privileges (PrivEsc) without ever leaving the dashboard.
+- **Persistent Pentest Notes (📝):** Introduced a heavily requested in-browser scratchpad for dumping passwords, IPs, and quick thoughts during active engagements. Autosaves locally via `localStorage`.
+- **System Heartbeat & Network Pulse UI:** The top header now features an animated ping monitor tracking system latency, and a local daemon tracker indicating real-time CPU/RAM averages and Ollama AI health.
+
+---
+
 ### ᚛᚜ System Manual & Deployment ᚛᚜
 
 #### Installation Guide
@@ -174,7 +239,9 @@ Bu depo, ofansif güvenlik operasyonlarını tek bir merkezde toplamak için gel
 
 #### 2. Hangi Zorluklarla Karşılaştım?
 * **Subprocess Yönetimi ve Asenkron Mimari**: Başlangıçta yoğun taramaları `subprocess` ile çalıştırmak Flask işçi iş parçacıklarını (worker threads) blokluyor ve arayüzün kilitlenmesine neden oluyordu. Bunu çözmek için **Asenkron Görev Yöneticisi (Async Task Manager)** mimarisini tasarladım. Arayüz artık `task_id` üzerinden `/api/task_status` uç noktasını periyodik olarak sorguluyor (polling). Böylece UI donmadan aynı anda birden fazla aracın eşzamanlı çalıştırılabilmesi sağlandı.
+* **Platform Bağımsız İşlem Öldürme (Cross-Platform Task Kill)**: Arka planda derinden çalışan asenkron taramaları UI üzerinden tek tuşla, arkada öksüz (orphan) kalıntılar bırakmadan sonlandırmak büyük bir teknik problemdi. Bunu çözmek için Python `psutil` tabanlı bir "Thread-Tracking" mekanizması tasarladım. Web terminalindeki iptal (X) butonuna basıldığında, işlem ve ürettiği tüm alt işlemler (child processes) Windows, Linux ve macOS üzerinde kusursuzca öldürülür.
 * **Bağımlılık Orkestrasyonu & WSL Entegrasyonu**: Sisteme eksik araçları tespit edip dinamik yükleyen "Runic Installation Ritual" eklendi. Windows ortamında **Windows Subsystem for Linux (WSL)** (`wsl.exe --list`) entegrasyonu sayesinde kullanıcı arayüzden Linux dağıtımını seçebiliyor ve sadece Linux destekli güvenlik araçları Windows üzerinden sorunsuzca çalıştırılabiliyor.
+* **Akıllı Kimlik Doğrulama**: Başlangıç scriptleri (`run.bat`/`run.sh`) için akıllı bir önbellek mekanizması (`.yggdrasil_auth`) tasarlanarak, master parolasının kurulum esnasında sadece bir kez sorulup sonraki kullanımlarda otomatik geçilmesi sağlandı.
 * **Output Streaming (Çıktı Akışı)**: HTML ortamında asenkron verileri gerçek zamanlı "daktilo (typewriter)" efektiyle göstermek, terminal hissini yaratmak için özel JavaScript akış (stream) mantığı gerektirdi.
 
 #### 3. Güvenlik Arsenalini Nasıl Yönettim?
@@ -255,6 +322,69 @@ Framework, **Runes** dizini altında derlenen özel yapım araçlarla genişleti
 10. **Muninn Scanner (Go):** Go ile yazılmış yüksek hızlı, çok iş parçacıklı (highly concurrent) ağ port ve servis tarayıcısı. Sağlam zaman aşımı (timeout) yönetimi ve hafif goroutine yürütme yapısıyla hızlı keşif sağlar.
 11. **Huginn SecureTransfer:** Tamamen şifrelenmiş peer-to-peer (P2P) dosya transfer aracı. Hem JavaFX Masaüstü arayüzüne hem de Spring Boot Web arka ucuna sahip olup güvenli ve kesintisiz veri aktarımı sağlar.
 12. **Dependency Manager (Runic Installation Ritual):** Kullanıcı sistemini (Windows/Linux) tarayarak eksik olan araçları tespit eder ve animasyonlu terminal arayüzü eşliğinde tüm bağımlılıkları tek tuşla otomatik olarak kurar. **Tam donanımlı WSL (Windows Subsystem for Linux) entegrasyonu** sayesinde yalnızca Linux destekli araçları Windows üzerinde yerelmiş gibi kurup sorunsuzca çalıştırabilir.
+
+---
+
+### 👁️ Odin's Eye AI — Otonom Ofansif Yapay Zeka
+
+Yggdrasil, **Ollama** ile çalışan, tamamen yerel ve gizlilik odaklı bir yapay zeka saldırı asistanını bünyesinde barındırır — hiçbir veri kullanıcının makinesinden dışarı çıkmaz. Sistem üç uzmanlaşmış ajan üzerinden çalışır:
+
+#### 🧠 Yerel AI Motoru (Ollama Entegrasyonu)
+- Yerel olarak çalışan Ollama sunucusuyla REST API (`/api/chat`, `/api/tags`) üzerinden iletişim kurar
+- **3 Katmanlı Donanım Profili:** Sistem özelliklerine göre otomatik model önerisi:
+  - **Katman 1 (CPU):** `llama3.2:3b`, `qwen2.5-coder:7b` — 16 GB RAM, 10-15 tok/sn
+  - **Katman 2 (GPU):** `deepseek-r1:14b`, `qwen2.5-coder:7b` — 32 GB RAM + 12-16 GB VRAM, 40-70 tok/sn
+  - **Katman 3 (Kurumsal):** `deepseek-r1:70b`, `qwen2.5-coder:32b` — 64 GB+ RAM + 24 GB+ VRAM, 80+ tok/sn
+- **Model Yönetimi:** Arayüzden doğrudan model indirme, silme ve listeleme
+- Modeller **asla otomatik indirilmez** — kullanıcı kurulumu Paket Yöneticisi üzerinden açıkça tetikler
+
+#### ⚔️ Heimdall — Canlı Çıktı Ayrıştırıcı ve Akıllı Öneri Motoru
+- Her tarama sonucu (Nmap, Nikto, Nuclei vb.) otomatik olarak yakalanarak yerel LLM'e analiz için gönderilir
+- **Yapılandırılmış JSON bulguları** döner: açık portlar, tespit edilen servisler, önem dereceli zafiyetler ve önerilen sonraki adımlar
+- Akıllı model seçim zinciri: `qwen2.5-coder → deepseek-r1 → mistral → llama3.2` (mevcut en iyisini seçer)
+- LLM bağlam penceresi (context window) sınırına uymak için çıktılar 8K karaktere kırpılır
+- **Odin Modunda otomatik tetikleme:** Odin Modu aktifken, her tarama tamamlandığında analiz otomatik olarak başlatılır
+
+#### 📜 Kvasir — Çevrimdışı RAG Bilgi Tabanı
+- **43 küratörlü girdi**, 3 koleksiyon halinde, tamamen çevrimdışı ve internet bağımsız:
+  - **GTFOBins (21 girdi):** Yetki yükseltme vektörleri — `find`, `vim`, `awk`, `python`, `docker`, `crontab` ve daha fazlası
+  - **Exploit-DB (10 girdi):** Kritik CVE'ler — EternalBlue, BlueKeep, ZeroLogon, DirtyCow, PwnKit, DirtyPipe
+  - **Payloads (12 girdi):** SQLi, XSS, LFI, RCE, XXE, SSTI saldırı vektörleri ve bağlamları
+- **Çift modlu arama:**
+  - 🧠 **Vektör Araması:** ChromaDB + Ollama `nomic-embed-text` gömmeleri (embeddings) ile semantik benzerlik
+  - 📖 **Anahtar Kelime Yedek Modu:** Ağırlıklı anahtar kelime eşleştirmesi — sıfır bağımlılıkla çalışır
+- Canlı arama, koleksiyon filtreleri ve alaka puanlaması ile özel Kvasir arama paneli
+
+#### 🌑 Odin Modu — Nordik Karanlık Savaş Teması
+- **Geçiş butonu** (sol üst 👁️) ile tüm arayüzde animasyonlu Nordik karanlık temaya geçiş
+- Özel CSS değişkenleri: Derin siyah (`#0d0f18`), Altın vurgular (`#ebcb8b`), Rün mavisi (`#5E81AC`)
+- Konteynerler, kenar çubukları ve modallarda **Glassmorphism** efektleri (`backdrop-filter: blur()`)
+- **Rün köşe animasyonları**, göz nabız efektleri ve altın parıltılı toggle
+- **Performans modu** (⚙️ dişli ikonu): Düşük donanımlı cihazlar için tüm animasyonları ve GPU yoğun filtreleri devre dışı bırakır
+- Araç paneli otomatik soldurma: Manuel araç grupları %25 opaklığa düşer; AI uyumlu araçlar belirgin kalır
+- Durum `localStorage` ile saklanır — sayfa yenilemelerinde korunur
+
+#### 🚀 Odin Otonom Ajan — ReAct Karar Döngüsü
+- **Tamamen otonom sızma testi:** Hedef girin, 🚀 AUTONOMOUS SCAN butonuna basın, Odin tüm süreci yönetsin
+- **ReAct mimarisi:** `💭 Düşünme → ⚡ Eylem → 👁️ Gözlem → döngü` — oturum başına en fazla 8 adım
+- **Çift karar motoru:**
+  - 🧠 **LLM destekli** (Ollama): Odin önceki sonuçları analiz eder ve stratejik olarak sonraki aracı seçer
+  - 📋 **Kural tabanlı yedek mod:** AI modeli olmadan da mükemmel çalışır — sezgisel port/servis tespiti kullanır
+- **Güvenlik katmanları:**
+  - Araç beyaz listesi (25+ güvenli araç) + 2 adım sonra açılan ayrı yükseltme (escalation) katmanı
+  - Oturum başına maks. 8 adım, 6. adımda kapsam uyarısı
+  - Oturum izolasyonu — hedef başına tek aktif tarama
+  - Acil DURDUR butonu ile anında sonlandırma
+  - Enjeksiyon saldırılarına karşı hedef girdi doğrulaması
+- **Canlı ilerleme paneli:** Animasyonlu adım kartları, faz göstergeleri ve nihai özet ile gerçek zamanlı izleme
+
+### 🚀 V2.0.0 Güncellemeleri & Arayüz Yenilenmesi (Haziran 2026)
+- **Gelişmiş Aksiyon Çubuğu:** Ana operasyon menüsü CSS Grid yapısı kullanılarak, merkezi çalışma alanı kontrolleri eklenecek şekilde tamamen baştan yazıldı.
+- **Acil Durum Kesici & Alanı Sıfırla (☠️ / 🧹):** Çalışan tüm asenkron Python işlemlerini (`psutil` recursive kill) anında öldüren "Kill Switch" ve arayüzü, hedef geçmişini, Valkyrie haritasını tamamen temizleyen yeni butonlar eklendi.
+- **Loki Zararlı Yük Üretici (🐍):** `loki_engine` doğrudan arayüze (modal) entegre edildi. WAF (Güvenlik Duvarı) atlatıcı zararlı yükleri (XSS, SQLi, LFI vb.) hex, base64 ve unicode mutasyon teknikleriyle anında oluşturabilirsiniz.
+- **GTFOBins Canlı Arama (🕵️‍♂️):** `rag_engine` içerisindeki internet tabanlı GTFOBins GitHub dinleyicisi artık arayüzden aranabilir duruma getirildi. Sızma testi uzmanları, programdan hiç çıkmadan yetki yükseltme (Privilege Escalation) vektörlerini saniyeler içinde aratabilir.
+- **Kalıcı Pentest Notları (📝):** Aktif sızma testi (engagement) esnasında elde edilen parolalar, IP adresleri ve hızlı notlar için en çok talep edilen özelliklerden olan "Kalıcı Not Defteri" eklendi. Notlar `localStorage` ile yerel olarak otomatik kaydedilir.
+- **Sistem Nabzı & Ağ Durumu Arayüzü:** Üst panele sistem gecikmesini takip eden canlı bir ping (ping monitor) barı ve arka plandaki Ollama yapay zeka sağlığını / işlemci durumunu gösteren yeni bileşenler eklendi.
 
 ---
 

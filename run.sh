@@ -1,4 +1,18 @@
 #!/bin/bash
+echo "========================================="
+echo "      YGGDRASIL SECURITY FRAMEWORK"
+echo "========================================="
+if [ ! -f ".yggdrasil_auth" ]; then
+    read -s -p "Enter System Password: " password
+    echo ""
+    if [ "$password" != "yggdrasil2026" ]; then
+        echo -e "\033[0;31m[!] ACCESS DENIED. INITIATING LOCKDOWN...\033[0m"
+        exit 1
+    fi
+    touch .yggdrasil_auth
+fi
+echo -e "\033[0;32m[+] ACCESS GRANTED. WELCOME ARCHITECT.\033[0m"
+
 if [ ! -d "venv" ]; then
     echo "Virtual environment (venv) not found!"
     echo "Creating virtual environment..."

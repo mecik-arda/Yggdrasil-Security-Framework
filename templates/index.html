@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YGGDRASIL SECURITY FRAMEWORK v1.1.0</title>
+    <title>YGGDRASIL SECURITY FRAMEWORK v2.0.0</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='roots.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='odin_theme.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="odinTransitionOverlay"></div>
     <div class="container">
         <div class="rune-corner top-left">ᛤ</div>
         <div class="rune-corner top-right">ᛣ</div>
         <div class="rune-corner bottom-left">ᛠ</div>
         <div class="rune-corner bottom-right">ᛘ</div>
-
-        
         <div class="lang-selector" style="position: absolute; top: 20px; right: 20px; z-index: 100;">
             <button onclick="setLang('tr')" style="background: var(--bg-dark); color: {{ 'var(--highlight-color)' if current_lang == 'tr' else 'white' }}; border: 1px solid var(--accent-color); padding: 5px 10px; cursor: pointer;">🇹🇷 TR</button>
             <button onclick="setLang('en')" style="background: var(--bg-dark); color: {{ 'var(--highlight-color)' if current_lang == 'en' else 'white' }}; border: 1px solid var(--accent-color); padding: 5px 10px; cursor: pointer;">🇺🇸 EN</button>
         </div>
-
-        <div class="header-group">
+        <div class="header-group" style="display: flex; align-items: center; justify-content: center; gap: 25px; margin-top: 20px;">
             <a href="https://en.wikipedia.org/wiki/Yggdrasil" target="_blank">
-                <img id="project-logo" src="https://nordiksimit.org/wp-content/uploads/2016/11/pr50482_900x900_b_p_061526_by_design_by_humans-d7ss3og.jpg" alt="Yggdrasil Logo">
+                <img id="project-logo" src="https://nordiksimit.org/wp-content/uploads/2016/11/pr50482_900x900_b_p_061526_by_design_by_humans-d7ss3og.jpg" alt="Yggdrasil Logo" style="margin: 0; max-width: 120px;">
             </a>
-            <h1>YGGDRASIL SECURITY FRAMEWORK <span style="font-size: 0.4em; vertical-align: middle; color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-family: monospace;">v1.1.0</span></h1>
+            <h1 style="margin: 0; text-align: left;">YGGDRASIL SECURITY FRAMEWORK <span style="font-size: 0.4em; vertical-align: middle; color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-family: monospace;">v2.0.0</span></h1>
         </div>
-
         <div class="dashboard-panel">
             <div class="stat-card">
                 <span class="stat-label">{{ t('total_incursions') }}</span>
@@ -38,89 +36,137 @@
             </div>
             <div class="stat-card">
                 <span class="stat-label">{{ t('active_rune') }}</span>
-                <span id="stat-tool" class="stat-value">{{ t('idle') }}</span>
+                <div id="stat-tool" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 5px; min-height: 24px;">
+                    <span class="stat-value">{{ t('idle') }}</span>
+                </div>
             </div>
         </div>
-
         <div class="grid">
             <div class="sidebar">
                 <input type="text" id="target-input" placeholder="{{ t('target_placeholder') }}">
+                <input type="text" id="sidebarSearch" onkeyup="filterTools()" placeholder="{{ t('search_tools_placeholder') }}" class="neon-input" style="margin-bottom: 15px; border-color: #88c0d0; color: #88c0d0;">
                 
+                <div class="heartbeat-widget" style="border: 1px solid rgba(136, 192, 208, 0.3); border-radius: 4px; padding: 12px; margin-bottom: 15px; background: rgba(10, 12, 18, 0.6);">
+                    <h3 style="margin: 0 0 10px 0; font-size: 11px; letter-spacing: 2px; color: #88c0d0; text-transform: uppercase; font-family: 'Cinzel', serif;">ᛒ Yggdrasil Heartbeat</h3>
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-color); margin-bottom: 3px;">
+                            <span>CPU</span>
+                            <span id="heartbeat-cpu-val">0%</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                            <div id="heartbeat-cpu-bar" style="width: 0%; height: 100%; background: #88c0d0; transition: width 0.5s ease;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-color); margin-bottom: 3px;">
+                            <span>RAM</span>
+                            <span id="heartbeat-ram-val">0%</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                            <div id="heartbeat-ram-bar" style="width: 0%; height: 100%; background: #b48ead; transition: width 0.5s ease;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 9px; color: #81a1c1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: bold;">Active Incursions</div>
+                        <div id="heartbeat-scans" style="font-size: 10px; color: var(--text-color); font-family: monospace; max-height: 80px; overflow-y: auto;">
+                            <div style="color: var(--text-dim); font-style: italic;">No active incursions</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-node-widget" style="border: 1px solid rgba(235, 203, 139, 0.3); border-radius: 4px; padding: 12px; margin-bottom: 15px; background: rgba(10, 12, 18, 0.6); display: flex; flex-direction: column; justify-content: space-between;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 11px; letter-spacing: 2px; color: #ebcb8b; text-transform: uppercase; font-family: 'Cinzel', serif;">ᛗ Odin AI Node</h3>
+                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 10px; color: var(--text-color);">
+                        <span>NET PULSE</span>
+                        <span id="heartbeat-ping-val" style="color: #bf616a; font-weight: bold;">OFFLINE</span>
+                    </div>
+                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 10px; color: var(--text-color);">
+                        <span>AI STATUS</span>
+                        <span id="heartbeat-ai-val" style="color: #bf616a; font-weight: bold;">OFFLINE</span>
+                    </div>
+                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 10px; color: var(--text-color);">
+                        <span>MODEL</span>
+                        <span id="heartbeat-model-val" style="color: #81a1c1; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px;" title="No model loaded">NONE</span>
+                    </div>
+                </div>
+
                 <div class="tool-group" data-category="passive_recon">
                     <h3>{{ t('cat_passive_recon') }}</h3>
                 </div>
-
                 <div class="tool-group" data-category="dns_subdomain">
                     <h3>{{ t('cat_dns') }}</h3>
                 </div>
-
                 <div class="tool-group" data-category="active_scanning">
                     <h3>{{ t('cat_active_scan') }}</h3>
                 </div>
-
                 <div class="tool-group" data-category="nmap_scans">
                     <h3>{{ t('cat_nmap') }}</h3>
                 </div>
-
                 <div class="tool-group" data-category="vulnerability">
                     <h3>{{ t('cat_vuln') }}</h3>
                 </div>
-
                 <div class="my-runes-container">
                     <h2 class="my-runes-title">{{ t('my_runes') }}</h2>
                     <div class="tool-group" data-category="erebus_scanner">
                         <h3>{{ t('rune_erebus') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="fenrir">
                         <h3>{{ t('rune_fenrir') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="kali_ghost">
                         <h3>{{ t('rune_ghost') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="adv_syn">
                         <h3>{{ t('rune_adv_syn') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="java_sniffer">
                         <h3>{{ t('rune_java') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="snoopdork">
                         <h3>{{ t('rune_snoopdork') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="packet_injector">
                         <h3>{{ t('rune_packet') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="mimir_scanner">
                         <h3>{{ t('rune_mimir') }}</h3>
                     </div>
-
                     <div class="tool-group" data-category="bifrost_gateway">
                         <h3>{{ t('rune_bifrost') }}</h3>
                     </div>
                 </div>
-
                 <div class="tool-group" data-category="system_ops">
                     <h3>{{ t('sys_ops') }}</h3>
                     <button type="button" onclick="openDependencyManager()">
                         {{ t('dep_manager') }}
                     </button>
+                    <button type="button" onclick="openAiPackageManager()" style="margin-top: 10px; border-color: #b48ead; color: #b48ead;">
+                        {{ t('btn_ai_manager') }}
+                    </button>
                     <button type="button" onclick="openWslSettings()" style="margin-top: 10px;">
-                        ⚙️ WSL SETTINGS
+                        {{ t('btn_wsl_settings') }}
                     </button>
                 </div>
-
+                <div class="tool-group" data-category="ai_ops">
+                    <h3>{{ t('ai_ops') }}</h3>
+                    <button type="button" onclick="openOdinChat()" style="margin-top: 10px; border-color: #ebcb8b; color: #ebcb8b;">
+                        {{ t('btn_odin_ai') }}
+                    </button>
+                    <button type="button" onclick="openAgentPanel()" id="btnAutonomousScan" style="margin-top: 10px; border-color: #bf616a; color: #bf616a;">
+                        {{ t('btn_autonomous') }}
+                    </button>
+                    <button type="button" onclick="openLokiPanel()" style="margin-top: 10px; border-color: #d08770; color: #d08770;">
+                        {{ t('btn_loki') }}
+                    </button>
+                    <button type="button" onclick="openKvasirPanel()" style="margin-top: 10px; border-color: #a3be8c; color: #a3be8c;">
+                        {{ t('btn_kvasir') }}
+                    </button>
+                </div>
                 <div class="creator-zone">
                     <div class="creator-title">{{ t('architect') }}</div>
                     <a href="https://github.com/mecik-arda" target="_blank" class="creator-name">
                         ARDA 'HADES' MEÇİK
                     </a>
-                    
                     <div class="social-links">
                         <a href="https://github.com/mecik-arda" target="_blank" class="social-btn">
                             ᛝ GITHUB
@@ -134,1621 +180,90 @@
                     </div>
                 </div>
             </div>
-
             <div class="main-content">
                 <div id="status-display" class="status-bar">{{ t('sys_init') }}</div>
+                <div class="action-bar" style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="odinModeToggle" onclick="toggleOdinMode()" title="Toggle Odin Autonomous Attack Mode" style="width: 100%;">
+                        <span id="odinToggleIcon">👁️</span>
+                        <span id="odinToggleLabel">{{ t('btn_odin_mode') }}</span>
+                    </button>
+                    <button onclick="openHistoryModal()" title="Incursions Log" style="width: 100%;">📜 Incursions Log</button>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; width: 100%;">
+                        <button onclick="generateValkyrieReport()" class="btn-download" style="width: 100%; border-color: #a3be8c; color: #a3be8c;">{{ t('btn_generate_report') }}</button>
+                        <button id="odinSettingsBtn" onclick="openThemeSettingsModal()" title="Theme Settings" style="width: 100%; margin-top:0;">⚙️ Settings</button>
+                        <button onclick="purgeWorkspace()" class="btn-download" style="width: 100%; border-color: #81a1c1; color: #81a1c1;">{{ t('btn_purge_workspace') }}</button>
+                        <button onclick="globalKillSwitch()" class="btn-download" style="width: 100%; border-color: #bf616a; color: #bf616a;">{{ t('btn_kill_switch') }}</button>
+                        <button onclick="downloadArtifact('txt')" class="btn-download" style="width: 100%;">{{ t('save_log') }}</button>
+                        <button onclick="downloadArtifact('json')" class="btn-download" style="width: 100%;">{{ t('export_data') }}</button>
+                        <button onclick="openLokiModal()" class="btn-download" style="width: 100%; border-color: #a3be8c; color: #a3be8c;">{{ t('btn_loki_payloads') }}</button>
+                        <button onclick="openGtfobinsModal()" class="btn-download" style="width: 100%; border-color: #d08770; color: #d08770;">{{ t('btn_gtfobins') }}</button>
+                        <button onclick="openPentestNotesModal()" class="btn-download" style="width: 100%; border-color: #b48ead; color: #b48ead;">{{ t('btn_pentest_notes') }}</button>
+                        <button onclick="window.location.href='/logout'" class="btn-download" style="width: 100%; border-color: var(--danger-color); color: var(--danger-color);">{{ t('btn_logout') }}</button>
+                    </div>
+                </div>
                 
-                <div class="action-bar">
-                    <button onclick="downloadArtifact('txt')" class="btn-download">{{ t('save_log') }}</button>
-                    <button onclick="downloadArtifact('json')" class="btn-download">{{ t('export_data') }}</button>
+                <div id="valkyrieTreePanel" style="margin-bottom: 20px; border: 1px solid rgba(136, 192, 208, 0.3); border-radius: 4px; background: rgba(10, 12, 18, 0.9); overflow: hidden;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(136, 192, 208, 0.08); border-bottom: 1px solid rgba(136, 192, 208, 0.2); cursor: pointer;" onclick="toggleValkyrieTreePanel()">
+                        <h3 style="color: #88c0d0; margin: 0; font-size: 14px; letter-spacing: 1px;">
+                            ᛥ VALKYRIE INTERACTIVE VULNERABILITY MAP (YGGDRASIL TREE)
+                        </h3>
+                        <span id="valkyriePanelToggle" style="color: #88c0d0; font-size: 14px;">▼</span>
+                    </div>
+                    <div id="valkyrieTreeContent" style="display: block; padding: 15px; position: relative;">
+                        <canvas id="valkyrieTreeMap" width="800" height="350" style="width: 100%; border: 1px solid rgba(255,255,255,0.05); background: #05070a; border-radius: 4px; display: block;"></canvas>
+                        <div style="position: absolute; top: 25px; right: 25px; display: flex; gap: 10px;">
+                            <button onclick="resetValkyrieTree()" style="font-size: 10px; padding: 3px 8px; border-color: rgba(191,97,106,0.5); color: #bf616a;">RESET MAP</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="output-area"></div>
+                <div id="aiSuggestionsPanel" style="display: none; margin-top: 20px; border: 1px solid rgba(235, 203, 139, 0.3); border-radius: 4px; background: rgba(10, 12, 18, 0.9); overflow: hidden;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(235, 203, 139, 0.08); border-bottom: 1px solid rgba(235, 203, 139, 0.2); cursor: pointer;" onclick="toggleSuggestionsPanel()">
+                        <h3 style="color: #ebcb8b; margin: 0; font-size: 14px; letter-spacing: 1px;">
+                            ᛟ HEIMDALL — AI SMART SUGGESTIONS
+                            <span id="aiSuggestionCount" style="font-size: 11px; color: var(--accent-color); margin-left: 10px;"></span>
+                        </h3>
+                        <span id="aiPanelToggle" style="color: #ebcb8b; font-size: 14px;">▼</span>
+                    </div>
+                    <div id="aiSuggestionsContent" style="max-height: 600px; overflow-y: auto; padding: 15px;">
+                        <div style="color: var(--text-dim); text-align: center; padding: 30px;">
+                            <p>No analyses yet. Click <span style="color: #ebcb8b;">🧠 AI</span> on any terminal window to analyze scan results.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+        {% include 'modals/tool_modals.html' %}
 
-    <div id="installModal" class="modal">
-        <div class="modal-content">
-            <h2 style="color: var(--wood-light); margin-top:0;">{{ t('missing_tool') }}</h2>
-            <p id="installMsg" style="font-size: 18px; margin: 30px 0;"></p>
-            <button onclick="confirmInstall()" class="btn-install">{{ t('initiate_ritual') }}</button>
-            <button onclick="closeModal()" class="btn-cancel">{{ t('abort') }}</button>
-        </div>
-    </div>
-
-    <div id="synScannerModal" class="modal">
-        <div class="modal-content">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ ᚷ ] ADVANCED SYN SCANNER</h2>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color);">Mode:</label>
-                <select id="synMode" onchange="toggleSynFields()" style="background:var(--bg-dark); color:var(--text-color); border:1px solid var(--accent-color); padding:5px; width:100%; margin-top:5px;">
-                    <option value="auto">Automated (Recommended)</option>
-                    <option value="manual">Manual</option>
-                </select>
-            </div>
-            
-            <div id="synAutoFields">
-                <label style="color:var(--text-color);">Target IP:</label>
-                <input type="text" id="synAutoTarget" placeholder="192.168.1.1" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
-                <label style="color:var(--text-color);">Max Port:</label>
-                <input type="text" id="synAutoPort" placeholder="1000" style="margin-bottom:15px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
-            </div>
-
-            <div id="synManualFields" style="display:none;">
-                <label style="color:var(--text-color);">Source IP:</label>
-                <input type="text" id="synManSource" placeholder="192.168.1.5" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
-                <label style="color:var(--text-color);">Target IP:</label>
-                <input type="text" id="synManTarget" placeholder="192.168.1.1" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
-                <label style="color:var(--text-color);">Start Port:</label>
-                <input type="text" id="synManStart" placeholder="1" style="margin-bottom:10px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
-                <label style="color:var(--text-color);">End Port:</label>
-                <input type="text" id="synManEnd" placeholder="1000" style="margin-bottom:15px; width:100%; padding:5px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color);">
-            </div>
-
-            <button onclick="submitSynScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('start_scan') }}</button>
-            <button onclick="closeSynModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <div id="packetInjectorModal" class="modal">
-        <div class="modal-content" style="max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; text-align: left;">
-            <h2 style="color: var(--wood-light); margin-top:0;">{{ t('rune_packet') }}</h2>
-            
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Operation Mode / Action:</label>
-                <select id="injectorAction" onchange="toggleInjectorFields()" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                    <option value="sniff">Packet Sniffing (sniff)</option>
-                    <option value="arp-detect">ARP Poison Detection (arp-detect)</option>
-                    <option value="inject">Packet Injection (inject)</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Network Interface:</label>
-                <input type="text" id="injectorInterface" value="eth0" placeholder="eth0, wlan0, etc." style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-
-            <!-- Inject Specific Options -->
-            <div id="injectorInjectFields" style="display: none; border: 1px solid rgba(136, 192, 208, 0.2); padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2);">
-                <h3 style="color: var(--highlight-color); margin-top: 0; margin-bottom: 15px; font-size: 16px;">Injection Parameters</h3>
-                
-                <div style="margin-bottom: 12px;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Protocol:</label>
-                    <select id="injectorProtocol" onchange="toggleInjectorProtocolFields()" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        <option value="tcp">TCP</option>
-                        <option value="arp">ARP</option>
-                    </select>
-                </div>
-
-                <div style="margin-bottom: 12px;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Target IP (Destination):</label>
-                    <input type="text" id="injectorTarget" placeholder="192.168.1.1" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                </div>
-
-                <div style="margin-bottom: 12px;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Source IP:</label>
-                    <input type="text" id="injectorSrcIp" value="192.168.1.100" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                </div>
-
-                <div style="margin-bottom: 12px; display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Source MAC:</label>
-                        <input type="text" id="injectorSrcMac" value="00:00:00:00:00:00" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Destination MAC:</label>
-                        <input type="text" id="injectorDstMac" value="ff:ff:ff:ff:ff:ff" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 12px;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">TTL:</label>
-                    <input type="number" id="injectorTtl" value="64" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                </div>
-
-                <!-- TCP Protocol Options -->
-                <div id="injectorTcpFields" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(136, 192, 208, 0.2);">
-                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Source Port:</label>
-                            <input type="number" id="injectorSrcPort" value="4444" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Dest Port:</label>
-                            <input type="number" id="injectorDstPort" placeholder="80" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Seq Number:</label>
-                            <input type="number" id="injectorSeq" value="123456789" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Ack Number:</label>
-                            <input type="number" id="injectorAckNum" value="0" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Window Size:</label>
-                            <input type="number" id="injectorWindow" value="8192" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">TCP Flags (Comma separated):</label>
-                            <input type="text" id="injectorFlags" value="SYN" placeholder="SYN, ACK, FIN, RST" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ARP Protocol Options -->
-                <div id="injectorArpFields" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(136, 192, 208, 0.2);">
-                    <div style="margin-bottom: 12px;">
-                        <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">ARP Opcode:</label>
-                        <select id="injectorArpOp" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                            <option value="1">1 (Request)</option>
-                            <option value="2">2 (Reply)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Scheduling Options -->
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(136, 192, 208, 0.2);">
-                    <h4 style="color: var(--wood-light); margin-top: 0; margin-bottom: 10px; font-size: 14px;">Transmission Settings</h4>
-                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Delay (Rate in sec):</label>
-                            <input type="number" step="0.01" id="injectorRate" value="0.0" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Count (Total):</label>
-                            <input type="number" id="injectorCount" value="1" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Duration (sec):</label>
-                            <input type="number" step="0.1" id="injectorDuration" value="0.0" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                        <div style="flex: 1;">
-                            <label style="color:var(--text-color); font-size: 12px; display: block; margin-bottom: 5px;">Burst Size:</label>
-                            <input type="number" id="injectorBurst" value="1" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button onclick="submitPacketInjector()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('execute_runes') }}</button>
-            <button onclick="closePacketInjectorModal()" class="btn-cancel" style="width:100%;">{{ t('abort') }}</button>
-        </div>
-    </div>
     
-    <div id="erebusScannerModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; width: 90%;">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ ᛖ ] EREBUS SCANNER</h2>
-            
-            <div style="margin-bottom: 15px; text-align: left;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Target IP/Domain:</label>
-                <input type="text" id="erebusTarget" placeholder="127.0.0.1 or example.com" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
+    
+    
+    
+    
+    
+    
+    
+    
+        {% include 'modals/system_modals.html' %}
 
-            <div style="margin-bottom: 15px; text-align: left;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Port Range (Default: 1-1024):</label>
-                <input type="text" id="erebusPorts" placeholder="1-1024 or 80,443,8080" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
+        {% include 'modals/ai_modals.html' %}
 
-            <div style="margin-bottom: 15px; text-align: left;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">HTTP/Socks5 Proxy (Optional):</label>
-                <input type="text" id="erebusProxy" placeholder="socks5://127.0.0.1:9050" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
+        {% include 'modals/custom_modals.html' %}
 
-            <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; text-align: left;">
-                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="erebusBanner" checked style="accent-color: var(--accent-color);">
-                    <span>Grab Service Banners</span>
-                </label>
-                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="erebusRandomize" style="accent-color: var(--accent-color);">
-                    <span>Randomize Port Scan Order</span>
-                </label>
-                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="erebusAdaptive" style="accent-color: var(--accent-color);">
-                    <span>Adaptive Rate Limiting (Evade IDS)</span>
-                </label>
-            </div>
-
-            <button onclick="submitErebusScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('launch_scan') }}</button>
-            <button onclick="closeErebusModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <!-- FENRIR CRACKER MODAL -->
-    <div id="fenrirModal" class="modal">
-        <div class="modal-content" style="border: 1px solid var(--accent-color);">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ 🐺 ] FENRIR HASH CRACKER</h2>
-            <div style="margin-bottom:15px;">
-                <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_target') }}</label>
-                <input type="text" id="fenrirTarget" placeholder="{{ t('fenrir_target_ph') }}" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-            
-            <div style="margin-bottom:15px; display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_hash_mode') }}</label>
-                    <select id="fenrirHashMode" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        <option value="md5">MD5</option>
-                        <option value="sha1">SHA1</option>
-                        <option value="sha256" selected>SHA256</option>
-                        <option value="sha512">SHA512</option>
-                        <option value="ntlm">NTLM</option>
-                        <option value="bcrypt">Bcrypt</option>
-                        <option value="pbkdf2">PBKDF2</option>
-                        <option value="argon2">Argon2</option>
-                    </select>
-                </div>
-                <div style="flex: 1;">
-                    <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_attack_mode') }}</label>
-                    <select id="fenrirAttackMode" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        <option value="dict" selected>{{ t('fenrir_dict') }}</option>
-                        <option value="mask">{{ t('fenrir_mask') }}</option>
-                        <option value="rule">{{ t('fenrir_rule') }}</option>
-                        <option value="api">{{ t('fenrir_api') }}</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="margin-bottom:20px;">
-                <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:5px;">{{ t('fenrir_wordlist') }}</label>
-                <input type="text" id="fenrirWordlist" placeholder="{{ t('fenrir_wordlist_ph') }}" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-
-            <button onclick="submitFenrirScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('launch_scan') }}</button>
-            <button onclick="closeFenrirModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <div id="hydraModal" class="modal">
-        <div class="modal-content" style="max-width: 600px; width: 90%; text-align: left;">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ ᚺ ] HYDRA BRUTE FORCE</h2>
-            
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Protocol:</label>
-                <select id="hydraProtocol" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                    <option value="ssh">SSH</option>
-                    <option value="ftp">FTP</option>
-                    <option value="telnet">Telnet</option>
-                    <option value="http-get">HTTP GET</option>
-                    <option value="http-post-form">HTTP POST Form</option>
-                    <option value="smb">SMB</option>
-                    <option value="rdp">RDP</option>
-                    <option value="mysql">MySQL</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Port (Optional):</label>
-                    <input type="text" id="hydraPort" placeholder="Default for protocol" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                </div>
-                <div style="flex: 1;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Threads (-t):</label>
-                    <input type="number" id="hydraThreads" value="4" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                </div>
-            </div>
-
-            <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Username Mode:</label>
-                    <select id="hydraUserMode" onchange="toggleHydraUserMode()" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        <option value="single">Single Username (-l)</option>
-                        <option value="list">Wordlist Path (-L)</option>
-                    </select>
-                </div>
-                <div style="flex: 1;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Username/List:</label>
-                    <input type="text" id="hydraUserVal" value="admin" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                </div>
-            </div>
-
-            <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Password Mode:</label>
-                    <select id="hydraPassMode" onchange="toggleHydraPassMode()" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                        <option value="list">Wordlist Path (-P)</option>
-                        <option value="single">Single Password (-p)</option>
-                    </select>
-                </div>
-                <div style="flex: 1;">
-                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Password/List:</label>
-                    <input type="text" id="hydraPassVal" value="/usr/share/wordlists/rockyou.txt" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="hydraVerbose" checked style="accent-color: var(--accent-color);">
-                    <span>Verbose Output (-V)</span>
-                </label>
-            </div>
-
-            <button onclick="submitHydraScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('start_scan') }}</button>
-            <button onclick="closeHydraModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <!-- SUBFINDER MODAL -->
-    <div id="subfinderModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; width: 90%; text-align: left;">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ ᛊ ] SUBFINDER CONFIG</h2>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('threads') }}:</label>
-                <input type="number" id="subfinderThreads" value="10" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="subfinderAll" style="accent-color: var(--accent-color);">
-                    <span>{{ t('all_sources') }} (-all)</span>
-                </label>
-            </div>
-            <button onclick="submitSubfinderScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('start_scan') }}</button>
-            <button onclick="closeSubfinderModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <!-- KNOCKPY MODAL -->
-    <div id="knockpyModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; width: 90%; text-align: left;">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ ᚲ ] KNOCKPY CONFIG</h2>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('wordlist_path') }}:</label>
-                <input type="text" id="knockpyWordlist" placeholder="/usr/share/wordlists/amass/subdomains-top1mil-5000.txt" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('threads') }}:</label>
-                <input type="number" id="knockpyThreads" value="50" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-            <button onclick="submitKnockpyScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('start_scan') }}</button>
-            <button onclick="closeKnockpyModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <!-- GOBUSTER DNS MODAL -->
-    <div id="gobusterDnsModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; width: 90%; text-align: left;">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ ᚷ ] GOBUSTER DNS CONFIG</h2>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('wordlist_path') }}:</label>
-                <input type="text" id="gobusterWordlist" placeholder="/usr/share/wordlists/dirb/common.txt" value="/usr/share/wordlists/dirb/common.txt" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('threads') }}:</label>
-                <input type="number" id="gobusterThreads" value="10" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--accent-color); box-sizing: border-box;">
-            </div>
-            <button onclick="submitGobusterDnsScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('start_scan') }}</button>
-            <button onclick="closeGobusterDnsModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <div id="muninnScannerModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; width: 90%; text-align: left;">
-            <h2 style="color: var(--wood-light); margin-top:0;">[ ᛗ ] MUNINN SCANNER</h2>
-            <div style="margin-bottom: 15px;">
-                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">Scan Options:</label>
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptAll" value="true"> --all (Run passive + active scans)</label>
-                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptNuclei" value="true"> --nuclei (Run Vuln scan)</label>
-                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptNmap" value="true"> --nmap (Run Port scan)</label>
-                    <label style="color: white; cursor:pointer;"><input type="checkbox" id="muninnOptMonitor" value="true"> --monitor (Continuous diff mode)</label>
-                </div>
-            </div>
-            <button onclick="submitMuninnScan()" class="btn-install" style="width:100%; margin-bottom:10px;">{{ t('start_scan') }}</button>
-            <button onclick="closeMuninnModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
-        </div>
-    </div>
-
-    <div id="wslSettingsModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; width: 90%;">
-            <h2 style="color: var(--wood-light); margin-top:0;">WSL SETTINGS</h2>
-            <p style="color: var(--text-color); margin-bottom: 20px;">Select your preferred Windows Subsystem for Linux (WSL) distribution for Linux-native tools.</p>
-            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 4px; border: 1px solid var(--accent-color); margin-bottom: 20px;">
-                <label for="wslDistroSelect" style="display: block; margin-bottom: 10px; color: var(--wood-light); font-weight: bold;">Available Distros:</label>
-                <select id="wslDistroSelect" class="form-input" style="width: 100%;">
-                    <option value="">Loading...</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="saveWslSettings()" class="btn-install" style="flex: 1; min-width: 120px;">SAVE</button>
-                <button onclick="closeWslSettings()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color);">CLOSE</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="depManagerModal" class="modal">
-        <div class="modal-content" style="max-width: 800px; width: 90%;">
-            <h2 style="color: var(--wood-light); margin-top:0;">{{ t('dep_manager') }}</h2>
-            <p style="color: var(--text-color); margin-bottom: 20px;">{{ t('dep_desc') }}</p>
-            
-            <div style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px; border: 1px solid var(--accent-color); padding: 10px; background: rgba(0,0,0,0.3);">
-                <table id="depTable" style="width: 100%; border-collapse: collapse; color: white; text-align: left; font-family: 'Courier New', Courier, monospace; font-size: 14px;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--accent-color);">
-                            <th style="padding: 10px;"><input type="checkbox" id="selectAllDeps" onclick="toggleSelectAllDeps()"></th>
-                            <th style="padding: 10px;">{{ t('dep_col_tool') }}</th>
-                            <th style="padding: 10px;">{{ t('dep_col_used_for') }}</th>
-                            <th style="padding: 10px;">{{ t('dep_col_status') }}</th>
-                            <th style="padding: 10px;">{{ t('dep_col_os') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="depTableBody">
-                    </tbody>
-                </table>
-            </div>
-
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="installSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: var(--highlight-color); border-color: var(--highlight-color); color: var(--bg-dark);">INSTALL</button>
-                <button onclick="updateSelectedDependencies()" class="btn-install" style="flex: 1; min-width: 120px; background-color: #5E81AC; border-color: #5E81AC; color: white;">UPDATE</button>
-                <button onclick="removeSelectedDependencies()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: var(--danger-color); border-color: var(--danger-color); color: white;">UNINSTALL</button>
-                <button onclick="closeDependencyManager()" class="btn-cancel" style="flex: 1; min-width: 120px; background-color: #4C566A; border-color: #4C566A; color: white;">CLOSE</button>
-            </div>
-        </div>
-    </div>
-
+    
+    
+    
+    
+    
+    
+    
     <script>
-        // CSRF & Async Task Polling Global Injector
-        const originalFetch = window.fetch;
-        window.fetch = async function() {
-            let [resource, config] = arguments;
-            if (config && config.method && config.method.toUpperCase() === 'POST') {
-                config.headers = config.headers || {};
-                config.headers['X-CSRFToken'] = '{{ csrf_token() }}';
-            }
-            
-            const res = await originalFetch(resource, config);
-            
-            if (resource === '/api/action') {
-                const clone = res.clone();
-                try {
-                    const data = await clone.json();
-                    if (data.status === 'pending' && data.task_id) {
-                        const taskId = data.task_id;
-                        while (true) {
-                            await new Promise(r => setTimeout(r, 1000));
-                            const pollRes = await originalFetch('/api/task_status?task_id=' + taskId);
-                            const pollData = await pollRes.json();
-                            if (pollData.status !== 'running') {
-                                return new Response(JSON.stringify(pollData), {
-                                    status: 200,
-                                    headers: { 'Content-Type': 'application/json' }
-                                });
-                            }
-                        }
-                    }
-                } catch(e) { }
-            }
-            return res;
-        };
-
-        const translations = {{ js_translations | tojson | safe }};
-        function t(key, params={}) {
-            let text = translations[key] || key;
-            for (const [k, v] of Object.entries(params)) {
-                text = text.replace(`{${k}}`, v);
-            }
-            return text;
-        }
-
-        function setLang(lang) {
-            fetch('/api/set_lang', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lang: lang })
-            }).then(() => window.location.reload());
-        }
-
-        let currentTool = '';
-        let typewriterTimeouts = [];
-        let isProcessRunning = false;
-
-        // XSS Protection: Escapes HTML entities to prevent script injection
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        // Applies syntax highlighting safely AFTER escaping HTML
-        function highlightSafe(output) {
-            let safe = escapeHtml(output);
-            safe = safe.replace(/&gt;&gt; SYSTEM ERROR/g, '<span style="color:var(--danger-color); font-weight:bold;">&gt;&gt; SYSTEM ERROR</span>');
-            safe = safe.replace(/\[\+\]/g, '<span style="color:var(--highlight-color); font-weight:bold;">[+]</span>');
-            safe = safe.replace(/\[-\]/g, '<span style="color:var(--danger-color); font-weight:bold;">[-]</span>');
-            return safe;
-        }
-
-        async function loadTools() {
-            try {
-                const response = await fetch('/api/tools');
-                const tools = await response.json();
-                window.toolsConfig = tools;
-                
-                Object.keys(tools).forEach(toolKey => {
-                    const tool = tools[toolKey];
-                    const categoryContainer = document.querySelector(`[data-category="${tool.category}"]`);
-                    if (categoryContainer) {
-                        const btn = document.createElement('button');
-                        btn.innerText = t(tool.name);
-                        btn.onclick = () => {
-                            if (toolKey === 'update_modules') {
-                                initiateUpdateCheck();
-                            } else if (tool.has_modal) {
-                                if (toolKey === 'erebus') {
-                                    openErebusModal();
-                                    return;
-                                }
-                                if (toolKey === 'fenrir') {
-                                    openFenrirModal();
-                                    return;
-                                }
-                                if (toolKey === 'packet_injector') {
-                                    openPacketInjectorModal();
-                                } else if (toolKey === 'hydra') {
-                                    openHydraModal();
-                                } else if (toolKey === 'subfinder') {
-                                    openSubfinderModal();
-                                } else if (toolKey === 'knockpy') {
-                                    openKnockpyModal();
-                                } else if (toolKey === 'gobuster_dns') {
-                                    openGobusterDnsModal();
-                                } else if (toolKey === 'muninn_scanner') {
-                                    openMuninnModal();
-                                } else {
-                                    openSynModal();
-                                }
-                            } else {
-                                runTool(toolKey);
-                            }
-                        };
-                        categoryContainer.appendChild(btn);
-                    }
-                });
-            } catch (e) {}
-        }
-        
-        loadTools();
-
-        async function updateStats() {
-            try {
-                const response = await fetch('/api/stats');
-                const stats = await response.json();
-                document.getElementById('stat-scans').innerText = stats.total_scans;
-                document.getElementById('stat-target').innerText = stats.last_target;
-                document.getElementById('stat-tool').innerText = stats.active_tool;
-            } catch (e) {}
-        }
-
-        setInterval(updateStats, 5000);
-        updateStats();
-
-        async function openDependencyManager() {
-            document.getElementById('depManagerModal').style.display = 'block';
-            const tbody = document.getElementById('depTableBody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">' + t('dep_fetching') + '</td></tr>';
-            
-            try {
-                const response = await fetch('/api/dependencies');
-                const deps = await response.json();
-                
-                tbody.innerHTML = '';
-                deps.forEach(dep => {
-                    const statusColor = dep.installed ? '#a3be8c' : 'var(--danger-color)';
-                    const statusText = dep.installed ? t('dep_installed') : t('dep_missing');
-                    
-                    const supportColor = dep.supported ? (dep.is_wsl ? '#b48ead' : 'var(--highlight-color)') : '#888';
-                    const supportText = dep.supported ? (dep.is_wsl ? 'NATIVE (WSL)' : t('dep_native')) : t('dep_manual');
-
-                    const disabledAttr = '';
-
-                    const tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid rgba(136, 192, 208, 0.2)';
-                    tr.innerHTML = `
-                        <td style="padding: 10px;"><input type="checkbox" class="dep-checkbox" value="${escapeHtml(dep.tool_key)}" ${disabledAttr}></td>
-                        <td style="padding: 10px; font-weight: bold;">${escapeHtml(dep.tool_key)}</td>
-                        <td style="padding: 10px;">${escapeHtml(dep.name)}</td>
-                        <td style="padding: 10px; color: ${statusColor}; font-weight: bold;">${escapeHtml(statusText)}</td>
-                        <td style="padding: 10px; color: ${supportColor};">${escapeHtml(supportText)}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--danger-color);">' + t('dep_fetch_fail') + '</td></tr>';
-            }
-        }
-
-        function closeDependencyManager() {
-            document.getElementById('depManagerModal').style.display = 'none';
-        }
-
-        function toggleSelectAllDeps() {
-            const selectAll = document.getElementById('selectAllDeps').checked;
-            const checkboxes = document.querySelectorAll('.dep-checkbox');
-            checkboxes.forEach(cb => cb.checked = selectAll);
-        }
-
-        async function installSelectedDependencies() {
-            const checkboxes = document.querySelectorAll('.dep-checkbox:checked');
-            const toolsToInstall = Array.from(checkboxes).map(cb => cb.value);
-            
-            if (toolsToInstall.length === 0) {
-                alert(t('dep_err_select'));
-                return;
-            }
-
-            closeDependencyManager();
-
-            for (const tool of toolsToInstall) {
-                const contentDiv = createTerminalWindow(t('dep_installing') + tool.toUpperCase());
-                const statusDiv = document.getElementById('status-display');
-                statusDiv.innerText = t('initiating_ritual', {tool: tool.toUpperCase()});
-                
-                typeWriter(contentDiv, t('dep_req_seq') + tool + '...\n', 0);
-
-                const formData = new FormData();
-                formData.append('tool', tool);
-                formData.append('action', 'install');
-
-                try {
-                    const response = await fetch('/api/action', { method: 'POST', body: formData });
-                    const data = await response.json();
-                    
-                    const msg = data.message || "Unknown error";
-                    if (data.status === 'success') {
-                        contentDiv.innerText += '\n' + t('dep_success') + '\n\n' + msg;
-                    } else {
-                        contentDiv.innerText += '\n' + t('dep_err_seq') + '\n\n' + msg;
-                    }
-                } catch (error) {
-                    contentDiv.innerText += '\n' + t('dep_sys_err') + error;
-                }
-                contentDiv.scrollTop = contentDiv.scrollHeight;
-            }
-        }
-
-        async function updateSelectedDependencies() {
-            const checkboxes = document.querySelectorAll('.dep-checkbox:checked');
-            const toolsToInstall = Array.from(checkboxes).map(cb => cb.value);
-            
-            if (toolsToInstall.length === 0) {
-                alert(t('dep_err_select') || "Please select at least one tool.");
-                return;
-            }
-
-            closeDependencyManager();
-
-            for (const tool of toolsToInstall) {
-                const contentDiv = createTerminalWindow("UPDATING: " + tool.toUpperCase());
-                const statusDiv = document.getElementById('status-display');
-                statusDiv.innerText = ">> UPDATING " + tool.toUpperCase() + "...";
-                
-                typeWriter(contentDiv, "Sending update command for " + tool + '...\n', 0);
-
-                const formData = new FormData();
-                formData.append('tool', tool);
-                formData.append('action', 'update');
-
-                try {
-                    const response = await fetch('/api/action', { method: 'POST', body: formData });
-                    const data = await response.json();
-                    
-                    const msg = data.message || "Unknown error";
-                    if (data.status === 'success') {
-                        contentDiv.innerText += '\n[+] UPDATE SUCCESSFUL:\n\n' + msg;
-                    } else {
-                        contentDiv.innerText += '\n[-] UPDATE FAILED:\n\n' + msg;
-                    }
-                } catch (error) {
-                    contentDiv.innerText += '\n[!] SYSTEM ERROR: ' + error;
-                }
-                contentDiv.scrollTop = contentDiv.scrollHeight;
-            }
-        }
-
-        async function removeSelectedDependencies() {
-            const checkboxes = document.querySelectorAll('.dep-checkbox:checked');
-            const toolsToInstall = Array.from(checkboxes).map(cb => cb.value);
-            
-            if (toolsToInstall.length === 0) {
-                alert(t('dep_err_select') || "Please select at least one tool.");
-                return;
-            }
-
-            if(!confirm("Are you sure you want to remove the selected tools?")) return;
-
-            closeDependencyManager();
-
-            for (const tool of toolsToInstall) {
-                const contentDiv = createTerminalWindow("REMOVING: " + tool.toUpperCase());
-                const statusDiv = document.getElementById('status-display');
-                statusDiv.innerText = ">> REMOVING " + tool.toUpperCase() + "...";
-                
-                typeWriter(contentDiv, "Sending removal command for " + tool + '...\n', 0);
-
-                const formData = new FormData();
-                formData.append('tool', tool);
-                formData.append('action', 'remove');
-
-                try {
-                    const response = await fetch('/api/action', { method: 'POST', body: formData });
-                    const data = await response.json();
-                    
-                    const msg = data.message || "Unknown error";
-                    if (data.status === 'success') {
-                        contentDiv.innerText += '\n[-] UNINSTALL SUCCESSFUL:\n\n' + msg;
-                    } else {
-                        contentDiv.innerText += '\n[!] UNINSTALL FAILED:\n\n' + msg;
-                    }
-                } catch (error) {
-                    contentDiv.innerText += '\n[!] SYSTEM ERROR: ' + error;
-                }
-                contentDiv.scrollTop = contentDiv.scrollHeight;
-            }
-        }
-
-        function typeWriter(element, text, i) {
-            if (i < text.length) {
-                let chunkSize = text.length > 5000 ? 50 : (text.length > 1000 ? 15 : 1);
-                // Use textContent to prevent XSS injection during typing
-                element.textContent += text.substring(i, i + chunkSize);
-                element.scrollTop = element.scrollHeight;
-                let timeout = setTimeout(() => typeWriter(element, text, i + chunkSize), 2);
-                if (!element.typewriterTimeouts) element.typewriterTimeouts = [];
-                element.typewriterTimeouts.push(timeout);
-            } else if (element.typewriterTimeouts) {
-                // Clear the timeout references to prevent memory leaks
-                element.typewriterTimeouts.forEach(t => clearTimeout(t));
-                element.typewriterTimeouts = [];
-            }
-        }
-
-        function createTerminalWindow(title) {
-            const outputArea = document.getElementById('output-area');
-            
-            const win = document.createElement('div');
-            win.className = 'terminal-window';
-            if (title.toUpperCase().includes('INSTALLING') || title.toUpperCase().includes('UPDATING') || title.toUpperCase().includes('REMOVING')) {
-                win.classList.add('terminal-install');
-            }
-            
-            const header = document.createElement('div');
-            header.className = 'terminal-header';
-            
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'terminal-title';
-            titleSpan.innerText = title;
-            
-            const actions = document.createElement('div');
-            actions.className = 'terminal-actions';
-            
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'btn-mini';
-            copyBtn.innerText = 'COPY';
-            copyBtn.onclick = () => {
-                navigator.clipboard.writeText(content.innerText);
-                copyBtn.innerText = 'COPIED!';
-                setTimeout(() => copyBtn.innerText = 'COPY', 2000);
-            };
-            
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'btn-mini terminal-close-btn';
-            closeBtn.innerText = 'X';
-            closeBtn.onclick = () => {
-                if (content.typewriterTimeouts) {
-                    content.typewriterTimeouts.forEach(t => clearTimeout(t));
-                }
-                win.remove();
-            };
-            
-            actions.appendChild(copyBtn);
-            actions.appendChild(closeBtn);
-            header.appendChild(titleSpan);
-            header.appendChild(actions);
-            
-            const content = document.createElement('div');
-            content.className = 'terminal-content';
-            content.typewriterTimeouts = [];
-            
-            win.appendChild(header);
-            win.appendChild(content);
-            
-            outputArea.insertBefore(win, outputArea.firstChild);
-            return content;
-        }
-        
-        function openHydraModal() {
-            document.getElementById('hydraModal').style.display = 'block';
-        }
-
-        function closeHydraModal() {
-            document.getElementById('hydraModal').style.display = 'none';
-        }
-
-        function toggleHydraUserMode() {
-            const mode = document.getElementById('hydraUserMode').value;
-            const input = document.getElementById('hydraUserVal');
-            if (mode === 'list') {
-                input.placeholder = '/path/to/users.txt';
-                input.value = '/usr/share/wordlists/fasttrack.txt';
-            } else {
-                input.placeholder = 'admin';
-                input.value = 'admin';
-            }
-        }
-
-        function toggleHydraPassMode() {
-            const mode = document.getElementById('hydraPassMode').value;
-            const input = document.getElementById('hydraPassVal');
-            if (mode === 'list') {
-                input.placeholder = '/path/to/passwords.txt';
-                input.value = '/usr/share/wordlists/rockyou.txt';
-            } else {
-                input.placeholder = 'password123';
-                input.value = 'password123';
-            }
-        }
-
-        async function submitHydraScan() {
-            const target = document.getElementById('target-input').value;
-            if (!target) {
-                alert(t('err_target'));
-                return;
-            }
-
-            closeHydraModal();
-            const statusDiv = document.getElementById('status-display');
-            statusDiv.innerText = ">> WEAVING FATE WITH HYDRA...";
-            statusDiv.style.color = "var(--wood-light)";
-
-            const protocol = document.getElementById('hydraProtocol').value;
-            const port = document.getElementById('hydraPort').value;
-            const threads = document.getElementById('hydraThreads').value;
-            const userMode = document.getElementById('hydraUserMode').value;
-            const userVal = document.getElementById('hydraUserVal').value;
-            const passMode = document.getElementById('hydraPassMode').value;
-            const passVal = document.getElementById('hydraPassVal').value;
-            const verbose = document.getElementById('hydraVerbose').checked ? 'true' : 'false';
-
-            const formData = new FormData();
-            formData.append('tool', 'hydra');
-            formData.append('target', target);
-            formData.append('action', 'run');
-            formData.append('protocol', protocol);
-            formData.append('port', port);
-            formData.append('threads', threads);
-            formData.append('user_type', userMode);
-            formData.append('user_val', userVal);
-            formData.append('pass_type', passMode);
-            formData.append('pass_val', passVal);
-            formData.append('verbose', verbose);
-
-            const contentDiv = createTerminalWindow(`[ HYDRA - ${target} ]`);
-            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ INITIATING BRUTE FORCE RITUAL... ]</span>";
-
-            try {
-                const response = await fetch('/api/action', { method: 'POST', body: formData });
-                const data = await response.json();
-                contentDiv.innerHTML = "";
-                contentDiv.innerHTML = highlightSafe(data.output);
-                updateStats();
-            } catch (error) {
-                contentDiv.innerHTML = `<span style="color:var(--danger-color);">RUNTIME ERROR: ${escapeHtml(String(error))}</span>`;
-            }
-        }
-
-        // Subfinder Functions
-        function openSubfinderModal() { document.getElementById('subfinderModal').style.display = 'block'; }
-        function closeSubfinderModal() { document.getElementById('subfinderModal').style.display = 'none'; }
-        async function submitSubfinderScan() {
-            const target = document.getElementById('target-input').value;
-            if (!target) { alert(t('err_target')); return; }
-            closeSubfinderModal();
-            const threads = document.getElementById('subfinderThreads').value;
-            const all_sources = document.getElementById('subfinderAll').checked ? 'true' : 'false';
-            
-            const formData = new FormData();
-            formData.append('target', target);
-            formData.append('action', 'subfinder');
-            formData.append('threads', threads);
-            formData.append('all_sources', all_sources);
-            
-            runCustomHandler('subfinder', formData, `[ SUBFINDER - ${target} ]`);
-        }
-
-        // Knockpy Functions
-        function openKnockpyModal() { document.getElementById('knockpyModal').style.display = 'block'; }
-        function closeKnockpyModal() { document.getElementById('knockpyModal').style.display = 'none'; }
-        async function submitKnockpyScan() {
-            const target = document.getElementById('target-input').value;
-            if (!target) { alert(t('err_target')); return; }
-            closeKnockpyModal();
-            const threads = document.getElementById('knockpyThreads').value;
-            const wordlist = document.getElementById('knockpyWordlist').value;
-            
-            const formData = new FormData();
-            formData.append('target', target);
-            formData.append('action', 'knockpy');
-            formData.append('threads', threads);
-            formData.append('wordlist', wordlist);
-            
-            runCustomHandler('knockpy', formData, `[ KNOCKPY - ${target} ]`);
-        }
-
-        // Gobuster DNS Functions
-        function openGobusterDnsModal() { document.getElementById('gobusterDnsModal').style.display = 'block'; }
-        function closeGobusterDnsModal() { document.getElementById('gobusterDnsModal').style.display = 'none'; }
-        async function submitGobusterDnsScan() {
-            const target = document.getElementById('target-input').value;
-            if (!target) { alert(t('err_target')); return; }
-            closeGobusterDnsModal();
-            const threads = document.getElementById('gobusterThreads').value;
-            const wordlist = document.getElementById('gobusterWordlist').value;
-            
-            const formData = new FormData();
-            formData.append('target', target);
-            formData.append('tool', 'gobuster_dns');
-            formData.append('action', 'run');
-            formData.append('threads', threads);
-            formData.append('wordlist', wordlist);
-            
-            runCustomHandler('gobuster_dns', formData, `[ GOBUSTER DNS - ${target} ]`);
-        }
-
-        // Muninn Scanner Functions
-        function openMuninnModal() { document.getElementById('muninnScannerModal').style.display = 'block'; }
-        function closeMuninnModal() { document.getElementById('muninnScannerModal').style.display = 'none'; }
-        async function submitMuninnScan() {
-            const target = document.getElementById('target-input').value;
-            if (!target) { alert(t('err_target')); return; }
-            closeMuninnModal();
-            
-            const formData = new FormData();
-            formData.append('target', target);
-            formData.append('tool', 'muninn_scanner');
-            formData.append('action', 'run');
-            
-            if (document.getElementById('muninnOptAll').checked) formData.append('all', 'true');
-            if (document.getElementById('muninnOptNuclei').checked) formData.append('nuclei', 'true');
-            if (document.getElementById('muninnOptNmap').checked) formData.append('nmap', 'true');
-            if (document.getElementById('muninnOptMonitor').checked) formData.append('monitor', 'true');
-            
-            runCustomHandler('muninn_scan', formData, `[ MUNINN SCAN - ${target} ]`);
-        }
-
-        async function runCustomHandler(action, formData, title) {
-            const statusDiv = document.getElementById('status-display');
-            statusDiv.innerText = `>> WEAVING FATE WITH ${action.toUpperCase()}...`;
-            statusDiv.style.color = "var(--wood-light)";
-            
-            const contentDiv = createTerminalWindow(title);
-            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ INITIATING RITUAL... ]</span>";
-
-            try {
-                const response = await fetch('/api/action', { method: 'POST', body: formData });
-                const data = await response.json();
-                contentDiv.innerHTML = "";
-                contentDiv.innerHTML = highlightSafe(data.output);
-                updateStats();
-            } catch (error) {
-                contentDiv.innerHTML = `<span style="color:var(--danger-color);">RUNTIME ERROR: ${escapeHtml(String(error))}</span>`;
-            }
-        }
-
-        async function runTool(toolName) {
-            const target = document.getElementById('target-input').value;
-            const statusDiv = document.getElementById('status-display');
-            
-            const toolInfo = window.toolsConfig[toolName];
-            if (toolInfo && toolInfo.requires_target && !target) {
-                statusDiv.innerText = t('err_target');
-                statusDiv.style.color = "var(--danger-color)";
-                statusDiv.style.borderColor = "var(--danger-color)";
-                return;
-            }
-            
-            statusDiv.style.color = "var(--wood-light)";
-            statusDiv.style.borderColor = "var(--wood-light)";
-
-            currentTool = toolName;
-            statusDiv.innerText = t('consulting_roots', {tool: toolInfo ? toolInfo.name.toUpperCase() : toolName.toUpperCase()});
-
-            const formData = new FormData();
-            formData.append('tool', toolName);
-            formData.append('target', target);
-            formData.append('action', 'check');
-
-            try {
-                const response = await fetch('/api/action', { method: 'POST', body: formData });
-                const data = await response.json();
-
-                if (data.status === 'missing') {
-                    showInstallModal(toolName);
-                } else {
-                    executeTool(toolName, target);
-                }
-            } catch (error) {
-                statusDiv.innerText = "SYSTEM ERROR: " + error;
-                statusDiv.style.color = "var(--danger-color)";
-            }
-        }
-
-        let updateContentDiv = null;
-
-        async function initiateUpdateCheck() {
-            const statusDiv = document.getElementById('status-display');
-            
-            statusDiv.innerText = ">> CONSULTING THE ARCHIVES FOR KNOWLEDGE (CHECKING UPDATES)...";
-            statusDiv.style.color = "var(--wood-light)";
-            
-            updateContentDiv = createTerminalWindow("[ SYSTEM OPERATIONS - RUNE SYNC ]");
-            updateContentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ SCANNING GITHUB REPOSITORIES... ]</span>";
-
-            const formData = new FormData();
-            formData.append('action', 'check_updates');
-
-            try {
-                const response = await fetch('/api/action', { method: 'POST', body: formData });
-                const data = await response.json();
-
-                if (data.updates && data.updates.length > 0) {
-                    let html = `<div style="color: var(--wood-light); margin-bottom: 20px; font-family: monospace;">
-                        <h3>[ ᛊ ] NEW KNOWLEDGE DISCOVERED</h3>
-                        <p>The following Runes have updates available from their source:</p>
-                        <ul style="color: var(--highlight-color);">`;
-                    data.updates.forEach(u => html += `<li>${escapeHtml(u)}</li>`);
-                    html += `</ul>
-                        <p>Do you wish to integrate these updates into the framework?</p>
-                        <button onclick="applyUpdates()" class="btn-install" style="margin-right: 10px; width: auto; padding: 10px 20px;">YES, INTEGRATE UPDATES</button>
-                        <button onclick="cancelUpdates()" class="btn-cancel" style="width: auto; padding: 10px 20px;">NO, KEEP CURRENT</button>
-                    </div>`;
-                    updateContentDiv.innerHTML = html;
-                    statusDiv.innerText = ">> AWAITING YOUR COMMAND.";
-                } else {
-                    updateContentDiv.innerHTML = "<span style='color: #a3be8c;'>[ ALL RUNES ARE CURRENTLY UP TO DATE. THE ROOTS ARE UNTOUCHED. ]</span>";
-                    statusDiv.innerText = ">> THE ARCHIVES ARE SYNCED.";
-                }
-            } catch (error) {
-                if(updateContentDiv) updateContentDiv.innerText = "RUNTIME ERROR: " + error;
-                statusDiv.innerText = t('chant_failed');
-                statusDiv.style.color = "var(--danger-color)";
-            }
-        }
-
-        function cancelUpdates() {
-            if(updateContentDiv) {
-                updateContentDiv.innerHTML = "<span style='color: #a3be8c;'>[ UPDATE {{ t('cancel') }}LED. THE ROOTS REMAIN UNTOUCHED. ]</span>";
-            }
-            document.getElementById('status-display').innerText = ">> OPERATION {{ t('abort') }}ED.";
-        }
-
-        async function applyUpdates() {
-            const statusDiv = document.getElementById('status-display');
-            
-            statusDiv.innerText = ">> WEAVING NEW FATE (APPLYING UPDATES & RECOMPILING)...";
-            if(updateContentDiv) {
-                updateContentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ DOWNLOADING AND INTEGRATING... ]</span>";
-            }
-
-            const formData = new FormData();
-            formData.append('action', 'apply_updates');
-
-            try {
-                const response = await fetch('/api/action', { method: 'POST', body: formData });
-                const data = await response.json();
-                if(updateContentDiv) {
-                    updateContentDiv.innerHTML = data.output;
-                }
-                statusDiv.innerText = ">> FATE HAS BEEN WOVEN. UPDATES INTEGRATED.";
-                statusDiv.style.color = "var(--highlight-color)";
-            } catch (error) {
-                if(updateContentDiv) updateContentDiv.innerText = "RUNTIME ERROR: " + error;
-                statusDiv.innerText = t('chant_failed');
-                statusDiv.style.color = "var(--danger-color)";
-            }
-        }
-
-        function showInstallModal(toolName) {
-            const toolInfo = window.toolsConfig[toolName];
-            const displayName = toolInfo ? toolInfo.name : toolName;
-            document.getElementById('installMsg').innerText = `The tool '${displayName.toUpperCase()}' is not present.\n\nDo you wish to summon it now?`;
-            document.getElementById('installModal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('installModal').style.display = 'none';
-            document.getElementById('status-display').innerText = ">> RITUAL {{ t('abort') }}ED.";
-        }
-
-        async function confirmInstall() {
-            closeModal();
-            const statusDiv = document.getElementById('status-display');
-            const toolInfo = window.toolsConfig[currentTool];
-            const displayName = toolInfo ? toolInfo.name : currentTool;
-            
-            statusDiv.innerText = `>> SUMMONING ${displayName.toUpperCase()}... PLEASE WAIT...`;
-            
-            const formData = new FormData();
-            formData.append('tool', currentTool);
-            formData.append('action', 'install');
-
-            try {
-                const response = await fetch('/api/action', { method: 'POST', body: formData });
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    statusDiv.innerText = ">> SUMMONING COMPLETE. ENGAGING TOOL...";
-                    const target = document.getElementById('target-input').value;
-                    executeTool(currentTool, target);
-                } else {
-                    statusDiv.innerText = ">> SUMMONING FAILED: " + data.message;
-                    statusDiv.style.color = "var(--danger-color)";
-                }
-            } catch (error) {
-                statusDiv.innerText = "INSTALLATION ERROR: " + error;
-            }
-        }
-
-        async function executeTool(tool, target) {
-            const statusDiv = document.getElementById('status-display');
-            const toolInfo = window.toolsConfig[tool];
-            const displayName = toolInfo ? toolInfo.name : tool;
-            
-            statusDiv.innerText = `>> WEAVING FATE WITH ${displayName.toUpperCase()} ON [${target || 'NO TARGET'}]...`;
-            
-            const contentDiv = createTerminalWindow(`[ ${displayName.toUpperCase()} - ${target || 'SYSTEM'} ]`);
-            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE... ]</span>";
-
-            const formData = new FormData();
-            formData.append('tool', tool);
-            formData.append('target', target);
-            formData.append('action', 'run');
-
-            try {
-                const response = await fetch('/api/action', { method: 'POST', body: formData });
-                const data = await response.json();
-                updateStats();
-
-                contentDiv.innerHTML = ""; 
-
-                if (data.type === 'html') {
-                    contentDiv.innerHTML = data.output;
-                } else {
-                    typeWriter(contentDiv, data.output, 0);
-                }
-                
-                statusDiv.innerText = t('operation_complete');
-                statusDiv.style.color = "var(--highlight-color)";
-                statusDiv.style.borderColor = "var(--highlight-color)";
-            } catch (error) {
-                contentDiv.innerText = t('runtime_error') + String(error);
-                statusDiv.innerText = t('chant_failed');
-                statusDiv.style.color = "var(--danger-color)";
-            }
-        }
-
-        function downloadArtifact(type) {
-            const content = document.getElementById('output-area').innerText;
-            const target = document.getElementById('target-input').value || 'unknown_target';
-            const tool = currentTool || 'tool';
-            const timestamp = new Date().toISOString().slice(0,10);
-            
-            let filename = `yggdrasil_${target}_${tool}_${timestamp}.${type}`;
-            let blob;
-
-            if (type === 'json') {
-                const data = { target: target, tool: tool, date: timestamp, log: content };
-                blob = new Blob([JSON.stringify(data, null, 4)], { type: "application/json" });
-            } else {
-                blob = new Blob([content], { type: "text/plain" });
-            }
-
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-        }
-
-        function openSynModal() {
-            document.getElementById('synScannerModal').style.display = 'block';
-            const target = document.getElementById('target-input').value;
-            if (target) {
-                document.getElementById('synAutoTarget').value = target;
-                document.getElementById('synManTarget').value = target;
-            }
-        }
-
-        function closeSynModal() {
-            document.getElementById('synScannerModal').style.display = 'none';
-        }
-
-        function toggleSynFields() {
-            const mode = document.getElementById('synMode').value;
-            if (mode === 'auto') {
-                document.getElementById('synAutoFields').style.display = 'block';
-                document.getElementById('synManualFields').style.display = 'none';
-            } else {
-                document.getElementById('synAutoFields').style.display = 'none';
-                document.getElementById('synManualFields').style.display = 'block';
-            }
-        }
-
-        function submitSynScan() {
-            closeSynModal();
-            const mode = document.getElementById('synMode').value;
-            let target = "";
-            const formData = new FormData();
-            formData.append('tool', 'adv_syn_scan');
-            formData.append('action', 'run');
-            formData.append('syn_mode', mode);
-
-            if (mode === 'auto') {
-                target = document.getElementById('synAutoTarget').value;
-                formData.append('target', target);
-                formData.append('max_port', document.getElementById('synAutoPort').value || '1000');
-            } else {
-                target = document.getElementById('synManTarget').value;
-                formData.append('target', target);
-                formData.append('source_ip', document.getElementById('synManSource').value);
-                formData.append('start_port', document.getElementById('synManStart').value || '1');
-                formData.append('end_port', document.getElementById('synManEnd').value || '1000');
-            }
-
-            const statusDiv = document.getElementById('status-display');
-            const outputDiv = document.getElementById('output-area');
-            
-            if (!target) {
-                statusDiv.innerText = t('err_target');
-                statusDiv.style.color = "var(--danger-color)";
-                statusDiv.style.borderColor = "var(--danger-color)";
-                return;
-            }
-
-            currentTool = 'adv_syn_scan';
-            statusDiv.style.color = "var(--wood-light)";
-            statusDiv.style.borderColor = "var(--wood-light)";
-            statusDiv.innerText = t('weaving_syn', {target: target});
-            
-            const contentDiv = createTerminalWindow(`[ ADVANCED SYN SCAN - ${target} ]`);
-            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE... ]</span>";
-
-            fetch('/api/action', { method: 'POST', body: formData })
-                .then(r => r.json())
-                .then(data => {
-                    updateStats();
-                    contentDiv.innerHTML = ""; 
-                    if (data.type === 'html') {
-                        contentDiv.innerHTML = data.output;
-                    } else {
-                        typeWriter(contentDiv, data.output, 0);
-                    }
-                    statusDiv.innerText = t('operation_complete');
-                    statusDiv.style.color = "var(--highlight-color)";
-                    statusDiv.style.borderColor = "var(--highlight-color)";
-                })
-                .catch(error => {
-                    contentDiv.innerText = t('runtime_error') + error;
-                    statusDiv.innerText = t('chant_failed');
-                    statusDiv.style.color = "var(--danger-color)";
-                    statusDiv.style.borderColor = "var(--danger-color)";
-                });
-        }
-
-        function openErebusModal() {
-            document.getElementById('erebusScannerModal').style.display = 'block';
-            const target = document.getElementById('target-input').value;
-            if (target) {
-                document.getElementById('erebusTarget').value = target;
-            }
-        }
-
-        function closeErebusModal() {
-            document.getElementById('erebusScannerModal').style.display = 'none';
-        }
-
-        function submitErebusScan() {
-            closeErebusModal();
-            const target = document.getElementById('erebusTarget').value;
-            const ports = document.getElementById('erebusPorts').value || '1-1024';
-            const proxy = document.getElementById('erebusProxy').value;
-            const banner = document.getElementById('erebusBanner').checked;
-            const randomize = document.getElementById('erebusRandomize').checked;
-            const adaptive = document.getElementById('erebusAdaptive').checked;
-
-            const statusDiv = document.getElementById('status-display');
-            
-            if (!target) {
-                statusDiv.innerText = t('err_target_erebus');
-                statusDiv.style.color = "var(--danger-color)";
-                statusDiv.style.borderColor = "var(--danger-color)";
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('tool', 'erebus');
-            formData.append('action', 'run');
-            formData.append('target', target);
-            formData.append('ports', ports);
-            if (proxy && proxy.trim()) {
-                formData.append('proxy', proxy.trim());
-            }
-            formData.append('banner', banner ? 'true' : 'false');
-            formData.append('randomize', randomize ? 'true' : 'false');
-            formData.append('adaptive', adaptive ? 'true' : 'false');
-
-            currentTool = 'erebus';
-            statusDiv.style.color = "var(--wood-light)";
-            statusDiv.style.borderColor = "var(--wood-light)";
-            statusDiv.innerText = t('weaving_erebus', {target: target});
-            
-            const contentDiv = createTerminalWindow(`[ EREBUS SCANNER - ${target} ]`);
-            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ CONNECTING TO THE WORLD TREE / CARGO RUNNING... ]</span>";
-
-            fetch('/api/action', { method: 'POST', body: formData })
-                .then(r => r.json())
-                .then(data => {
-                    updateStats();
-                    contentDiv.innerHTML = ""; 
-                    if (data.type === 'html') {
-                        contentDiv.innerHTML = data.output;
-                    } else {
-                        typeWriter(contentDiv, data.output, 0);
-                    }
-                    statusDiv.innerText = t('operation_complete');
-                    statusDiv.style.color = "var(--highlight-color)";
-                    statusDiv.style.borderColor = "var(--highlight-color)";
-                })
-                .catch(error => {
-                    contentDiv.innerText = t('runtime_error') + error;
-                    statusDiv.innerText = t('chant_failed');
-                    statusDiv.style.color = "var(--danger-color)";
-                    statusDiv.style.borderColor = "var(--danger-color)";
-                });
-        }
-
-        function openPacketInjectorModal() {
-            document.getElementById('packetInjectorModal').style.display = 'block';
-            const target = document.getElementById('target-input').value;
-            if (target) {
-                document.getElementById('injectorTarget').value = target;
-            }
-        }
-
-        function closePacketInjectorModal() {
-            document.getElementById('packetInjectorModal').style.display = 'none';
-        }
-
-        function toggleInjectorFields() {
-            const action = document.getElementById('injectorAction').value;
-            const injectFields = document.getElementById('injectorInjectFields');
-            if (action === 'inject') {
-                injectFields.style.display = 'block';
-                toggleInjectorProtocolFields();
-            } else {
-                injectFields.style.display = 'none';
-            }
-        }
-
-        function toggleInjectorProtocolFields() {
-            const protocol = document.getElementById('injectorProtocol').value;
-            const tcpFields = document.getElementById('injectorTcpFields');
-            const arpFields = document.getElementById('injectorArpFields');
-            if (protocol === 'tcp') {
-                tcpFields.style.display = 'block';
-                arpFields.style.display = 'none';
-            } else if (protocol === 'arp') {
-                tcpFields.style.display = 'none';
-                arpFields.style.display = 'block';
-            }
-        }
-
-        function submitPacketInjector() {
-            closePacketInjectorModal();
-            const action = document.getElementById('injectorAction').value;
-            const interface = document.getElementById('injectorInterface').value || 'eth0';
-            const target = document.getElementById('injectorTarget').value;
-            
-            const formData = new FormData();
-            formData.append('tool', 'packet_injector');
-            formData.append('action', 'run');
-            formData.append('packet_action', action);
-            formData.append('interface', interface);
-
-            if (action === 'inject') {
-                const protocol = document.getElementById('injectorProtocol').value;
-                formData.append('protocol', protocol);
-                formData.append('target', target);
-                formData.append('src_ip', document.getElementById('injectorSrcIp').value);
-                formData.append('src_mac', document.getElementById('injectorSrcMac').value);
-                formData.append('dst_mac', document.getElementById('injectorDstMac').value);
-                formData.append('ttl', document.getElementById('injectorTtl').value);
-
-                if (protocol === 'tcp') {
-                    formData.append('dst_port', document.getElementById('injectorDstPort').value);
-                    formData.append('src_port', document.getElementById('injectorSrcPort').value);
-                    formData.append('seq', document.getElementById('injectorSeq').value);
-                    formData.append('ack_num', document.getElementById('injectorAckNum').value);
-                    formData.append('window', document.getElementById('injectorWindow').value);
-                    formData.append('flags', document.getElementById('injectorFlags').value);
-                } else if (protocol === 'arp') {
-                    formData.append('arp_op', document.getElementById('injectorArpOp').value);
-                }
-
-                // Scheduling
-                formData.append('rate', document.getElementById('injectorRate').value);
-                formData.append('count', document.getElementById('injectorCount').value);
-                formData.append('duration', document.getElementById('injectorDuration').value);
-                formData.append('burst', document.getElementById('injectorBurst').value);
-            } else {
-                // For sniff and arp-detect, we can optionally pass the global target or leave it blank
-                formData.append('target', target || 'none');
-            }
-
-            const statusDiv = document.getElementById('status-display');
-            
-            if (action === 'inject' && !target) {
-                statusDiv.innerText = t('err_target_injection');
-                statusDiv.style.color = "var(--danger-color)";
-                statusDiv.style.borderColor = "var(--danger-color)";
-                return;
-            }
-
-            currentTool = 'packet_injector';
-            statusDiv.style.color = "var(--wood-light)";
-            statusDiv.style.borderColor = "var(--wood-light)";
-            statusDiv.innerText = t('initiating_injector', {action: action.toUpperCase(), interface: interface});
-            
-            const contentDiv = createTerminalWindow(`[ PACKET INJECTOR - ${action.toUpperCase()} ]`);
-            contentDiv.innerHTML = "<span style='color: var(--highlight-color);'>[ ENGAGING PACKET CRAFTING ENGINE... ]</span>";
-
-            fetch('/api/action', { method: 'POST', body: formData })
-                .then(r => r.json())
-                .then(data => {
-                    updateStats();
-                    contentDiv.innerHTML = ""; 
-                    if (data.type === 'html') {
-                        contentDiv.innerHTML = data.output;
-                    } else {
-                        typeWriter(contentDiv, data.output, 0);
-                    }
-                    statusDiv.innerText = t('injection_complete');
-                    statusDiv.style.color = "var(--highlight-color)";
-                    statusDiv.style.borderColor = "var(--highlight-color)";
-                })
-                .catch(error => {
-                    contentDiv.innerText = t('runtime_error') + error;
-                    statusDiv.innerText = t('crafting_failed');
-                    statusDiv.style.color = "var(--danger-color)";
-                    statusDiv.style.borderColor = "var(--danger-color)";
-                });
-        }
-        // FENRIR CRACKER MODAL FUNCTIONS
-        function openFenrirModal() {
-            document.getElementById('fenrirModal').style.display = 'block';
-            const target = document.getElementById('target-input').value;
-            if (target) {
-                document.getElementById('fenrirTarget').value = target;
-            }
-        }
-
-        function closeFenrirModal() {
-            document.getElementById('fenrirModal').style.display = 'none';
-        }
-
-        function submitFenrirScan() {
-            closeFenrirModal();
-            const target = document.getElementById('fenrirTarget').value;
-            const hashMode = document.getElementById('fenrirHashMode').value;
-            const attackMode = document.getElementById('fenrirAttackMode').value;
-            const wordlist = document.getElementById('fenrirWordlist').value;
-
-            if (!target) {
-                const statusDiv = document.getElementById('status-display');
-                statusDiv.innerText = t('err_target_req');
-                statusDiv.style.color = "var(--danger-color)";
-                return;
-            }
-
-            if (isProcessRunning) {
-                alert(t('err_process_run'));
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('tool', 'fenrir');
-            formData.append('target', target);
-            formData.append('action', 'run');
-            formData.append('fenrir_hash_mode', hashMode);
-            formData.append('fenrir_attack_mode', attackMode);
-            formData.append('fenrir_wordlist', wordlist);
-
-            isProcessRunning = true;
-            currentTool = 'fenrir';
-
-            const statusDiv = document.getElementById('status-display');
-            statusDiv.innerText = `>> AWAKENING FENRIR ON [ ${escapeHtml(target)} ]...`;
-
-            const contentDiv = createTerminalWindow(`[ 🐺 FENRIR - ${escapeHtml(hashMode.toUpperCase())} - ${escapeHtml(target)} ]`);
-
-            fetch('/api/action', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                isProcessRunning = false;
-                if (data.status === 'success') {
-                    contentDiv.innerHTML = `<pre>${escapeHtml(data.output)}</pre>`;
-                    statusDiv.innerText = t('fate_woven');
-                } else {
-                    contentDiv.innerHTML = `<pre style="color:var(--danger-color);">${escapeHtml(data.message)}</pre>`;
-                    statusDiv.innerText = t('err_execute');
-                }
-            })
-            .catch(error => {
-                isProcessRunning = false;
-                console.error('Error:', error);
-                statusDiv.innerText = t('err_network');
-            });
-        }
-        async function openWslSettings() {
-            document.getElementById('wslSettingsModal').style.display = 'block';
-            const select = document.getElementById('wslDistroSelect');
-            select.innerHTML = '<option value="">Loading...</option>';
-            try {
-                const res = await fetch('/api/wsl/distros');
-                const data = await res.json();
-                select.innerHTML = '<option value="">-- Auto-Detect / Default --</option>';
-                data.distros.forEach(distro => {
-                    const opt = document.createElement('option');
-                    opt.value = distro;
-                    opt.textContent = distro;
-                    if (data.preferred === distro) {
-                        opt.selected = true;
-                    }
-                    select.appendChild(opt);
-                });
-            } catch (err) {
-                select.innerHTML = '<option value="">Failed to load distros</option>';
-            }
-        }
-
-        function closeWslSettings() {
-            document.getElementById('wslSettingsModal').style.display = 'none';
-        }
-
-        async function saveWslSettings() {
-            const select = document.getElementById('wslDistroSelect');
-            const distro = select.value;
-            try {
-                const res = await fetch('/api/wsl/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ distro: distro })
-                });
-                const data = await res.json();
-                const statusDiv = document.getElementById('status-display');
-                if(data.status === 'success') {
-                    statusDiv.innerText = 'WSL configuration updated successfully.';
-                } else {
-                    statusDiv.innerText = 'Failed to update WSL configuration: ' + data.message;
-                }
-            } catch (err) {
-                document.getElementById('status-display').innerText = 'Error saving WSL configuration.';
-            }
-            closeWslSettings();
-        }
-    </script>
+    window.csrfToken = '{{ csrf_token() }}';
+    window.jsTranslations = {{ js_translations | tojson | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,297 @@
+
+body.odin-mode {
+    --odin-gold: #ebcb8b;
+    --odin-rune-blue: #5E81AC;
+    --odin-deep: #1a1c2a;
+    --odin-glass: rgba(20, 22, 36, 0.85);
+    --odin-glow-gold: 0 0 20px rgba(235, 203, 139, 0.4);
+    --odin-glow-blue: 0 0 25px rgba(94, 129, 172, 0.5);
+    --transition-speed: 0.7s;
+    --bg-color: #0d0f18;
+    --accent-color: #5E81AC;
+    --highlight-color: #ebcb8b;
+    --wood-light: #ebcb8b;
+    --wood-dark: #1e2130;
+    --text-color: #d8dee9;
+    --danger-color: #bf616a;
+    transition: background-color var(--transition-speed) ease,
+                color var(--transition-speed) ease;
+}
+body.odin-mode .container {
+    background: var(--odin-glass);
+    border-color: rgba(235, 203, 139, 0.5);
+    box-shadow: inset 0 0 80px rgba(94, 129, 172, 0.08),
+                0 0 40px rgba(235, 203, 139, 0.15),
+                0 0 80px rgba(94, 129, 172, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .rune-corner {
+    border-color: var(--odin-gold);
+    color: var(--odin-gold);
+    box-shadow: var(--odin-glow-gold);
+    animation: runePulseOdin 3s infinite ease-in-out;
+    transition: all var(--transition-speed) ease;
+}
+@keyframes runePulseOdin {
+    0%   { box-shadow: 0 0 10px rgba(235, 203, 139, 0.3); }
+    50%  { box-shadow: 0 0 25px rgba(235, 203, 139, 0.7), 0 0 50px rgba(94, 129, 172, 0.3); }
+    100% { box-shadow: 0 0 10px rgba(235, 203, 139, 0.3); }
+}
+body.odin-mode h1 {
+    text-shadow: 0 0 20px rgba(235, 203, 139, 0.6),
+                 0 0 40px rgba(94, 129, 172, 0.3);
+    border-bottom-color: var(--odin-gold);
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .sidebar {
+    background: rgba(20, 22, 36, 0.7);
+    border-color: rgba(94, 129, 172, 0.4);
+    box-shadow: inset 0 0 30px rgba(94, 129, 172, 0.05),
+                0 0 20px rgba(235, 203, 139, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .status-bar {
+    border-color: var(--odin-gold);
+    color: var(--odin-gold);
+    box-shadow: 0 0 15px rgba(235, 203, 139, 0.2);
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .terminal-window {
+    border-color: rgba(94, 129, 172, 0.4);
+    box-shadow: 0 0 25px rgba(94, 129, 172, 0.1);
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .terminal-header {
+    background: rgba(30, 33, 48, 0.9);
+    color: var(--odin-gold);
+    border-bottom-color: rgba(235, 203, 139, 0.3);
+}
+body.odin-mode button {
+    border-color: rgba(94, 129, 172, 0.5);
+    transition: all 0.4s ease;
+}
+body.odin-mode button:hover {
+    border-color: var(--odin-gold);
+    box-shadow: 0 0 20px rgba(235, 203, 139, 0.3);
+    background: rgba(94, 129, 172, 0.2);
+    color: var(--odin-gold);
+}
+body.odin-mode input[type="text"] {
+    border-color: rgba(94, 129, 172, 0.5);
+    transition: all 0.4s ease;
+}
+body.odin-mode input[type="text"]:focus {
+    border-color: var(--odin-gold);
+    box-shadow: 0 0 20px rgba(235, 203, 139, 0.4);
+}
+body.odin-mode .modal-content {
+    background: var(--odin-glass);
+    border-color: var(--odin-gold);
+    box-shadow: 0 0 60px rgba(235, 203, 139, 0.2),
+                0 0 100px rgba(94, 129, 172, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .stat-card {
+    background: rgba(94, 129, 172, 0.08);
+    border-color: rgba(235, 203, 139, 0.3);
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .stat-value {
+    color: var(--odin-gold);
+}
+body.odin-mode .tool-group[data-category="passive_recon"],
+body.odin-mode .tool-group[data-category="dns_subdomain"],
+body.odin-mode .tool-group[data-category="active_scanning"],
+body.odin-mode .tool-group[data-category="nmap_scans"],
+body.odin-mode .tool-group[data-category="vulnerability"],
+body.odin-mode .tool-group[data-category="adv_syn"],
+body.odin-mode .tool-group[data-category="kali_ghost"],
+body.odin-mode .tool-group[data-category="java_sniffer"],
+body.odin-mode .tool-group[data-category="snoopdork"] {
+    opacity: 0.25;
+    pointer-events: none;
+    filter: grayscale(0.6);
+    transform: translateX(-8px);
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body.odin-mode .my-runes-container,
+body.odin-mode .tool-group[data-category="system_ops"],
+body.odin-mode .tool-group[data-category="ai_ops"] {
+    opacity: 1;
+    pointer-events: all;
+    filter: none;
+    transform: none;
+    transition: all var(--transition-speed) ease;
+}
+body.odin-mode .my-runes-container {
+    border-color: var(--odin-gold);
+    box-shadow: inset 0 0 20px rgba(235, 203, 139, 0.08),
+                var(--odin-glow-gold);
+}
+body.odin-mode .my-runes-container h2.my-runes-title {
+    color: var(--odin-gold);
+    text-shadow: 0 0 15px rgba(235, 203, 139, 0.6);
+}
+body.odin-mode .my-runes-container .tool-group {
+    border-left-color: var(--odin-gold);
+}
+body.odin-mode .my-runes-container .tool-group h3 {
+    color: var(--odin-gold);
+}
+body.odin-mode .tool-group[data-category="ai_ops"] h3 {
+    color: var(--odin-gold);
+    text-shadow: 0 0 15px rgba(235, 203, 139, 0.6);
+}
+body.odin-mode .tool-group[data-category="ai_ops"] button {
+    border-color: var(--odin-gold) !important;
+    color: var(--odin-gold) !important;
+    background: rgba(235, 203, 139, 0.05);
+}
+body.odin-mode .tool-group[data-category="ai_ops"] button:hover {
+    background: rgba(235, 203, 139, 0.2);
+    box-shadow: 0 0 20px rgba(235, 203, 139, 0.3);
+}
+#odinModeToggle {
+    background: rgba(180, 142, 173, 0.1);
+    border: 2px solid #b48ead;
+    color: #b48ead;
+    padding: 10px 18px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#odinModeToggle:hover {
+    border-color: #ebcb8b;
+    box-shadow: 0 0 25px rgba(235, 203, 139, 0.3);
+    color: #ebcb8b;
+}
+body.odin-mode #odinModeToggle {
+    background: rgba(20, 22, 36, 0.95);
+    border-color: #ebcb8b;
+    color: #ebcb8b;
+    box-shadow: 0 0 30px rgba(235, 203, 139, 0.4),
+                0 0 60px rgba(94, 129, 172, 0.2);
+    animation: toggleGlowOdin 3s infinite ease-in-out;
+}
+@keyframes toggleGlowOdin {
+    0%   { box-shadow: 0 0 20px rgba(235, 203, 139, 0.3); }
+    50%  { box-shadow: 0 0 40px rgba(235, 203, 139, 0.6), 0 0 70px rgba(94, 129, 172, 0.3); }
+    100% { box-shadow: 0 0 20px rgba(235, 203, 139, 0.3); }
+}
+#odinToggleIcon {
+    display: inline-block;
+    font-size: 20px;
+    transition: transform 0.5s ease, text-shadow 0.5s ease;
+}
+body.odin-mode #odinToggleIcon {
+    transform: scale(1.2);
+    text-shadow: 0 0 15px rgba(235, 203, 139, 0.8);
+    animation: eyePulse 0.8s infinite ease-in-out;
+}
+@keyframes eyePulse {
+    0%   { text-shadow: 0 0 10px rgba(235, 203, 139, 0.5); }
+    50%  { text-shadow: 0 0 25px rgba(235, 203, 139, 0.9), 0 0 40px rgba(94, 129, 172, 0.5); }
+    100% { text-shadow: 0 0 10px rgba(235, 203, 139, 0.5); }
+}
+body.dark-matte-theme *,
+body.dark-matte-theme *::before,
+body.dark-matte-theme *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.15s !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+body.dark-matte-theme #odinToggleIcon {
+    animation-duration: 0.8s !important;
+}
+#odinTransitionOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+#odinTransitionOverlay.active {
+    opacity: 1;
+    background: radial-gradient(circle at center,
+                rgba(235, 203, 139, 0.08) 0%,
+                rgba(94, 129, 172, 0.04) 50%,
+                transparent 70%);
+    animation: overlayFlash 0.6s ease-out forwards;
+}
+@keyframes overlayFlash {
+    0%   { background: radial-gradient(circle at center,
+                rgba(235, 203, 139, 0.25) 0%,
+                rgba(94, 129, 172, 0.12) 50%,
+                transparent 70%); }
+    100% { background: radial-gradient(circle at center,
+                rgba(235, 203, 139, 0.0) 0%,
+                transparent 70%); }
+}
+#odinSettingsBtn {
+    background: transparent;
+    border: 1px solid rgba(180, 142, 173, 0.5);
+    color: rgba(180, 142, 173, 0.8);
+    width: auto;
+    padding: 10px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+body.odin-mode #odinSettingsBtn {
+    border-color: rgba(235, 203, 139, 0.4);
+    color: rgba(235, 203, 139, 0.6);
+}
+#odinSettingsBtn:hover {
+    border-color: #ebcb8b;
+    color: #ebcb8b;
+    box-shadow: none;
+    background: transparent;
+    padding: 10px 12px;
+}
+body.odin-mode::after {
+    content: 'ᛟ ODIN AUTONOMOUS ATTACK MODE ACTIVE';
+    position: fixed;
+    bottom: 15px;
+    right: 20px;
+    z-index: 150;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(235, 203, 139, 0.6);
+    text-shadow: 0 0 10px rgba(235, 203, 139, 0.3);
+    pointer-events: none;
+    animation: fadeInUp 0.8s ease-out;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
