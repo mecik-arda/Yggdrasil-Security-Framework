@@ -1,7 +1,7 @@
 from .utils import run_command_safely
 import os
 import platform
-def handle_fenrir_cracker(target, data):
+def handle_fenrir_cracker(target, data, output_callback=None):
     if data is None:
         data = {}
     hash_mode = data.get('fenrir_hash_mode', 'md5')
@@ -20,4 +20,4 @@ def handle_fenrir_cracker(target, data):
         cmd.extend(["--hash", target, "--no-tui"])
     else:
         cmd.extend(["-H", target, "--no-tui"])
-    return run_command_safely(cmd, timeout=300)
+    return run_command_safely(cmd, timeout=300, output_callback=output_callback)

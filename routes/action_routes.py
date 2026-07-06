@@ -3,6 +3,7 @@ from core.task_manager import create_task, get_async_tasks, get_task_manager
 from core.db import log_scan_start, update_db_stats, log_scan_end
 from core.system_manager import sanitize_target, validate_target, check_tool_status, check_runes_updates, apply_runes_updates, install_tool_system, update_tool_system, remove_tool_system
 from core.tool_runner import execute_tool, execute_tool_streaming
+from core.logger import get_logger
 from tools_config import TOOLS_CONFIG
 
 try:
@@ -14,15 +15,7 @@ except ImportError:
 action_bp = Blueprint('action', __name__)
 
 
-def login_required(f):
-    from functools import wraps
-    from flask import session, redirect, url_for
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    return decorated_function
+from core.auth import login_required
 
 
 def _emit_event(event_name, data):
@@ -30,8 +23,11 @@ def _emit_event(event_name, data):
     try:
         if SOCKETIO_AVAILABLE and socketio:
             socketio.emit(event_name, data)
-    except Exception:
-        pass  # best-effort; never crash the task thread on an emit failure
+    except Exception as e:
+        get_logger('action_routes').warning(
+            f'SocketIO emit failed for event {event_name}',
+            extra={'tool': data.get('tool'), 'target': data.get('target')},
+        )
 
 
 def _emit_stats_update():
@@ -40,8 +36,8 @@ def _emit_stats_update():
         if SOCKETIO_AVAILABLE and socketio:
             from core.db import get_db_stats
             socketio.emit('stats_update', get_db_stats())
-    except Exception:
-        pass
+    except Exception as e:
+        get_logger('action_routes').warning('SocketIO stats_update emit failed')
 
 
 def _notify_team(event_name, tool, target, status=None):
@@ -54,13 +50,16 @@ def _notify_team(event_name, tool, target, status=None):
             notify_scan_start(tool, target)
         elif event_name == 'scan_completed':
             notify_scan_complete(tool, target, status or 'UNKNOWN')
-    except Exception:
-        pass
+    except Exception as e:
+        get_logger('action_routes').warning(
+            f'Team notify failed for {event_name}',
+            extra={'tool': tool, 'target': target},
+        )
 
 
 def run_async_task(task_id, tool, target, data, action):
-    tasks = get_async_tasks()
     manager = get_task_manager()
+    task_obj = manager.get_task(task_id)
 
     if action == 'run':
         log_scan_start(task_id, tool, target if target else 'SYSTEM')
@@ -83,18 +82,17 @@ def run_async_task(task_id, tool, target, data, action):
 
             if config and config.get('type') == 'custom_html':
                 output = execute_tool(tool, target, data, task_id=task_id)
-                type_val = 'html' if tool in ['google_dorks'] else 'text'
-                for line in output.split('\n'):
-                    _emit_event('scan_output', {
-                        'task_id': task_id, 'tool': tool, 'line': line,
-                    })
+                type_val = 'html'
+                # Do NOT emit HTML line by line as that triggers text escaping in frontend.
+                # Instead, we skip scan_output and let scan_complete deliver the full HTML.
             else:
                 output = execute_tool_streaming(tool, target, _on_output, data, task_id=task_id)
                 type_val = 'text'
 
-            tasks[task_id]['status'] = 'success'
-            tasks[task_id]['output'] = output
-            tasks[task_id]['type'] = type_val
+            if task_obj:
+                task_obj.status = 'success'
+                task_obj.output = output
+                task_obj.type = type_val
             log_scan_end(task_id, 'SUCCESS', output)
             _emit_event('scan_complete', {
                 'task_id': task_id, 'tool': tool, 'output': output, 'type': type_val,
@@ -103,22 +101,31 @@ def run_async_task(task_id, tool, target, data, action):
 
         elif action == 'install':
             success, msg = install_tool_system(tool)
-            tasks[task_id]['status'] = 'success' if success else 'error'
-            tasks[task_id]['message'] = msg
+            if task_obj:
+                task_obj.status = 'success' if success else 'error'
+                task_obj.message = msg
 
         elif action == 'update':
             success, msg = update_tool_system(tool)
-            tasks[task_id]['status'] = 'success' if success else 'error'
-            tasks[task_id]['message'] = msg
+            if task_obj:
+                task_obj.status = 'success' if success else 'error'
+                task_obj.message = msg
 
         elif action == 'remove':
             success, msg = remove_tool_system(tool)
-            tasks[task_id]['status'] = 'success' if success else 'error'
-            tasks[task_id]['message'] = msg
+            if task_obj:
+                task_obj.status = 'success' if success else 'error'
+                task_obj.message = msg
 
     except Exception as e:
-        tasks[task_id]['status'] = 'error'
-        tasks[task_id]['message'] = str(e)
+        get_logger('action_routes').error(
+            f'Task execution failed: {e}',
+            extra={'tool': tool, 'target': target or 'NONE', 'task_id': task_id},
+            exc_info=True,
+        )
+        if task_obj:
+            task_obj.status = 'error'
+            task_obj.message = str(e)
         _emit_event('scan_error', {
             'task_id': task_id, 'tool': tool, 'error': str(e),
         })
@@ -149,7 +156,8 @@ def handle_action():
         output = apply_runes_updates()
         return jsonify({'status': 'success', 'output': output, 'type': 'html'})
     elif action in ['run', 'install', 'update', 'remove']:
-        task_id = create_task(tool, target, action)
+        client_task_id = data.get('task_id')
+        task_id = create_task(tool, target, action, task_id=client_task_id)
         get_task_manager().submit(task_id, run_async_task, task_id, tool, target, data, action)
         return jsonify({'status': 'pending', 'task_id': task_id})
 

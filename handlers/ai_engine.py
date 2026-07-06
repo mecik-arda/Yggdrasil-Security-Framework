@@ -90,8 +90,8 @@ def pull_model(model_name):
     try:
         if platform.system() == "Windows":
             subprocess.Popen(
-                f'start "Odin Model Pull - {model_name}" cmd /k "ollama pull {model_name}"',
-                shell=True
+                ['cmd.exe', '/c', 'start', f'Odin Model Pull - {model_name}', 'cmd', '/k', f'ollama pull {model_name}'],
+                shell=False
             )
         else:
             subprocess.Popen(
@@ -246,6 +246,184 @@ Return ONLY the JSON object, no other text."""
         return {"status": "error", "message": "Timeout: Analiz 120 saniyede tamamlanamadi."}
     except Exception as e:
         return {"status": "error", "message": f"Analysis hatasi: {str(e)}"}
+# ═══════════════════════════════════════════════════════════════════════════════
+# Multi-Source Model Scanner (Phase 2.2) — localhost + Docker + WSL
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _scan_docker_ollama():
+    """Scan Docker containers for running Ollama instances and return their models.
+
+    Queries ``docker ps`` for containers exposing port 11434, then probes each
+    container's Ollama API at ``localhost:<mapped_port>``.
+    """
+    import subprocess as _sp
+    results = []
+    try:
+        out = _sp.check_output(
+            ['docker', 'ps', '--format', '{{.ID}}\t{{.Names}}\t{{.Ports}}'],
+            stderr=_sp.DEVNULL, timeout=10
+        ).decode('utf-8', errors='replace').strip()
+    except (_sp.CalledProcessError, _sp.TimeoutExpired, FileNotFoundError):
+        return results  # Docker not installed or not running
+
+    if not out:
+        return results
+
+    for line in out.split('\n'):
+        parts = line.split('\t')
+        if len(parts) < 3:
+            continue
+        cid, cname, ports = parts[0], parts[1], parts[2]
+        # Extract host port mapped to container 11434
+        import re as _re
+        m = _re.search(r'0\.0\.0\.0:(\d+)->11434/tcp', ports)
+        if not m:
+            m = _re.search(r':::(\d+)->11434/tcp', ports)
+        if not m:
+            continue
+        host_port = m.group(1)
+        try:
+            resp = requests.get(
+                f'http://localhost:{host_port}/api/tags', timeout=5
+            )
+            if resp.status_code == 200:
+                models = resp.json().get('models', [])
+                for mdl in models:
+                    results.append({
+                        'name': mdl['name'],
+                        'size': mdl.get('size', 0),
+                        'source': 'docker',
+                        'source_label': f'Docker ({cname})',
+                        'endpoint': f'http://localhost:{host_port}',
+                    })
+        except (requests.ConnectionError, requests.Timeout, Exception):
+            pass
+    return results
+
+
+def _scan_wsl_ollama(wsl_distros=None):
+    """Scan WSL distributions for running Ollama instances and return their models.
+
+    Uses ``wsl.exe -d <distro> -- curl http://localhost:11434/api/tags`` to
+    probe each distribution.  Falls back to the configured WSL distro when
+    ``wsl_distros`` is None.
+    """
+    import subprocess as _sp
+    results = []
+
+    if wsl_distros is None:
+        from core.tool_runner import get_wsl_distros as _get_ds
+        wsl_distros = _get_ds()
+
+    if not wsl_distros:
+        return results
+
+    for distro in wsl_distros:
+        try:
+            out = _sp.check_output(
+                ['wsl.exe', '-d', distro, '--', 'curl', '-s',
+                 'http://localhost:11434/api/tags'],
+                stderr=_sp.DEVNULL, timeout=10
+            ).decode('utf-8', errors='replace').strip()
+            if not out:
+                continue
+            data = json.loads(out)
+            models = data.get('models', [])
+            for mdl in models:
+                results.append({
+                    'name': mdl['name'],
+                    'size': mdl.get('size', 0),
+                    'source': 'wsl',
+                    'source_label': f'WSL ({distro})',
+                    'endpoint': 'http://localhost:11434',  # routed via WSL
+                })
+        except (_sp.CalledProcessError, _sp.TimeoutExpired,
+                json.JSONDecodeError, Exception):
+            pass
+    return results
+
+
+def scan_all_model_sources():
+    """Scan localhost, Docker, and WSL for all available Ollama models.
+
+    Returns a unified list of model dicts with ``source`` and ``source_label``
+    fields.  Localhost models are marked ``source: 'localhost'``.
+
+    Deduplication: when the same model name appears in multiple sources each
+    entry is kept (different endpoint = different instance).  The frontend
+    dropdown groups them by source_label.
+    """
+    all_models = []
+
+    # 1. Localhost
+    ok, local_models = _check_ollama()
+    if ok:
+        for m in local_models:
+            all_models.append({
+                'name': m['name'],
+                'size': m.get('size', 0),
+                'source': 'localhost',
+                'source_label': 'Localhost',
+                'endpoint': OLLAMA_BASE,
+            })
+
+    # 2. Docker
+    docker_models = _scan_docker_ollama()
+    all_models.extend(docker_models)
+
+    # 3. WSL
+    wsl_models = _scan_wsl_ollama()
+    all_models.extend(wsl_models)
+
+    return {
+        'status': 'success',
+        'models': all_models,
+        'sources': {
+            'localhost': sum(1 for m in all_models if m['source'] == 'localhost'),
+            'docker': sum(1 for m in all_models if m['source'] == 'docker'),
+            'wsl': sum(1 for m in all_models if m['source'] == 'wsl'),
+        },
+        'total': len(all_models),
+    }
+
+
+def check_environment_status():
+    """Return real-time status of Docker and WSL environments.
+
+    Used by the Settings page to show connection indicators.
+    """
+    import subprocess as _sp
+
+    # Docker status
+    docker_status = {'available': False, 'message': 'Not available'}
+    try:
+        _sp.check_output(
+            ['docker', 'ps'], stderr=_sp.DEVNULL, timeout=5
+        )
+        docker_status = {'available': True, 'message': 'Connected'}
+    except (_sp.CalledProcessError, _sp.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # WSL status
+    wsl_status = {'available': False, 'message': 'Not available', 'distros': []}
+    try:
+        from core.tool_runner import get_wsl_distros as _get_ds
+        distros = _get_ds()
+        if distros:
+            wsl_status = {
+                'available': True,
+                'message': f'{len(distros)} distro(s) found',
+                'distros': distros,
+            }
+    except Exception:
+        pass
+
+    return {
+        'docker': docker_status,
+        'wsl': wsl_status,
+    }
+
+
 def get_ai_profile_tiers():
     """Return available hardware profile tiers with recommended models."""
     return {

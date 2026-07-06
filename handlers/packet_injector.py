@@ -1,5 +1,5 @@
 from .utils import run_command_safely
-def handle_packet_injector(target, data):
+def handle_packet_injector(target, data, output_callback=None):
     action = data.get('packet_action', 'sniff') if data else 'sniff'
     interface = data.get('interface', 'eth0') if data else 'eth0'
     protocol = data.get('protocol', 'tcp') if data else 'tcp'
@@ -43,4 +43,4 @@ def handle_packet_injector(target, data):
         elif protocol == 'arp':
             arp_op = data.get('arp_op')
             if arp_op: cmd.extend(['--arp-op', str(arp_op)])
-    return run_command_safely(cmd, timeout=120)
+    return run_command_safely(cmd, timeout=120, output_callback=output_callback)

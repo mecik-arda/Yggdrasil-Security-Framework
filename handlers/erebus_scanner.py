@@ -1,5 +1,5 @@
 from .utils import run_command_safely
-def handle_erebus_scan(target, data):
+def handle_erebus_scan(target, data, output_callback=None):
     if not target or target == 'none':
         return ">> ERROR: Target IP/Domain is required for Erebus Scanner."
     ports = data.get('ports', '1-1024') if data else '1-1024'
@@ -16,4 +16,4 @@ def handle_erebus_scan(target, data):
         proxy = data.get('proxy')
         if proxy and proxy.strip():
             cmd.extend(['--proxy', str(proxy).strip()])
-    return run_command_safely(cmd, timeout=180)
+    return run_command_safely(cmd, timeout=180, output_callback=output_callback)

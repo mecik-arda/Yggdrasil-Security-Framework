@@ -1,5 +1,5 @@
 from .utils import run_command_safely
-def handle_subfinder(target, data):
+def handle_subfinder(target, data, output_callback=None):
     if data is None:
         data = {}
     threads = data.get('threads', '10')
@@ -9,4 +9,4 @@ def handle_subfinder(target, data):
         cmd.extend(['-t', str(threads)])
     if all_sources:
         cmd.append('-all')
-    return run_command_safely(cmd, timeout=120)
+    return run_command_safely(cmd, timeout=120, output_callback=output_callback)

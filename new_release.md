@@ -17,3 +17,4 @@ Yggdrasil v2.0.0 brings a massive architectural overhaul, enhancing stability, s
 - **Robust Package Installations:** Solved `404 Not Found` network errors during tool installations by seamlessly integrating `apt-get update` before `apt-get install` commands. Also migrated WPScan installation to use Ruby `gem` natively on Linux.
 - **Syntax Compatibility:** Resolved `CRLF` vs `LF` line-ending conflicts that caused execution failures (`\r command not found`) in custom bash scripts (e.g., Advanced SYN Scanner).
 - **Startup Race Condition:** Fixed a bug where the browser opened before the Flask server was ready, preventing "Connection Refused" errors on launch.
+- **CI/CD Stabilization:** Fixed a pytest failure (`test_no_command_for_os`) where mocked Windows environments incorrectly attempted to execute Linux installation sequences without a valid WSL boundary.

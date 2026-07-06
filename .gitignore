@@ -10,6 +10,10 @@ launcher.log
 *.sqlite3
 *.db
 stats.db
+vectordb/
+
+# Security Framework Generated Files
+generated_payloads/
 
 # Agent Scratch / Test Files
 scratch/
@@ -32,3 +36,9 @@ Thumbs.db
 node_modules/
 package-lock.json
 yarn.lock
+
+# Eklenenler
+*.sqlite
+.coverage
+.pytest_cache/
+wsl_config.json

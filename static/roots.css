@@ -371,6 +371,21 @@ button:hover::before {
     box-shadow: 0 0 50px rgba(208, 135, 112, 0.3);
     border-radius: 4px;
 }
+.close {
+    color: #4c566a;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    margin-top: -10px;
+    margin-right: -10px;
+}
+.close:hover,
+.close:focus {
+    color: var(--danger-color, #bf616a);
+    text-decoration: none;
+}
 .btn-install {
     background: var(--wood-light);
     color: var(--bg-color);
@@ -691,3 +706,61 @@ button:hover::before {
     color: var(--accent-color);
 }
 
+
+
+/* ====================================================
+   ZEN MODE (FOCUS MODE)
+   ==================================================== */
+body.zen-mode {
+    background-color: #000000 !important;
+    overflow: hidden;
+}
+body.zen-mode .sidebar {
+    display: none !important;
+}
+body.zen-mode .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+}
+body.zen-mode .action-bar {
+    display: none !important;
+}
+body.zen-mode .terminal-container {
+    height: 100vh !important;
+    margin: 0 !important;
+}
+body.zen-mode .terminal {
+    height: 100vh !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: #000000 !important;
+}
+body.zen-mode #valkyrieTreePanel,
+body.zen-mode .status-bar {
+    display: none !important;
+}
+#zenModeExitBtn {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999999;
+    background: rgba(191, 97, 106, 0.2);
+    border: 1px solid #bf616a;
+    color: #bf616a;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: monospace;
+    transition: all 0.2s ease;
+}
+#zenModeExitBtn:hover {
+    background: rgba(191, 97, 106, 0.8);
+    color: #ffffff;
+}
+body.zen-mode #zenModeExitBtn {
+    display: block !important;
+}

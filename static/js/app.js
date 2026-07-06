@@ -2,47 +2,25 @@ const originalFetch = window.fetch;
         window._lastScanRequest = { tool: '', target: '' };
         window.fetch = async function() {
             let [resource, config] = arguments;
+            let isAction = (resource === '/api/action' || (resource && resource.indexOf('/api/action') === 0));
             if (config && config.method && config.method.toUpperCase() === 'POST') {
                 config.headers = config.headers || {};
                 config.headers['X-CSRFToken'] = window.csrfToken;
+                if (isAction && config.body && config.body instanceof FormData) {
+                    if (!config.body.has('task_id')) {
+                        const newTaskId = crypto.randomUUID();
+                        config.body.append('task_id', newTaskId);
+                        pendingTasks[newTaskId] = {
+                            contentDiv: null,
+                            statusDiv: null,
+                            win: null,
+                            lines: [],
+                            output_buffer: []
+                        };
+                    }
+                }
             }
             const res = await originalFetch(resource, config);
-            if (resource === '/api/action' || resource === '/api/action' && resource.indexOf('/api/') === 0) {
-                if (!res.ok) {
-                    return new Response(JSON.stringify({status: 'error', message: 'Server returned ' + res.status}), {status: 200, headers: {'Content-Type': 'application/json'}});
-                }
-                try {
-                    const text = await res.text();
-                    let data;
-                    try { data = JSON.parse(text); } catch(e) { data = {status: 'error', message: 'Invalid server response'}; }
-                    if (data.status === 'pending' && data.task_id) {
-                        const taskId = data.task_id;
-                        const scanInfo = { ...window._lastScanRequest };
-                        while (true) {
-                            await new Promise(r => setTimeout(r, 1000));
-                            try {
-                                const pollRes = await originalFetch('/api/task_status?task_id=' + taskId);
-                                if (!pollRes.ok) {
-                                    return new Response(JSON.stringify({status: 'error', message: 'Task polling failed (HTTP ' + pollRes.status + ')'}), {status: 200, headers: {'Content-Type': 'application/json'}});
-                                }
-                                const pollText = await pollRes.text();
-                                const pollData = (function(t) { try { return JSON.parse(t); } catch(e) { return {status: 'error', message: 'Invalid server response'}; } })(pollText);
-                                if (pollData.status !== 'running') {
-                                    if (pollData.status === 'success' && pollData.output && pollData.output.trim()) {
-                                        try { autoAnalyzeScan(pollData.output, scanInfo.tool || 'unknown', scanInfo.target || ''); } catch(e) {}
-                                    }
-                                    return new Response(JSON.stringify(pollData), {status: 200, headers: {'Content-Type': 'application/json'}});
-                                }
-                            } catch(pollErr) {
-                                return new Response(JSON.stringify({status: 'error', message: 'Poll error: ' + pollErr.message}), {status: 200, headers: {'Content-Type': 'application/json'}});
-                            }
-                        }
-                    }
-                    return new Response(JSON.stringify(data), {status: 200, headers: {'Content-Type': 'application/json'}});
-                } catch(e) {
-                    return new Response(JSON.stringify({status: 'error', message: 'Request failed: ' + e.message}), {status: 200, headers: {'Content-Type': 'application/json'}});
-                }
-            }
             return res;
         };
         // --- SOCKET.IO REAL-TIME LAYER --------------------------------
@@ -68,15 +46,25 @@ const originalFetch = window.fetch;
                 });
 
                 socket.on('scan_output', (data) => {
-                    const pt = pendingTasks[data.task_id];
-                    if (pt && pt.contentDiv) {
-                        if (!pt.lines) pt.lines = [];
-                        pt.lines.push(data.line);
-                        // Append line to terminal in real-time
+                    let pt = pendingTasks[data.task_id];
+                    if (!pt) {
+                        pt = { lines: [], output_buffer: [], contentDiv: null, statusDiv: null };
+                        pendingTasks[data.task_id] = pt;
+                    }
+                    if (!pt.lines) pt.lines = [];
+                    pt.lines.push(data.line);
+                    
+                    if (pt.contentDiv) {
+                        if (pt.contentDiv.innerHTML.includes('CONNECTING TO THE WORLD TREE')) {
+                            pt.contentDiv.innerHTML = ''; // Clear "CONNECTING..." on first line
+                        }
                         const lineSpan = document.createElement('span');
                         lineSpan.textContent = data.line + '\n';
                         pt.contentDiv.appendChild(lineSpan);
                         pt.contentDiv.scrollTop = pt.contentDiv.scrollHeight;
+                    } else {
+                        if (!pt.output_buffer) pt.output_buffer = [];
+                        pt.output_buffer.push(data.line);
                     }
                 });
 
@@ -101,7 +89,14 @@ const originalFetch = window.fetch;
                             parseScanOutput(pt.win._scanTool, pt.win._scanTarget, data.output);
                         }
                         updateStats();
-                        delete pendingTasks[data.task_id];
+                        pt.isComplete = true; // Mark as complete so handleTaskResponse knows
+                        pt.finalData = data;
+                        // DO NOT DELETE yet if handleTaskResponse hasn't bound the UI
+                        if (pt.contentDiv) {
+                            delete pendingTasks[data.task_id];
+                        }
+                    } else {
+                        pendingTasks[data.task_id] = { isComplete: true, finalData: data };
                     }
                 });
 
@@ -145,6 +140,18 @@ const originalFetch = window.fetch;
                 socket.on('stats_update', (data) => {
                     document.getElementById('stat-scans').innerText = data.total_scans || 0;
                     document.getElementById('stat-target').innerText = data.last_target || 'NONE';
+                });
+
+                // -- Phase 3: Log Dashboard real-time events --
+                socket.on('log_entry', (data) => {
+                    const liveToggle = document.getElementById('logLiveToggle');
+                    if (liveToggle && liveToggle.checked) {
+                        prependLogRow(data);
+                    }
+                });
+
+                socket.on('log_stats_update', (data) => {
+                    updateLogStatsBadges(data);
                 });
 
             } catch (e) {
@@ -530,14 +537,59 @@ const originalFetch = window.fetch;
         function handleTaskResponse(data, contentDiv, statusDiv, win) {
             if (data.status === 'pending') {
                 if (win) win._taskId = data.task_id;
-                // Register for SocketIO real-time streaming
+                
                 if (socketConnected) {
-                    pendingTasks[data.task_id] = {
-                        contentDiv: contentDiv,
-                        statusDiv: statusDiv,
-                        win: win,
-                        lines: [],
-                    };
+                    let pt = pendingTasks[data.task_id];
+                    if (!pt) {
+                        pt = { lines: [], output_buffer: [] };
+                        pendingTasks[data.task_id] = pt;
+                    }
+                    pt.contentDiv = contentDiv;
+                    pt.statusDiv = statusDiv;
+                    pt.win = win;
+
+                    if (pt.isComplete) {
+                        // The scan finished before fetch returned!
+                        if (contentDiv) {
+                            contentDiv.innerHTML = '';
+                            if (pt.finalData && pt.finalData.type === 'html') {
+                                contentDiv.innerHTML = pt.finalData.output || '';
+                            } else {
+                                const finalOutput = (pt.finalData && pt.finalData.output) ? pt.finalData.output : '';
+                                if (finalOutput) {
+                                    typeWriter(contentDiv, finalOutput, 0);
+                                } else {
+                                    contentDiv.innerHTML = '<span style="color:var(--highlight-color)">[Process completed with no output]</span>';
+                                }
+                            }
+                        }
+                        if (statusDiv) {
+                            statusDiv.innerText = t('operation_complete');
+                            statusDiv.style.color = 'var(--highlight-color)';
+                            statusDiv.style.borderColor = 'var(--highlight-color)';
+                        }
+                        if (win && pt.finalData && pt.finalData.output) {
+                            parseScanOutput(win._scanTool, win._scanTarget, pt.finalData.output);
+                        }
+                        delete pendingTasks[data.task_id];
+                        updateStats();
+                        return;
+                    }
+
+                    // Flush any buffered output that arrived early
+                    if (pt.output_buffer && pt.output_buffer.length > 0) {
+                        if (contentDiv.innerHTML.includes('CONNECTING TO THE WORLD TREE')) {
+                            contentDiv.innerHTML = '';
+                        }
+                        pt.output_buffer.forEach(line => {
+                            const lineSpan = document.createElement('span');
+                            lineSpan.textContent = line + '\n';
+                            contentDiv.appendChild(lineSpan);
+                        });
+                        contentDiv.scrollTop = contentDiv.scrollHeight;
+                        pt.output_buffer = [];
+                    }
+
                     // Fallback poll (in case SocketIO misses the completion event)
                     const fallbackCheck = setInterval(async () => {
                         if (!pendingTasks[data.task_id]) {
@@ -549,30 +601,36 @@ const originalFetch = window.fetch;
                             const statusData = await res.json();
                             if (statusData.status === 'success' || statusData.status === 'error') {
                                 clearInterval(fallbackCheck);
-                                const pt = pendingTasks[data.task_id];
-                                if (pt) {
-                                    if (pt.contentDiv && (!pt.lines || pt.lines.length === 0)) {
-                                        pt.contentDiv.innerHTML = '';
+                                const currPt = pendingTasks[data.task_id];
+                                if (currPt) {
+                                    if (currPt.contentDiv && (!currPt.lines || currPt.lines.length === 0)) {
+                                        currPt.contentDiv.innerHTML = '';
                                         if (statusData.type === 'html') {
-                                            pt.contentDiv.innerHTML = statusData.output || statusData.message;
+                                            currPt.contentDiv.innerHTML = statusData.output || statusData.message || '';
                                         } else {
-                                            typeWriter(pt.contentDiv, statusData.output || statusData.message, 0);
+                                            const finalOutput = statusData.output || statusData.message || '';
+                                            if (finalOutput) {
+                                                typeWriter(currPt.contentDiv, finalOutput, 0);
+                                            } else {
+                                                currPt.contentDiv.innerHTML = '<span style="color:var(--highlight-color)">[Process completed with no output]</span>';
+                                            }
                                         }
                                     }
-                                    if (pt.statusDiv) {
-                                        pt.statusDiv.innerText = t('operation_complete');
-                                        pt.statusDiv.style.color = 'var(--highlight-color)';
-                                        pt.statusDiv.style.borderColor = 'var(--highlight-color)';
+                                    if (currPt.statusDiv) {
+                                        currPt.statusDiv.innerText = t('operation_complete');
+                                        currPt.statusDiv.style.color = 'var(--highlight-color)';
+                                        currPt.statusDiv.style.borderColor = 'var(--highlight-color)';
                                     }
-                                    if (pt.win && statusData.status === 'success') {
-                                        parseScanOutput(pt.win._scanTool, pt.win._scanTarget, statusData.output);
+                                    if (currPt.win && statusData.status === 'success') {
+                                        parseScanOutput(currPt.win._scanTool, currPt.win._scanTarget, statusData.output);
                                     }
                                     delete pendingTasks[data.task_id];
                                 }
                                 updateStats();
                             }
                         } catch (err) { console.error(err); }
-                    }, 3000);  // slower fallback — 3s instead of 1s
+                    }, 3000);
+
                 } else {
                     // No SocketIO — use 1s polling
                     const checkStatus = setInterval(async () => {
@@ -585,9 +643,14 @@ const originalFetch = window.fetch;
                                 if (contentDiv) {
                                     contentDiv.innerHTML = '';
                                     if (statusData.type === 'html') {
-                                        contentDiv.innerHTML = statusData.output || statusData.message;
+                                        contentDiv.innerHTML = statusData.output || statusData.message || '';
                                     } else {
-                                        typeWriter(contentDiv, statusData.output || statusData.message, 0);
+                                        const finalOutput = statusData.output || statusData.message || '';
+                                        if (finalOutput) {
+                                            typeWriter(contentDiv, finalOutput, 0);
+                                        } else {
+                                            contentDiv.innerHTML = '<span style="color:var(--highlight-color)">[Process completed with no output]</span>';
+                                        }
                                     }
                                     if (win && statusData.status === 'success') {
                                         parseScanOutput(win._scanTool, win._scanTarget, statusData.output);
@@ -1040,9 +1103,16 @@ const originalFetch = window.fetch;
             document.getElementById('installMsg').innerText = `The tool '${displayName.toUpperCase()}' is not present.\n\nDo you wish to summon it now?`;
             document.getElementById('installModal').style.display = 'block';
         }
-        function closeModal() {
-            document.getElementById('installModal').style.display = 'none';
-            document.getElementById('status-display').innerText = ">> RITUAL " + t("abort") + "ED.";
+        function closeModal(modalId) {
+            if (typeof modalId === 'string' && modalId.trim() !== '') {
+                const el = document.getElementById(modalId);
+                if (el) el.style.display = 'none';
+            } else {
+                const instModal = document.getElementById('installModal');
+                if (instModal) instModal.style.display = 'none';
+                const statDisp = document.getElementById('status-display');
+                if (statDisp && typeof t === 'function') statDisp.innerText = ">> RITUAL " + t("abort") + "ED.";
+            }
         }
         async function confirmInstall() {
             closeModal();
@@ -3341,3 +3411,344 @@ const originalFetch = window.fetch;
                 document.getElementById('autoExploitLog').innerHTML += '<div style="color:#bf616a;">Operation stopped by user.</div>';
             }
         }
+
+        // =====================================================================
+        // Phase 3: Merkezi Log Dashboard
+        // =====================================================================
+        let logEntries = [];
+        let logOffset = 0;
+        let logDetailCache = {};
+
+        function openLogDashboard() {
+            document.getElementById('logDashboardModal').style.display = 'block';
+            logEntries = [];
+            logOffset = 0;
+            loadLogs();
+            loadLogStats();
+        }
+
+        function closeLogDashboard() {
+            document.getElementById('logDashboardModal').style.display = 'none';
+            document.getElementById('logDetailPanel').style.display = 'none';
+        }
+
+        async function loadLogs(reset) {
+            if (reset) {
+                logEntries = [];
+                logOffset = 0;
+            }
+            const level = document.getElementById('logLevelFilter').value;
+            const tool = document.getElementById('logToolFilter').value.trim();
+            const limit = 100;
+            const offset = logOffset;
+
+            let url = '/api/logs/errors?limit=' + limit;
+            if (level) url += '&level=' + encodeURIComponent(level);
+            if (tool) url += '&tool=' + encodeURIComponent(tool);
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (reset) {
+                        logEntries = data.errors || [];
+                    } else {
+                        logEntries = logEntries.concat(data.errors || []);
+                    }
+                    logOffset += data.count || 0;
+                    renderLogTable();
+                }
+            } catch (e) {
+                console.error('[LogDashboard] Load failed:', e);
+            }
+        }
+
+        async function loadMoreLogs() {
+            await loadLogs(false);
+        }
+
+        function refreshLogDashboard() {
+            loadLogs(true);
+        }
+
+        async function loadLogStats() {
+            try {
+                const res = await fetch('/api/logs/stats');
+                const data = await res.json();
+                if (data.status === 'success') {
+                    updateLogStatsBadges(data.stats);
+                }
+            } catch (e) {
+                console.error('[LogDashboard] Stats failed:', e);
+            }
+        }
+
+        function updateLogStatsBadges(stats) {
+            const s = stats || {};
+            const el = document.getElementById('stat-errors');
+            if (el) el.innerText = s.errors_today || 0;
+            const ew = document.getElementById('stat-warnings');
+            if (ew) ew.innerText = s.warnings_today || 0;
+            const ec = document.getElementById('stat-critical');
+            if (ec) ec.innerText = s.critical_today || 0;
+            const et = document.getElementById('stat-tools');
+            if (et) et.innerText = s.unique_tools_errored || 0;
+            const etot = document.getElementById('stat-total');
+            if (etot) etot.innerText = s.total_errors || 0;
+            const etev = document.getElementById('stat-total-events');
+            if (etev) etev.innerText = s.total_events || 0;
+
+            // show live badge if stats loaded
+            const badge = document.getElementById('logLiveBadge');
+            if (badge) badge.style.display = 'inline-block';
+        }
+
+        function renderLogTable() {
+            const tbody = document.getElementById('logTableBody');
+            if (!tbody) return;
+
+            if (logEntries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 30px; text-align: center; color: var(--text-dim); font-style: italic;">Log bulunamadi. Temiz!</td></tr>';
+                return;
+            }
+
+            // Apply text search filter
+            const search = (document.getElementById('logSearchFilter').value || '').toLowerCase();
+            const filtered = search ? logEntries.filter(function(e) {
+                const msg = (e.message || '').toLowerCase();
+                const mod = (e.module || '').toLowerCase();
+                const t = (e.tool || '').toLowerCase();
+                const tg = (e.target || '').toLowerCase();
+                return msg.indexOf(search) !== -1 || mod.indexOf(search) !== -1 ||
+                       t.indexOf(search) !== -1 || tg.indexOf(search) !== -1;
+            }) : logEntries;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-dim);">Filtreyle eslesen log yok.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(function(entry) { return renderLogRowHTML(entry); }).join('');
+        }
+
+        function renderLogRowHTML(entry) {
+            const ts = entry.timestamp ? entry.timestamp.replace('T', ' ').substring(0, 19) : '-';
+            const level = entry.level || 'INFO';
+            const mod = entry.module || '-';
+            const tool = entry.tool || '-';
+            const target = entry.target || '-';
+            const msg = (entry.message || '').length > 100
+                ? entry.message.substring(0, 100) + '...'
+                : (entry.message || '-');
+            const hasTrace = entry.traceback ? true : false;
+
+            let levelColor = '#88c0d0'; // INFO default
+            let levelIcon = 'ℹ️';
+            if (level === 'ERROR') { levelColor = '#bf616a'; levelIcon = '🔴'; }
+            else if (level === 'WARNING') { levelColor = '#ebcb8b'; levelIcon = '⚠️'; }
+            else if (level === 'CRITICAL') { levelColor = '#d08770'; levelIcon = '💀'; }
+
+            const rowStyle = 'border-bottom: 1px solid rgba(255,255,255,0.05); cursor: ' + (hasTrace ? 'pointer' : 'default') + ';';
+            const clickHandler = hasTrace ? ' onclick="expandLogDetail(' + entry.id + ')"' : '';
+
+            return '<tr style="' + rowStyle + '"' + clickHandler + '>' +
+                '<td style="padding: 8px; color: var(--text-dim); font-size: 11px;">' + ts + '</td>' +
+                '<td style="padding: 8px; color: ' + levelColor + '; font-weight: bold;">' + levelIcon + ' ' + level + '</td>' +
+                '<td style="padding: 8px; color: #b48ead; font-size: 11px;">' + htmlEscape(mod) + '</td>' +
+                '<td style="padding: 8px; color: #88c0d0;">' + htmlEscape(tool) + '</td>' +
+                '<td style="padding: 8px; color: var(--text-dim);">' + htmlEscape(target) + '</td>' +
+                '<td style="padding: 8px;">' + htmlEscape(msg) + (hasTrace ? ' <span style="color:#88c0d0; font-size:10px;">[+]</span>' : '') + '</td>' +
+                '</tr>';
+        }
+
+        function prependLogRow(entry) {
+            // Add to in-memory list
+            logEntries.unshift(entry);
+            // Prepend to table if modal is open
+            const tbody = document.getElementById('logTableBody');
+            if (!tbody || document.getElementById('logDashboardModal').style.display === 'none') return;
+            const search = (document.getElementById('logSearchFilter').value || '').toLowerCase();
+            const msg = (entry.message || '').toLowerCase();
+            if (search && msg.indexOf(search) === -1) return;
+            // Avoid inserting the "empty" placeholder
+            if (tbody.children.length === 1 && tbody.children[0].children.length === 1 && tbody.children[0].children[0].tagName === 'TD') {
+                tbody.innerHTML = '';
+            }
+            tbody.insertAdjacentHTML('afterbegin', renderLogRowHTML(entry));
+            // Update stats
+            loadLogStats();
+        }
+
+        function expandLogDetail(id) {
+            const entry = logEntries.find(function(e) { return e.id === id; });
+            if (!entry) return;
+            const panel = document.getElementById('logDetailPanel');
+            const content = document.getElementById('logDetailContent');
+            if (!panel || !content) return;
+
+            let html = '<strong style="color:#88c0d0;">Mesaj:</strong> ' + htmlEscape(entry.message || '-') + '\n\n';
+            if (entry.traceback) {
+                html += '<strong style="color:#bf616a;">Traceback:</strong>\n' + htmlEscape(entry.traceback) + '\n\n';
+            }
+            if (entry.extra_data) {
+                html += '<strong style="color:#ebcb8b;">Extra Data:</strong> ' + htmlEscape(
+                    typeof entry.extra_data === 'string' ? entry.extra_data : JSON.stringify(entry.extra_data, null, 2)
+                ) + '\n\n';
+            }
+            html += '<strong>Timestamp:</strong> ' + (entry.timestamp || '-') + '\n';
+            html += '<strong>Module:</strong> ' + (entry.module || '-') + '\n';
+            html += '<strong>Tool:</strong> ' + (entry.tool || '-') + '\n';
+            html += '<strong>Target:</strong> ' + (entry.target || '-') + '\n';
+
+            content.innerHTML = html.replace(/\n/g, '<br>');
+            panel.style.display = 'block';
+        }
+
+        function hideLogDetail() {
+            document.getElementById('logDetailPanel').style.display = 'none';
+        }
+
+        function filterLogTable() {
+            renderLogTable();
+        }
+
+        function toggleLogLive() {
+            const checked = document.getElementById('logLiveToggle').checked;
+            const badge = document.getElementById('logLiveBadge');
+            if (badge) {
+                badge.style.display = checked ? 'inline-block' : 'none';
+            }
+        }
+
+        async function clearAllLogs() {
+            if (!confirm('Tum log kayitlarini silmek istediginize emin misiniz? Bu islem geri alinamaz.')) return;
+            try {
+                await fetch('/api/logs/clear', { method: 'POST' });
+                logEntries = [];
+                logOffset = 0;
+                renderLogTable();
+                loadLogStats();
+            } catch (e) {
+                console.error('[LogDashboard] Clear failed:', e);
+            }
+        }
+
+        function htmlEscape(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+
+// ==========================================
+// ZEN MODE (FOCUS MODE)
+// ==========================================
+function toggleZenMode() {
+    const isZen = document.body.classList.toggle('zen-mode');
+    const btn = document.getElementById('zenModeExitBtn');
+    if (isZen) {
+        // Enter fullscreen if possible
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+    } else {
+        // Exit fullscreen
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && document.body.classList.contains('zen-mode')) {
+        toggleZenMode();
+    }
+});
+
+
+let wikiDataCache = null;
+
+function openWikiModal() {
+    document.getElementById('wikiModal').style.display = 'block';
+    if (!wikiDataCache) {
+        fetch('/static/data/wiki_handbook.json')
+            .then(res => res.json())
+            .then(data => {
+                wikiDataCache = data;
+                renderWikiData();
+            })
+            .catch(err => {
+                document.getElementById('wikiResultsContainer').innerHTML = `<div style="color:#bf616a; padding: 20px;">Veri yüklenemedi: ${err}</div>`;
+            });
+    }
+}
+
+function renderWikiData() {
+    const container = document.getElementById('wikiResultsContainer');
+    if (!wikiDataCache) return;
+    
+    // Yggdrasil'de dil genellikle çeviri objesinden veya cookie'den alınır.
+    // 'btn_logout' çevirisini kontrol ederek TR/EN ayrımı yapalım:
+    const isTr = (window.jsTranslations && window.jsTranslations['btn_logout'] && window.jsTranslations['btn_logout'] !== 'LOGOUT');
+    const l = isTr ? 'tr' : 'en';
+
+    let html = '';
+    wikiDataCache.forEach(category => {
+        html += `<div class="wiki-category" data-cat="${category.cat}" style="margin-bottom: 20px;">
+                    <h3 style="color: #81a1c1; text-transform: uppercase; border-bottom: 1px solid #4c566a; padding-bottom: 5px; margin-top: 10px;">${category.cat}</h3>`;
+        category.cmds.forEach(cmd => {
+            html += `<div class="wiki-cmd-card" style="background: rgba(0,0,0,0.4); border-left: 3px solid #88c0d0; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                        <div style="font-weight: bold; color: #a3be8c; font-size: 16px;">${cmd.name}</div>
+                        <div style="color: #d8dee9; font-size: 13px; margin: 5px 0;">${cmd[l] || cmd.en}</div>
+                        <div style="background: #2e3440; padding: 5px; font-family: monospace; color: #ebcb8b; font-size: 12px; margin-bottom: 5px;">${cmd.syntax || ''}</div>`;
+            if (cmd.ex && cmd.ex.length > 0) {
+                html += `<div style="font-size: 12px; color: #88c0d0; margin-top: 8px;">Examples:</div><ul style="margin: 5px 0 0 20px; font-size: 12px; padding-left: 0;">`;
+                cmd.ex.forEach(ex => {
+                    html += `<li><code style="color: #b48ead;">${ex.c}</code> <span style="color: #eceff4;">- ${ex[l] || ex.en}</span></li>`;
+                });
+                html += `</ul>`;
+            }
+            html += `</div>`;
+        });
+        html += `</div>`;
+    });
+    container.innerHTML = html;
+}
+
+function filterWiki() {
+    const term = document.getElementById('wikiSearchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.wiki-cmd-card');
+    cards.forEach(card => {
+        if (card.innerText.toLowerCase().includes(term)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    const categories = document.querySelectorAll('.wiki-category');
+    categories.forEach(cat => {
+        const visibleCards = cat.querySelectorAll('.wiki-cmd-card[style="display: block;"]');
+        if (visibleCards.length === 0 && term !== '') {
+            cat.style.display = 'none';
+        } else {
+            cat.style.display = 'block';
+        }
+    });
+}
+
+function closeWikiModal() {
+    document.getElementById('wikiModal').style.display = 'none';
+}
+
+function openProfileModal() {
+    document.getElementById('profileModal').style.display = 'block';
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+}

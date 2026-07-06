@@ -1,0 +1,104 @@
+<!-- Phase 3: Merkezi Log Dashboard Modal -->
+<div id="logDashboardModal" class="modal">
+    <div class="modal-content" style="max-width: 1100px; width: 95%; max-height: 90vh; overflow-y: auto; text-align: left; padding: 25px; border: 1px solid rgba(136, 192, 208, 0.4); box-shadow: 0 0 30px rgba(136, 192, 208, 0.1);">
+
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(136, 192, 208, 0.3); padding-bottom: 12px;">
+            <h2 style="color: #88c0d0; margin: 0; font-family: 'Cinzel', serif; letter-spacing: 2px; font-size: 20px;">
+                📊 {{ t('log_dashboard_title') }}
+                <span id="logLiveBadge" style="font-size: 11px; background: rgba(163, 190, 140, 0.2); color: #a3be8c; padding: 3px 12px; border-radius: 10px; margin-left: 12px; font-family: monospace; letter-spacing: 0; display: none;">● {{ t('log_live') }}</span>
+            </h2>
+            <button onclick="closeLogDashboard()" class="btn-cancel" style="width: auto; margin: 0; padding: 5px 15px;">✕</button>
+        </div>
+
+        <!-- Stats Row -->
+        <div id="logStatsRow" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px;">
+            <span style="background: rgba(191, 97, 106, 0.15); color: #bf616a; padding: 6px 14px; border-radius: 4px; font-family: monospace; font-size: 12px; border: 1px solid rgba(191, 97, 106, 0.3);">
+                🔴 {{ t('log_error') }}: <b id="stat-errors">0</b>
+            </span>
+            <span style="background: rgba(235, 203, 139, 0.15); color: #ebcb8b; padding: 6px 14px; border-radius: 4px; font-family: monospace; font-size: 12px; border: 1px solid rgba(235, 203, 139, 0.3);">
+                ⚠️ {{ t('log_warning') }}: <b id="stat-warnings">0</b>
+            </span>
+            <span style="background: rgba(191, 97, 106, 0.15); color: #d08770; padding: 6px 14px; border-radius: 4px; font-family: monospace; font-size: 12px; border: 1px solid rgba(208, 135, 112, 0.3);">
+                💀 {{ t('log_critical') }}: <b id="stat-critical">0</b>
+            </span>
+            <span style="background: rgba(136, 192, 208, 0.1); color: #88c0d0; padding: 6px 14px; border-radius: 4px; font-family: monospace; font-size: 12px; border: 1px solid rgba(136, 192, 208, 0.3);">
+                🛠️ {{ t('log_affected_tools') }}: <b id="stat-tools">0</b>
+            </span>
+            <span style="background: rgba(0,0,0,0.3); color: var(--text-dim); padding: 6px 14px; border-radius: 4px; font-family: monospace; font-size: 12px; border: 1px solid var(--accent-color);">
+                📋 {{ t('log_total') }}: <b id="stat-total">0</b> {{ t('log_errors_lcase') }}, <b id="stat-total-events">0</b> {{ t('log_events_lcase') }}
+            </span>
+        </div>
+
+        <!-- Filter Bar -->
+        <div id="logFilters" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;">
+            <select id="logLevelFilter" onchange="refreshLogDashboard()"
+                style="padding: 8px 12px; background: rgba(0,0,0,0.4); color: white; border: 1px solid var(--accent-color); border-radius: 4px; font-family: monospace; font-size: 13px; cursor: pointer;">
+                <option value="">{{ t('log_all_levels') }}</option>
+                <option value="ERROR">🔴 ERROR</option>
+                <option value="WARNING">⚠️ WARNING</option>
+                <option value="CRITICAL">💀 CRITICAL</option>
+            </select>
+            <input type="text" id="logToolFilter" placeholder="{{ t('log_tool_placeholder') }}" oninput="refreshLogDashboard()"
+                style="padding: 8px 12px; background: rgba(0,0,0,0.4); color: white; border: 1px solid var(--accent-color); border-radius: 4px; font-family: monospace; font-size: 13px; width: 150px;">
+            <input type="text" id="logSearchFilter" placeholder="{{ t('log_search_placeholder') }}" oninput="filterLogTable()"
+                style="padding: 8px 12px; background: rgba(0,0,0,0.4); color: white; border: 1px solid var(--accent-color); border-radius: 4px; font-family: monospace; font-size: 13px; width: 200px; flex: 1; min-width: 150px;">
+            <label style="display: flex; align-items: center; gap: 6px; color: var(--text-color); font-family: monospace; font-size: 13px; cursor: pointer; white-space: nowrap;">
+                <input type="checkbox" id="logLiveToggle" checked onchange="toggleLogLive()" style="accent-color: #a3be8c;">
+                {{ t('log_live_stream') }}
+            </label>
+            <button onclick="refreshLogDashboard()"
+                style="padding: 8px 16px; background: rgba(136, 192, 208, 0.15); color: #88c0d0; border: 1px solid rgba(136, 192, 208, 0.4); border-radius: 4px; font-family: 'Cinzel', serif; font-size: 12px; cursor: pointer; letter-spacing: 1px;">
+                🔄 {{ t('log_refresh') }}
+            </button>
+        </div>
+
+        <!-- Log Table -->
+        <div style="max-height: 45vh; overflow-y: auto; margin-bottom: 15px; border: 1px solid rgba(136, 192, 208, 0.3); border-radius: 4px; background: rgba(0,0,0,0.3);">
+            <table style="width: 100%; border-collapse: collapse; color: white; text-align: left; font-family: 'Courier New', monospace; font-size: 12px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(136, 192, 208, 0.4); color: #88c0d0; position: sticky; top: 0; background: rgba(20, 22, 28, 0.95);">
+                        <th style="padding: 10px 8px; width: 150px;">{{ t('log_time') }}</th>
+                        <th style="padding: 10px 8px; width: 90px;">{{ t('log_level') }}</th>
+                        <th style="padding: 10px 8px; width: 120px;">{{ t('log_module') }}</th>
+                        <th style="padding: 10px 8px; width: 120px;">{{ t('log_tool') }}</th>
+                        <th style="padding: 10px 8px; width: 130px;">{{ t('log_target') }}</th>
+                        <th style="padding: 10px 8px;">{{ t('log_message') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="logTableBody">
+                    <tr>
+                        <td colspan="6" style="padding: 30px; text-align: center; color: var(--text-dim); font-style: italic;">
+                            {{ t('log_loading') }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Detail Panel (hidden until row clicked) -->
+        <div id="logDetailPanel" style="display: none; margin-bottom: 15px; padding: 15px; background: rgba(0,0,0,0.4); border: 1px solid rgba(136, 192, 208, 0.3); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="color: #88c0d0; margin: 0; font-family: 'Cinzel', serif;">{{ t('log_detail') }}</h4>
+                <button onclick="hideLogDetail()" style="background: none; border: none; color: #bf616a; cursor: pointer; font-size: 16px;">✕</button>
+            </div>
+            <div id="logDetailContent" style="font-family: 'Courier New', monospace; font-size: 12px; color: #d8dee9; line-height: 1.5; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="loadMoreLogs()" id="logLoadMore"
+                style="flex: 1; min-width: 120px; padding: 10px; background: rgba(136, 192, 208, 0.1); color: #88c0d0; border: 1px solid rgba(136, 192, 208, 0.3); border-radius: 4px; font-family: 'Cinzel', serif; font-size: 13px; cursor: pointer; letter-spacing: 1px;">
+                📥 {{ t('log_load_more') }}
+            </button>
+            <button onclick="clearAllLogs()"
+                style="flex: 1; min-width: 120px; padding: 10px; background: rgba(191, 97, 106, 0.15); color: #bf616a; border: 1px solid rgba(191, 97, 106, 0.4); border-radius: 4px; font-family: 'Cinzel', serif; font-size: 13px; cursor: pointer; letter-spacing: 1px;">
+                🗑️ {{ t('log_clear') }}
+            </button>
+            <button onclick="closeLogDashboard()"
+                style="flex: 1; min-width: 120px; padding: 10px; background: #4C566A; color: white; border: 1px solid #4C566A; border-radius: 4px; font-family: 'Cinzel', serif; font-size: 13px; cursor: pointer; letter-spacing: 1px;">
+                {{ t('log_close') }}
+            </button>
+        </div>
+    </div>
+</div>

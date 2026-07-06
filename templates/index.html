@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YGGDRASIL SECURITY FRAMEWORK v2.0.0</title>
+    <title>YGGDRASIL SECURITY FRAMEWORK v2.2.0</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='roots.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='odin_theme.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
             <a href="https://en.wikipedia.org/wiki/Yggdrasil" target="_blank">
                 <img id="project-logo" src="https://nordiksimit.org/wp-content/uploads/2016/11/pr50482_900x900_b_p_061526_by_design_by_humans-d7ss3og.jpg" alt="Yggdrasil Logo" style="margin: 0; max-width: 120px;">
             </a>
-            <h1 style="margin: 0; text-align: left;">YGGDRASIL SECURITY FRAMEWORK <span style="font-size: 0.4em; vertical-align: middle; color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-family: monospace;">v2.0.0</span></h1>
+            <h1 style="margin: 0; text-align: left;">YGGDRASIL SECURITY FRAMEWORK <span style="font-size: 0.4em; vertical-align: middle; color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-family: monospace;">v2.2.0</span></h1>
         </div>
         <div class="dashboard-panel">
             <div class="stat-card">
@@ -135,6 +135,45 @@
                         <h3>{{ t('rune_bifrost') }}</h3>
                     </div>
                 </div>
+                <div class="tool-group" data-category="tunnels_proxies">
+                    <h3>{{ t('cat_tunnels') }}</h3>
+                </div>
+                <div class="tool-group" data-category="ad_analysis">
+                    <h3>{{ t('cat_ad') }}</h3>
+                </div>
+                <div class="tool-group" data-category="wireless_attacks">
+                    <h3>{{ t('cat_wireless') }}</h3>
+                </div>
+                <div class="tool-group" data-category="password_cracking">
+                    <h3>{{ t('cat_password') }}</h3>
+                </div>
+                <div class="tool-group" data-category="web_proxies">
+                    <h3>{{ t('cat_web_proxies') }}</h3>
+                </div>
+                <div class="tool-group" data-category="c2_frameworks">
+                    <h3>{{ t('cat_c2') }}</h3>
+                </div>
+                <div class="tool-group" data-category="remote_access">
+                    <h3>{{ t('cat_remote') }}</h3>
+                </div>
+                <div class="tool-group" data-category="wordlist_gen">
+                    <h3>{{ t('cat_wordlist') }}</h3>
+                </div>
+                <div class="tool-group" data-category="exploitation">
+                    <h3>{{ t('cat_exploitation') }}</h3>
+                    <button type="button" onclick="openC2Modal()" style="margin-top: 10px; border-color: #88c0d0; color: #88c0d0;">
+                        {{ t('btn_c2_shell') }}
+                    </button>
+                    <button type="button" onclick="openMsfModal()" style="margin-top: 10px; border-color: #b48ead; color: #b48ead;">
+                        {{ t('btn_payload_crafter') }}
+                    </button>
+                    <button type="button" onclick="openAutoExploitPanel()" style="margin-top: 10px; border-color: #bf616a; color: #bf616a;">
+                        {{ t('btn_auto_red_team') }}
+                    </button>
+                    <button type="button" onclick="openAttackGraphModal()" style="margin-top: 10px; border-color: #ebcb8b; color: #ebcb8b;">
+                        {{ t('btn_attack_graph') }}
+                    </button>
+                </div>
                 <div class="tool-group" data-category="system_ops">
                     <h3>{{ t('sys_ops') }}</h3>
                     <button type="button" onclick="openDependencyManager()">
@@ -145,6 +184,9 @@
                     </button>
                     <button type="button" onclick="openWslSettings()" style="margin-top: 10px;">
                         {{ t('btn_wsl_settings') }}
+                    </button>
+                    <button type="button" onclick="openLogDashboard()" style="margin-top: 10px; border-color: #88c0d0; color: #88c0d0;">
+                        📊 {{ t('log_dashboard_btn') }}
                     </button>
                 </div>
                 <div class="tool-group" data-category="ai_ops">
@@ -162,20 +204,8 @@
                         {{ t('btn_kvasir') }}
                     </button>
                 </div>
-                <div class="tool-group" data-category="exploitation">
-                    <h3>{{ t('cat_exploitation') }}</h3>
-                    <button type="button" onclick="openC2Modal()" style="margin-top: 10px; border-color: #88c0d0; color: #88c0d0;">
-                        {{ t('btn_c2_shell') }}
-                    </button>
-                    <button type="button" onclick="openMsfModal()" style="margin-top: 10px; border-color: #b48ead; color: #b48ead;">
-                        {{ t('btn_payload_crafter') }}
-                    </button>
-                    <button type="button" onclick="openAutoExploitPanel()" style="margin-top: 10px; border-color: #bf616a; color: #bf616a;">
-                        {{ t('btn_auto_red_team') }}
-                    </button>
-                    <button type="button" onclick="openAttackGraphModal()" style="margin-top: 10px; border-color: #ebcb8b; color: #ebcb8b;">
-                        {{ t('btn_attack_graph') }}
-                    </button>
+                <div class="tool-group" data-category="post_exploitation">
+                    <h3>{{ t('cat_post_exploit') }}</h3>
                 </div>
                 <div class="creator-zone">
                     <div class="creator-title">{{ t('architect') }}</div>
@@ -206,7 +236,8 @@
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; width: 100%;">
                         <button onclick="generateValkyrieReport()" class="btn-download" style="width: 100%; border-color: #a3be8c; color: #a3be8c;">{{ t('btn_generate_report') }}</button>
-                        <button id="odinSettingsBtn" onclick="openThemeSettingsModal()" title="Theme Settings" style="width: 100%; margin-top:0;">⚙️ Settings</button>
+                        <button id="odinSettingsBtn" onclick="openThemeSettingsModal()" title="Theme Settings" style="width: 100%; margin-top:0;">🎨 Theme Settings</button>
+                        <button onclick="window.location.href='/settings'" title="Global Settings" style="width: 100%; margin-top:0; border-color: #ebcb8b; color: #ebcb8b;">⚙️ Agent Settings</button>
                         <button onclick="purgeWorkspace()" class="btn-download" style="width: 100%; border-color: #81a1c1; color: #81a1c1;">{{ t('btn_purge_workspace') }}</button>
                         <button onclick="globalKillSwitch()" class="btn-download" style="width: 100%; border-color: #bf616a; color: #bf616a;">{{ t('btn_kill_switch') }}</button>
                         <button onclick="downloadArtifact('txt')" class="btn-download" style="width: 100%;">{{ t('save_log') }}</button>
@@ -214,7 +245,16 @@
                         <button onclick="openLokiModal()" class="btn-download" style="width: 100%; border-color: #a3be8c; color: #a3be8c;">{{ t('btn_loki_payloads') }}</button>
                         <button onclick="openGtfobinsModal()" class="btn-download" style="width: 100%; border-color: #d08770; color: #d08770;">{{ t('btn_gtfobins') }}</button>
                         <button onclick="openPentestNotesModal()" class="btn-download" style="width: 100%; border-color: #b48ead; color: #b48ead;">{{ t('btn_pentest_notes') }}</button>
-                        <button onclick="window.location.href='/logout'" class="btn-download" style="width: 100%; border-color: var(--danger-color); color: var(--danger-color);">{{ t('btn_logout') }}</button>
+                        <button onclick="openOpsSessionsModal()" class="btn-download" style="width: 100%; border-color: #88c0d0; color: #88c0d0;" title="{{ t('btn_active_sessions_title') }}">🖧 {{ t('btn_active_sessions') }}</button>
+                        <button onclick="openNetworkTopologyModal()" class="btn-download" style="width: 100%; border-color: #a3be8c; color: #a3be8c;" title="{{ t('btn_topology_title') }}">🗺️ {{ t('btn_topology') }}</button>
+                        <button onclick="openCveKnowledgeModal()" class="btn-download" style="width: 100%; border-color: #d08770; color: #d08770;" title="{{ t('btn_cve_title') }}">📚 {{ t('btn_cve') }}</button>
+                        <button id="stealthModeBtn" onclick="toggleStealthMode()" class="btn-download" style="width: 100%; border-color: #81a1c1; color: #81a1c1;" title="{{ t('btn_stealth_title') }}">🕶️ {{ t('btn_stealth') }}</button>
+                        <button onclick="openAutoPwnModal()" class="btn-download" style="width: 100%; border-color: #bf616a; color: #bf616a;" title="{{ t('btn_autopwn_title') }}">💀 {{ t('btn_autopwn') }}</button>
+                        <button onclick="openSmartReportModal()" class="btn-download" style="width: 100%; border-color: #ebcb8b; color: #ebcb8b;" title="{{ t('btn_smart_report_title') }}">📋 {{ t('btn_smart_report') }}</button>
+                        <button onclick="openWikiModal()" class="btn-download" style="width: 100%; border-color: #b48ead; color: #b48ead;">📖 {{ t('btn_wiki') }}</button>
+                        <button onclick="openProfileModal()" class="btn-download" style="width: 100%; border-color: #88c0d0; color: #88c0d0;">👤 {{ t('btn_profile') }}</button>
+                        <button onclick="toggleZenMode()" class="btn-download" style="width: 100%; border-color: #81a1c1; color: #81a1c1;" title="Focus / Zen Mode">🎯 {{ t('btn_focus') }}</button>
+                        <button onclick="window.location.href='/logout'" class="btn-download" style="width: 100%; border-color: var(--danger-color); color: var(--danger-color);">↑ {{ t('btn_logout') }}</button>
                     </div>
                 </div>
                 
@@ -272,6 +312,9 @@
 
         {% include 'modals/msf_modals.html' %}
 
+        {% include 'modals/log_dashboard.html' %}
+        {% include 'modals/ops_modals.html' %}
+
     
     
     
@@ -285,5 +328,6 @@
 </script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<button id="zenModeExitBtn" onclick="toggleZenMode()">✖ EXIT FOCUS MODE (ESC)</button>
 </body>
 </html>

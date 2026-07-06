@@ -6,6 +6,7 @@ import os
 import shutil
 from tools_config import TOOLS_CONFIG
 from handlers import dispatch_handler
+from core.logger import get_logger
 
 WSL_CONFIG_FILE = 'wsl_config.json'
 
@@ -61,6 +62,10 @@ def execute_tool(tool_key, target, data=None, task_id=None):
             # Note: GUI processes run independently, so we just return success
             return f">> INITIATING GUI TOOL ({current_os.upper()} MODE)...\n>> PLEASE CHECK YOUR TASKBAR FOR THE NEW WINDOW."
         except Exception as e:
+            get_logger('tool_runner').error(
+                f'GUI launch failed: {tool_key} - {e}',
+                extra={'tool': tool_key},
+            )
             return f"GUI Launch Error: {str(e)}"
 
     elif tool_type in ['cli', 'script']:
@@ -93,8 +98,16 @@ def execute_tool(tool_key, target, data=None, task_id=None):
             return output.decode('utf-8', errors='replace')
         except subprocess.TimeoutExpired:
             process.kill()
+            get_logger('tool_runner').warning(
+                f'Tool timed out: {tool_key}',
+                extra={'tool': tool_key, 'target': target or 'NONE'},
+            )
             return "TIMEOUT: Process took too long"
         except Exception as e:
+            get_logger('tool_runner').error(
+                f'Tool execution failed: {tool_key} - {e}',
+                extra={'tool': tool_key, 'target': target or 'NONE'},
+            )
             return f"System Error: {str(e)}"
 
     elif tool_type in ['custom_html', 'custom_script']:
@@ -126,9 +139,14 @@ def execute_tool_streaming(tool_key, target, output_callback, data=None, task_id
 
     if tool_type in ['custom_html', 'custom_script']:
         handler_name = config.get('handler')
-        result = dispatch_handler(handler_name, target, data)
-        for line in result.split('\n'):
+        called = [False]
+        def wrapped_callback(line):
+            called[0] = True
             output_callback(line)
+        result = dispatch_handler(handler_name, target, data, output_callback=wrapped_callback)
+        if not called[0] and result:
+            for line in str(result).split('\n'):
+                output_callback(line)
         return result
 
     if tool_type not in ['cli', 'script']:
@@ -151,18 +169,32 @@ def execute_tool_streaming(tool_key, target, output_callback, data=None, task_id
             elif cmd[0] == 'tshark' and os.path.exists(r"C:\Program Files\Wireshark\tshark.exe"):
                 cmd[0] = r"C:\Program Files\Wireshark\tshark.exe"
 
+    wsl_booting = False
     if current_os.lower() not in supported and current_os == 'Windows':
         wsl_distro = get_preferred_wsl()
         if wsl_distro:
-            cmd = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--'] + cmd
+            wsl_booting = True
+            cmd = ['wsl.exe', '-d', wsl_distro, '-u', 'root', '--', 'stdbuf', '-oL'] + cmd
+    elif current_os != 'Windows' and cmd and cmd[0] != 'stdbuf':
+        cmd = ['stdbuf', '-oL'] + cmd
+
+    env = os.environ.copy()
+    env['PYTHONUNBUFFERED'] = '1'
 
     try:
+        if wsl_booting:
+            output_callback(f"[!] Target OS requires Linux. Booting WSL ({wsl_distro})...")
+            output_callback("[!] Please wait, this may take a moment.")
+        else:
+            output_callback(f"[*] Initializing {tool_key}... Please wait, some tools take time to generate output.")
+
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             bufsize=1,
             universal_newlines=True,
+            env=env
         )
         if task_id:
             from core.task_manager import set_task_process
@@ -180,9 +212,17 @@ def execute_tool_streaming(tool_key, target, output_callback, data=None, task_id
 
     except subprocess.TimeoutExpired:
         process.kill()
+        get_logger('tool_runner').warning(
+            f'Tool timed out (streaming): {tool_key}',
+            extra={'tool': tool_key, 'target': target or 'NONE'},
+        )
         output_callback("TIMEOUT: Process took too long")
         return "TIMEOUT: Process took too long"
     except Exception as e:
+        get_logger('tool_runner').error(
+            f'Tool execution failed (streaming): {tool_key} - {e}',
+            extra={'tool': tool_key, 'target': target or 'NONE'},
+        )
         msg = f"System Error: {str(e)}"
         output_callback(msg)
         return msg

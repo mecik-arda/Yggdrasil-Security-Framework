@@ -141,8 +141,9 @@ class TestCustomScriptTools:
 class TestToolConfigComplete:
     """Verify that TOOLS_CONFIG is self-consistent for every tool."""
 
-    def test_all_58_tools_have_type_and_category(self):
-        assert len(TOOLS_CONFIG) == 58
+    def test_all_tools_have_type_and_category(self):
+        # Dynamic count — tools are added over time; ensure every tool is valid
+        assert len(TOOLS_CONFIG) >= 58  # at minimum the original set
         for key, cfg in TOOLS_CONFIG.items():
             assert 'type' in cfg, f"{key}: missing type"
             assert 'category' in cfg, f"{key}: missing category"

@@ -1,10 +1,22 @@
-# ᚛᚜ Yggdrasil Security Framework v2.0.0 ᚛᚜
+# ᚛᚜ Yggdrasil Security Framework v2.2.0 ᚛᚜
 
-![Dashboard Overview](screenshots/3.png?v=3)
+![Dashboard Overview](screenshots/4.png)
 
 [ 🇬🇧 English ](#-english) | [ 🇹🇷 Türkçe ](#-türkçe)
 
 ---
+
+### 🚀 What's New in v2.2.0
+- **Smart Report Generation (AI-Powered)**: Integrates LLM assistance to parse tool outputs and draft professional vulnerability reports.
+- **Auto-Pwn Engine**: Automated, rule-based exploitation framework for rapid vulnerability verification.
+- **Stealth Mode (OPSEC)**: Obfuscates footprints, regulates scan intensity, and masks network traffic.
+- **Active Sessions & Metasploit Tracker**: Tracks C2 connections, reverse shells, and active exploit sessions in real-time.
+- **Network Topology Visualizer**: Generates dynamic, interactive node graphs of the target network architecture.
+- **CVE Knowledge Base Integration**: Direct access to NVD databases for instant vulnerability lookup.
+- **Yggdrasil Wiki & Linux Command Handbook**: Integrated, lightning-fast searchable database of Linux commands powered by [Linux Command Handbook](https://github.com/mecik-arda/linux-command-handbook).
+- **Focus / Zen Mode (Hack Mode)**: Immersive, distraction-free terminal layout with pitch-black UI for deep hacking sessions.
+
+
 
 ## 🇬🇧 English
 
@@ -230,6 +242,87 @@ Yggdrasil integrates a fully local, privacy-first AI offensive assistant powered
 - **GTFOBins Live Search (🕵️‍♂️):** Connected the `rag_engine`'s GTFOBins GitHub fetcher to a specialized search modal. Penetration testers can seamlessly query for active Unix/Windows binaries to escalate privileges (PrivEsc) without ever leaving the dashboard.
 - **Persistent Pentest Notes (📝):** Introduced a heavily requested in-browser scratchpad for dumping passwords, IPs, and quick thoughts during active engagements. Autosaves locally via `localStorage`.
 - **System Heartbeat & Network Pulse UI:** The top header now features an animated ping monitor tracking system latency, and a local daemon tracker indicating real-time CPU/RAM averages and Ollama AI health.
+
+### V2.1.0 — Phase 2: Performance & Scalability (July 2026)
+
+#### ThreadPoolExecutor Task Manager
+- **Bounded concurrency** with `concurrent.futures.ThreadPoolExecutor` (max 5 workers) replacing the previous unbounded `threading.Thread`-per-task model
+- **FIFO task queue** — when all workers are busy, new tasks are enqueued and scheduled automatically as slots free up
+- **Graceful cancellation** — `Future.cancel()` for queued tasks, `psutil` recursive process-tree killing for running tasks
+- **Thread-safe singleton** (`_TaskManager`) with `threading.Lock` protecting the task registry, active futures dict, and pending queue
+- **Real-time task stats** — `/api/system_resources` returns active/queued/total counts and max worker configuration
+
+#### Flask-SocketIO Real-Time Communication
+- **WebSocket transport** with automatic polling fallback — replaces the previous HTTP-only polling model
+- **Per-line streaming** via `scan_output` events — terminal output rendered character-by-character in real time
+- **Heartbeat events** every 2 seconds carrying CPU, RAM, network ping, and Ollama AI health status
+- **Task lifecycle events** — `scan_start`, `scan_output`, `scan_complete`, `scan_error` delivered over WebSocket
+- **Team collaboration events** — `user_joined`, `user_left`, `zombie_connected`, `beacon_checkin`, `graph_updated`
+
+### V2.1.0 — Phase 3: Observability & Log Management (July 2026)
+
+#### Merkezi Log Dashboard (Centralized Log Dashboard)
+- **Built-in log aggregator** — zero external dependencies (no Sentry, no ELK, no Redis); uses only Python stdlib + existing `flask-socketio`
+- **3-handler architecture** in `core/logger.py`:
+  1. **SQLiteLogHandler** — long-lived thread-safe connection writing structured records to `error_logs` table
+  2. **SocketIOLogHandler** — weak-reference push of `log_entry` events to all connected browsers in real time
+  3. **RotatingFileHandler** — `logs/yggdrasil.log` with 5 MB rotation and 3 backups
+- **Two database tables** in `stats.db`:
+  - `error_logs` — timestamp, level (ERROR/WARNING/CRITICAL), module, tool, target, message, traceback, extra_data
+  - `system_events` — timestamp, event_type (task_killed, kill_all, etc.), source, message, extra_data
+- **Auto-pruning** — every 500 log entries triggers cleanup; each table capped at 5,000 rows
+- **REST API** (`routes/log_routes.py`):
+  - `GET /api/logs/errors` — filtered query (level, tool, limit, since) with ISO date validation
+  - `GET /api/logs/events` — system event query
+  - `GET /api/logs/stats` — summary statistics (errors today, warnings, unique tools affected, last error)
+  - `POST /api/logs/clear` — purge all log entries
+- **Real-time dashboard modal** — accessible via "MERKEZI LOG PANOSU" button in System Operations:
+  - Filter bar (severity, tool name, text search)
+  - Color-coded stats badges (errors, warnings, critical, tools affected)
+  - Live-updating log table with row-expand for full traceback inspection
+  - "Canlı Yayın" (Live Stream) toggle — new `log_entry` events appear at the top instantly
+  - "Load More" pagination and "Clear All" purge button
+
+#### Global Error Capture
+- **Silent `except: pass` replaced with structured logging** across 4 critical modules:
+  - `routes/action_routes.py` — `_emit_event`, `_emit_stats_update`, `_notify_team` now log warnings instead of swallowing
+  - `core/tool_runner.py` — all timeout/execution/GUI-launch exceptions logged with tool/target context
+  - `handlers/utils.py` — `run_command_safely` logs TimeoutExpired, CalledProcessError, and generic exceptions with full command context
+  - `core/task_manager.py` — `kill_task` and `kill_all_tasks` emit `system_events` entries
+- **Flask global error handler** (`@app.errorhandler(Exception)`) — catches all unhandled exceptions and writes to the centralized log
+
+### V2.1.0 — Phase 4: Command Center Expansion (July 2026)
+
+#### Autonomous C2 & Operations Dashboard
+- **Active Sessions Panel:** Live monitoring of reverse shells with auto-updating tables.
+- **Auto-Pwn Engine:** Autonomous Privilege Escalation and Lateral Movement guided by Kvasir RAG intelligence upon gaining a zombie session.
+- **Network Topology Graph:** Automatic parsing of Nmap/Subfinder `scan_history` mapped into an interactive `vis.js` node-edge graph (Nodes for Targets, Ports, Subdomains, and Vulns).
+- **CVE Knowledge Interface:** Live vulnerability intelligence fetching directly from NIST NVD and Circl.lu APIs.
+- **Smart AI Reporting:** Odin analyzes active sessions and terminal history to dynamically generate Technical (Exploit-focused) and Executive (Risk-scored) reports.
+- **Stealth Mode (CRM Camouflage):** A panic toggle that masks the entire Yggdrasil offensive dashboard into a generic, boring corporate CRM interface to hide hacking activities in public environments.
+
+### V2.1.0 — Security Hardening (July 2026)
+
+#### Authentication & Session Security
+- **Password hashing** — `werkzeug.security.generate_password_hash` / `check_password_hash` replaces plaintext comparison
+- **Session cookie hardening** — `SESSION_COOKIE_HTTPONLY=True`, `SESSION_COOKIE_SAMESITE='Lax'`, `SESSION_COOKIE_SECURE=True`
+- **CORS restriction** — narrowed from wildcard (`*`) to localhost origins only
+
+#### C2 Listener API Key Authentication
+- **16-character API token** (`uuid4().hex[:16]`) auto-generated on listener start
+- **Connection gating** — incoming TCP connections must send the correct API key before receiving command output
+- **Embedded in all payloads** — Python, Bash, Netcat, PHP, Ruby, Perl, PowerShell reverse shells include the API key
+
+#### Code Security Fixes
+- **`shell=True` removed** from AI Engine (Ollama model pull), Bifrost Gateway, and Mimir Scanner — replaced with `shlex.split()` and argument lists
+- **Google Dorks URL encoding** — `urllib.parse.quote()` applied to all generated dork query strings
+- **SQLite connection safety** — all database functions in `core/db.py` wrapped in `try/finally` to prevent connection leaks on exception
+- **Missing handler registration** — `odin_ai`, `loki_ai`, and `update_modules` added to `HANDLER_MAP`
+
+#### CI/CD & Code Quality
+- **297-test suite** — `pytest` with `pytest-cov`, `pytest-mock`, and `pytest-asyncio`, all passing on every commit
+- **GitHub Actions CI** — automated linting (`flake8`) and testing on push — see `/.github/workflows/`
+- **Duplicate code cleanup** — resolved duplicate `auth_bp` import and duplicate `resetValkyrieTree()` definition
 
 ---
 
@@ -573,6 +666,87 @@ Yggdrasil, **Ollama** ile çalışan, tamamen yerel ve gizlilik odaklı bir yapa
 - **GTFOBins Canlı Arama (🕵️‍♂️):** `rag_engine` içerisindeki internet tabanlı GTFOBins GitHub dinleyicisi artık arayüzden aranabilir duruma getirildi. Sızma testi uzmanları, programdan hiç çıkmadan yetki yükseltme (Privilege Escalation) vektörlerini saniyeler içinde aratabilir.
 - **Kalıcı Pentest Notları (📝):** Aktif sızma testi (engagement) esnasında elde edilen parolalar, IP adresleri ve hızlı notlar için en çok talep edilen özelliklerden olan "Kalıcı Not Defteri" eklendi. Notlar `localStorage` ile yerel olarak otomatik kaydedilir.
 - **Sistem Nabzı & Ağ Durumu Arayüzü:** Üst panele sistem gecikmesini takip eden canlı bir ping (ping monitor) barı ve arka plandaki Ollama yapay zeka sağlığını / işlemci durumunu gösteren yeni bileşenler eklendi.
+
+### V2.1.0 — Faz 2: Performans ve Ölçeklenebilirlik (Temmuz 2026)
+
+#### ThreadPoolExecutor Görev Yöneticisi
+- **Sınırlandırılmış eşzamanlılık** — `concurrent.futures.ThreadPoolExecutor` (maks. 5 işçi), eski sınırsız `threading.Thread` modelinin yerini aldı
+- **FIFO görev kuyruğu** — tüm işçiler meşgul olduğunda yeni görevler sıraya alınır ve slot boşaldıkça otomatik planlanır
+- **Zarif iptal** — sıradaki görevler için `Future.cancel()`, çalışan görevler için `psutil` recursive process-tree sonlandırma
+- **Thread-safe singleton** (`_TaskManager`) — `threading.Lock` ile görev kaydı, aktif future'lar ve bekleme kuyruğu korunur
+- **Gerçek zamanlı görev istatistikleri** — `/api/system_resources` aktif/kuyruktaki/toplam sayıları ve maks. işçi yapılandırmasını döner
+
+#### Flask-SocketIO Gerçek Zamanlı İletişim
+- **WebSocket transport** + otomatik polling yedek modu — eski yalnızca-HTTP polling modelinin yerini aldı
+- **Satır satır akış** — `scan_output` event'leri ile terminal çıktısı karakter karakter gerçek zamanlı işlenir
+- **Heartbeat event'leri** — her 2 saniyede CPU, RAM, ağ gecikmesi ve Ollama AI durumu taşınır
+- **Görev yaşam döngüsü event'leri** — `scan_start`, `scan_output`, `scan_complete`, `scan_error` WebSocket üzerinden iletilir
+- **Takım işbirliği event'leri** — `user_joined`, `user_left`, `zombie_connected`, `beacon_checkin`, `graph_updated`
+
+### V2.1.0 — Faz 3: Gözlemlenebilirlik ve Log Yönetimi (Temmuz 2026)
+
+#### Merkezi Log Dashboard
+- **Dahili log toplayıcı** — sıfır harici bağımlılık (Sentry, ELK, Redis yok); sadece Python stdlib + mevcut `flask-socketio`
+- **3 işleyicili (handler) mimari** (`core/logger.py`):
+  1. **SQLiteLogHandler** — uzun ömürlü thread-safe bağlantı ile `error_logs` tablosuna yapılandırılmış kayıt
+  2. **SocketIOLogHandler** — weak-reference ile tüm bağlı tarayıcılara `log_entry` event'i push
+  3. **RotatingFileHandler** — `logs/yggdrasil.log` dosyasına 5 MB rotasyonlu, 3 yedekli yazma
+- **İki veritabanı tablosu** (`stats.db`):
+  - `error_logs` — zaman, seviye (ERROR/WARNING/CRITICAL), modül, araç, hedef, mesaj, traceback, ek veri
+  - `system_events` — zaman, event tipi (task_killed, kill_all vb.), kaynak, mesaj, ek veri
+- **Otomatik temizlik** — her 500 log girişinde tetiklenir; tablo başına 5.000 satır sınırı
+- **REST API** (`routes/log_routes.py`):
+  - `GET /api/logs/errors` — filtrelenebilir sorgu (seviye, araç, limit, tarih), ISO tarih doğrulamalı
+  - `GET /api/logs/events` — sistem event sorgusu
+  - `GET /api/logs/stats` — özet istatistikler (bugünkü hatalar, uyarılar, etkilenen araç sayısı, son hata)
+  - `POST /api/logs/clear` — tüm log kayıtlarını temizleme
+- **Gerçek zamanlı dashboard modal** — Sistem İşlemleri altındaki "MERKEZI LOG PANOSU" butonuyla erişilir:
+  - Filtre çubuğu (seviye, araç adı, metin araması)
+  - Renk kodlu istatistik rozetleri (hata, uyarı, kritik, etkilenen araç)
+  - Canlı güncellenen log tablosu, satır genişletme ile tam traceback inceleme
+  - "Canlı Yayın" toggle — yeni `log_entry` event'leri anında tablonun üstünde belirir
+  - "Daha Fazla Yükle" sayfalama ve "Temizle" butonu
+
+#### Küresel Hata Yakalama
+- **Sessiz `except: pass` blokları yapılandırılmış log'a dönüştürüldü** — 4 kritik modülde:
+  - `routes/action_routes.py` — `_emit_event`, `_emit_stats_update`, `_notify_team` artık hataları yutmak yerine warning log'lar
+  - `core/tool_runner.py` — tüm timeout/çalıştırma/GUI-başlatma hataları araç/hedef bağlamıyla log'lanır
+  - `handlers/utils.py` — `run_command_safely` TimeoutExpired, CalledProcessError ve genel hataları tam komut bağlamıyla log'lar
+  - `core/task_manager.py` — `kill_task` ve `kill_all_tasks` `system_events` girişleri oluşturur
+- **Flask küresel hata işleyicisi** (`@app.errorhandler(Exception)`) — tüm yakalanmamış hataları merkezi log'a yazar
+
+### V2.1.0 — Faz 4: Komuta Merkezi Genişletmesi (Temmuz 2026)
+
+#### Otonom C2 & Operasyon Paneli
+- **Active Sessions Paneli:** Ters bağlantıların (reverse shell) otomatik güncellenen tablolarla canlı izlenmesi.
+- **Auto-Pwn Motoru:** Bir zombi oturumu elde edildiğinde Kvasir RAG zekası tarafından yönlendirilen Otonom Yetki Yükseltme (PrivEsc) ve Ağ İçi Yayılma (Lateral Movement).
+- **Network Topology Haritası:** Nmap/Subfinder `scan_history` geçmişinin interaktif bir `vis.js` node haritasına dönüştürülmesi (Hedefler, Portlar, Subdomainler ve Zafiyetler için Baloncuklar).
+- **CVE Knowledge Arayüzü:** NIST NVD ve Circl.lu API'leri üzerinden canlı zafiyet istihbaratı ve exploit çekimi.
+- **Akıllı Yapay Zeka Raporlaması:** Odin'in aktif oturumları ve terminal geçmişini analiz edip dinamik olarak Teknik (Exploit odaklı) ve Yönetici (Risk skoru odaklı) raporları üretmesi.
+- **Stealth Mode (CRM Kamuflajı):** Yggdrasil ofansif arayüzünü tamamen "sıkıcı bir kurumsal CRM" ekranına dönüştürerek kalabalık ortamlardaki güvenlik operasyonlarını maskeleyen panik butonu.
+
+### V2.1.0 — Güvenlik Sertleştirmesi (Temmuz 2026)
+
+#### Kimlik Doğrulama & Oturum Güvenliği
+- **Parola hashleme** — `werkzeug.security.generate_password_hash` / `check_password_hash`, düz metin karşılaştırmanın yerini aldı
+- **Oturum çerezi (cookie) güvenliği** — `SESSION_COOKIE_HTTPONLY=True`, `SESSION_COOKIE_SAMESITE='Lax'`, `SESSION_COOKIE_SECURE=True`
+- **CORS kısıtlaması** — joker (`*`) yerine yalnızca localhost origin'lerine izin
+
+#### C2 Dinleyici API Key Kimlik Doğrulaması
+- **16 karakterli API token** (`uuid4().hex[:16]`) dinleyici başlatıldığında otomatik üretilir
+- **Bağlantı denetimi** — gelen TCP bağlantıları komut çıktısı almadan önce doğru API anahtarını göndermelidir
+- **Tüm payload'lara gömülü** — Python, Bash, Netcat, PHP, Ruby, Perl, PowerShell reverse shell'leri API anahtarını içerir
+
+#### Kod Güvenliği Düzeltmeleri
+- **`shell=True` kaldırıldı** — AI Engine (Ollama model çekme), Bifrost Gateway ve Mimir Scanner'dan; `shlex.split()` ve argüman listeleri ile değiştirildi
+- **Google Dorks URL kodlaması** — üretilen tüm dork sorgu dizgilerine `urllib.parse.quote()` uygulandı
+- **SQLite bağlantı güvenliği** — `core/db.py`'deki tüm veritabanı fonksiyonları `try/finally` ile sarıldı
+- **Eksik handler kayıtları** — `odin_ai`, `loki_ai` ve `update_modules` `HANDLER_MAP`'e eklendi
+
+#### CI/CD & Kod Kalitesi
+- **297 testli suite** — `pytest`, `pytest-cov`, `pytest-mock` ve `pytest-asyncio` ile; her commit'te tamamı geçiyor
+- **GitHub Actions CI** — her push'ta otomatik linting (`flake8`) ve test — bkz. `/.github/workflows/`
+- **Kod tekrarı temizliği** — duplicate `auth_bp` import'u ve duplicate `resetValkyrieTree()` fonksiyonu çözüldü
 
 ---
 

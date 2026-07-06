@@ -5,15 +5,7 @@ import psutil
 
 api_bp = Blueprint('api', __name__)
 
-def login_required(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            from flask import redirect, url_for
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    return decorated_function
+from core.auth import login_required
 
 @api_bp.route('/api/task_status', methods=['GET'])
 @login_required
@@ -84,10 +76,12 @@ def get_history():
     try:
         import sqlite3
         conn = sqlite3.connect('stats.db')
-        c = conn.cursor()
-        c.execute('SELECT id, timestamp, tool, target, status, output FROM scan_history ORDER BY id DESC LIMIT 30')
-        rows = c.fetchall()
-        conn.close()
+        try:
+            c = conn.cursor()
+            c.execute('SELECT id, timestamp, tool, target, status, output FROM scan_history ORDER BY id DESC LIMIT 30')
+            rows = c.fetchall()
+        finally:
+            conn.close()
         
         history = []
         for r in rows:
@@ -109,10 +103,12 @@ def clear_history():
     try:
         import sqlite3
         conn = sqlite3.connect('stats.db')
-        c = conn.cursor()
-        c.execute('DELETE FROM scan_history')
-        conn.commit()
-        conn.close()
+        try:
+            c = conn.cursor()
+            c.execute('DELETE FROM scan_history')
+            conn.commit()
+        finally:
+            conn.close()
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})

@@ -16,6 +16,8 @@ from concurrent.futures import ThreadPoolExecutor, Future
 
 import psutil
 
+from core.logger import emit_log_event
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -88,9 +90,10 @@ class _TaskManager:
 
     # -- task lifecycle -----------------------------------------------------
 
-    def create_task(self, tool, target, action):
+    def create_task(self, tool, target, action, task_id=None):
         """Create a *pending* task and return its UUID."""
-        task_id = str(uuid.uuid4())
+        if not task_id:
+            task_id = str(uuid.uuid4())
         task = Task(task_id, tool, target, action)
         with self._lock:
             self._tasks[task_id] = task
@@ -172,6 +175,12 @@ class _TaskManager:
             else:
                 task.output = "[!] PROCESS ABORTED BY USER."
 
+        emit_log_event(
+            'task_killed',
+            f'Task {task_id[:8]}... ({task.tool}) killed by user',
+            source='task_manager',
+            extra_data={'task_id': task_id, 'tool': task.tool, 'target': task.target},
+        )
         return True, killed
 
     def kill_all_tasks(self):
@@ -208,6 +217,13 @@ class _TaskManager:
                         task.output = "[!] PROCESS ABORTED BY GLOBAL KILL SWITCH."
 
             self._active_futures.clear()
+
+        emit_log_event(
+            'kill_all',
+            f'All tasks killed ({total_killed} process(es) terminated)',
+            source='task_manager',
+            extra_data={'total_killed': total_killed},
+        )
         return total_killed
 
     def as_dict(self, task_id):
@@ -258,9 +274,9 @@ _manager = _TaskManager()
 # Public API (backward-compatible with v1 task_manager)
 # ---------------------------------------------------------------------------
 
-def create_task(tool, target, action):
+def create_task(tool, target, action, task_id=None):
     """Create a pending async task and return its UUID."""
-    return _manager.create_task(tool, target, action)
+    return _manager.create_task(tool, target, action, task_id=task_id)
 
 
 def set_task_process(task_id, process):

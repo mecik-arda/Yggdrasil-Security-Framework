@@ -1,5 +1,5 @@
 from .utils import run_command_safely
-def handle_adv_syn_scan(target, data):
+def handle_adv_syn_scan(target, data, output_callback=None):
     syn_mode = data.get('syn_mode', 'auto') if data else 'auto'
     if syn_mode == 'auto':
         if not target or target == 'none':
@@ -17,4 +17,4 @@ def handle_adv_syn_scan(target, data):
         if source_ip:
             cmd.extend(["-s", str(source_ip)])
         cmd.extend(["-t", str(manual_target), "-p", str(start_port), "-e", str(end_port)])
-    return run_command_safely(cmd, timeout=120)
+    return run_command_safely(cmd, timeout=120, output_callback=output_callback)

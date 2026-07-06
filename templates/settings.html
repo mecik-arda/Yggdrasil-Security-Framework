@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Yggdrasil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='roots.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='odin_theme.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0d0f18;
+            --accent-color: #88c0d0;
+            --highlight-color: #ebcb8b;
+            --text-color: #d8dee9;
+            --border-subtle: rgba(136, 192, 208, 0.3);
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg-dark);
+            color: var(--text-color);
+            font-family: 'Segoe UI', 'Consolas', monospace;
+            margin: 0; padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 30px;
+            background: rgba(10, 12, 18, 0.92);
+            border: 1px solid var(--accent-color);
+            border-radius: 10px;
+        }
+        h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--highlight-color);
+            margin: 0 0 8px 0;
+            font-size: 1.8em;
+        }
+        h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--accent-color);
+            margin: 0 0 15px 0;
+            font-size: 1.2em;
+        }
+        .subtitle { color: #81a1c1; font-size: 0.9em; margin-bottom: 30px; }
+        .settings-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            background: rgba(20, 24, 35, 0.6);
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(136, 192, 208, 0.1);
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label {
+            flex: 1;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .settings-desc {
+            font-size: 0.82em;
+            color: #81a1c1;
+            margin-top: 3px;
+        }
+        /* Toggle switch */
+        .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+        .toggle {
+            position: relative; width: 52px; height: 26px;
+            display: inline-block;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #3b4252; border-radius: 26px;
+            transition: 0.3s;
+        }
+        .toggle .slider::before {
+            content: ""; position: absolute;
+            height: 20px; width: 20px; left: 3px; bottom: 3px;
+            background: #d8dee9; border-radius: 50%;
+            transition: 0.3s;
+        }
+        .toggle input:checked + .slider { background: var(--highlight-color); }
+        .toggle input:checked + .slider::before { transform: translateX(26px); }
+        .toggle-status {
+            font-size: 0.8em; font-weight: bold;
+            min-width: 30px; text-align: center;
+        }
+        .toggle-status.on { color: #a3be8c; }
+        .toggle-status.off { color: #bf616a; }
+
+        /* Select dropdown */
+        .select-model {
+            background: #2e3440;
+            color: var(--text-color);
+            border: 1px solid var(--accent-color);
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85em;
+            min-width: 200px;
+            cursor: pointer;
+        }
+        .select-model:focus { outline: none; border-color: var(--highlight-color); }
+
+        /* Number input */
+        .input-number {
+            background: #2e3440;
+            color: var(--text-color);
+            border: 1px solid var(--accent-color);
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            width: 80px;
+            text-align: center;
+        }
+        .input-number:focus { outline: none; border-color: var(--highlight-color); }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 4px;
+            font-size: 0.82em; font-weight: bold;
+        }
+        .status-connected { background: rgba(163, 190, 140, 0.15); color: #a3be8c; border: 1px solid #a3be8c; }
+        .status-disconnected { background: rgba(191, 97, 106, 0.15); color: #bf616a; border: 1px solid #bf616a; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .status-dot.green { background: #a3be8c; box-shadow: 0 0 6px #a3be8c; }
+        .status-dot.red { background: #bf616a; }
+
+        /* Buttons */
+        .btn-row { display: flex; gap: 12px; margin-top: 25px; flex-wrap: wrap; align-items: center; }
+        .btn {
+            font-family: 'Cinzel', serif;
+            background: transparent;
+            color: var(--highlight-color);
+            border: 1px solid var(--highlight-color);
+            padding: 10px 24px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: all 0.25s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover { background: var(--highlight-color); color: var(--bg-dark); }
+        .btn-secondary {
+            border-color: var(--accent-color); color: var(--accent-color);
+        }
+        .btn-secondary:hover { background: var(--accent-color); color: var(--bg-dark); }
+        .btn-small {
+            padding: 5px 14px; font-size: 0.75em;
+        }
+        .save-feedback {
+            font-size: 0.85em; margin-left: 15px;
+            transition: opacity 0.4s;
+        }
+        .save-feedback.success { color: #a3be8c; }
+        .save-feedback.error { color: #bf616a; }
+
+        /* Model list */
+        .model-badge {
+            display: inline-block;
+            background: rgba(136, 192, 208, 0.12);
+            border: 1px solid rgba(136, 192, 208, 0.25);
+            color: #81a1c1;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78em;
+            margin: 2px 4px;
+        }
+        .model-source-tag {
+            font-size: 0.7em;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+        .model-source-tag.localhost { background: rgba(163, 190, 140, 0.2); color: #a3be8c; }
+        .model-source-tag.docker { background: rgba(208, 135, 112, 0.2); color: #d08770; }
+        .model-source-tag.wsl { background: rgba(180, 142, 173, 0.2); color: #b48ead; }
+
+        .section-header {
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; user-select: none;
+        }
+        .section-arrow {
+            transition: transform 0.3s;
+            font-size: 0.8em;
+        }
+        .section-arrow.open { transform: rotate(90deg); }
+        .section-body { margin-top: 12px; }
+        .section-body.hidden { display: none; }
+
+        @media (max-width: 600px) {
+            .container { margin: 10px; padding: 15px; }
+            .settings-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .btn-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>⚙️ Yggdrasil — {{ t('theme_settings') }}</h2>
+        <p class="subtitle">Autonomous AI Configuration, Agent Management &amp; Environment Status</p>
+
+        <!-- ═══ AGENT SETTINGS ═══ -->
+        <div class="settings-group">
+            <div class="section-header" onclick="toggleSection(this, 'agentBody')">
+                <span class="section-arrow" id="arrow-agentBody">▶</span>
+                <h3 style="margin:0;">🤖 Autonomous Agent Configuration</h3>
+            </div>
+            <div class="section-body" id="agentBody">
+                <!-- Multi-Agent Mode -->
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Multi-Agent Mode (Concurrent)</div>
+                        <div class="settings-desc">Allow Odin &amp; Loki to run simultaneously. Disable for sequential execution on low-spec systems.</div>
+                    </div>
+                    <div class="toggle-wrap">
+                        <span class="toggle-status" id="multiAgentStatus">OFF</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="multiAgentToggle" onchange="updateToggle('multiAgent')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Approval Mode -->
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Approval Required Before Execution</div>
+                        <div class="settings-desc">When ON, the AI agent asks for your confirmation before running each tool.</div>
+                    </div>
+                    <div class="toggle-wrap">
+                        <span class="toggle-status" id="approvalStatus">OFF</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="approvalToggle" onchange="updateToggle('approval')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Max Steps -->
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Maximum Task Steps</div>
+                        <div class="settings-desc">Limit how many autonomous steps the agent can take (1–50). Default: 10.</div>
+                    </div>
+                    <input type="number" class="input-number" id="maxStepsInput"
+                           min="1" max="50" value="10"
+                           onchange="settingsChanged()">
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ MODEL ASSIGNMENT ═══ -->
+        <div class="settings-group">
+            <div class="section-header" onclick="toggleSection(this, 'modelBody')">
+                <span class="section-arrow open" id="arrow-modelBody">▶</span>
+                <h3 style="margin:0;">🧠 AI Model Assignment (Per-Agent)</h3>
+            </div>
+            <div class="section-body" id="modelBody">
+                <p style="font-size:0.82em;color:#81a1c1;margin-bottom:15px;">
+                    Assign different LLM models to each agent. Models are discovered from localhost, Docker, and WSL.
+                    <button class="btn btn-secondary btn-small" onclick="refreshModels()" style="margin-left:10px;">🔄 REFRESH MODELS</button>
+                </p>
+
+                <!-- Odin model -->
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">👁️ Odin (Orchestrator)</div>
+                        <div class="settings-desc">General operations commander. Decides what to do and manages the main loop.</div>
+                    </div>
+                    <select class="select-model" id="odinModelSelect" onchange="settingsChanged()">
+                        <option value="">(Auto-detect)</option>
+                    </select>
+                </div>
+
+                <!-- Loki model -->
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">🐍 Loki (Specialist)</div>
+                        <div class="settings-desc">WAF bypass &amp; payload mutation specialist. Called by Odin for specific tasks.</div>
+                    </div>
+                    <select class="select-model" id="lokiModelSelect" onchange="settingsChanged()">
+                        <option value="">(Auto-detect)</option>
+                    </select>
+                </div>
+
+                <!-- Kvasir model -->
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">📜 Kvasir (RAG Knowledge)</div>
+                        <div class="settings-desc">Offline knowledge base for privilege escalation, CVEs, and payload references.</div>
+                    </div>
+                    <select class="select-model" id="kvasirModelSelect" onchange="settingsChanged()">
+                        <option value="">(Auto-detect)</option>
+                    </select>
+                </div>
+
+                <!-- Available models overview -->
+                <div style="margin-top:12px; font-size:0.8em; color:#81a1c1;" id="modelSummary">
+                    Loading available models...
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ENVIRONMENT STATUS ═══ -->
+        <div class="settings-group">
+            <div class="section-header" onclick="toggleSection(this, 'envBody')">
+                <span class="section-arrow open" id="arrow-envBody">▶</span>
+                <h3 style="margin:0;">🌐 Environment Connection Status</h3>
+            </div>
+            <div class="section-body" id="envBody">
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">🐳 Docker</div>
+                        <div class="settings-desc">Container runtime for isolated Ollama instances.</div>
+                    </div>
+                    <span id="dockerStatus">
+                        <span class="status-indicator status-disconnected">
+                            <span class="status-dot red"></span> Checking...
+                        </span>
+                    </span>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">🐧 WSL (Windows Subsystem for Linux)</div>
+                        <div class="settings-desc">Linux-native tool execution on Windows.</div>
+                    </div>
+                    <span id="wslStatus">
+                        <span class="status-indicator status-disconnected">
+                            <span class="status-dot red"></span> Checking...
+                        </span>
+                    </span>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">🧠 Ollama (Localhost)</div>
+                        <div class="settings-desc">Primary local AI inference engine.</div>
+                    </div>
+                    <span id="ollamaStatus">
+                        <span class="status-indicator status-disconnected">
+                            <span class="status-dot red"></span> Checking...
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ACTIONS ═══ -->
+        <div class="btn-row" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: flex-start;">
+            <button class="btn" onclick="saveAllSettings()" style="flex: 0 1 280px; text-align: center; box-sizing: border-box;">💾 SAVE ALL SETTINGS</button>
+            <a href="{{ url_for('home') }}" class="btn btn-secondary" style="flex: 0 1 280px; text-align: center; box-sizing: border-box;">🏠 RETURN TO DASHBOARD</a>
+            <span class="save-feedback" id="saveFeedback" style="flex: 1; min-width: 200px;"></span>
+        </div>
+    </div>
+
+    <script>
+        let _pendingChanges = false;
+        let _allModels = [];
+        let _currentSettings = {};
+
+        // ── Section collapse ────────────────────────────────────────────
+        function toggleSection(header, bodyId) {
+            const body = document.getElementById(bodyId);
+            const arrow = header.querySelector('.section-arrow');
+            if (!body || !arrow) return;
+            body.classList.toggle('hidden');
+            arrow.classList.toggle('open');
+        }
+
+        // ── Toggle UI helpers ───────────────────────────────────────────
+        function updateToggle(type) {
+            settingsChanged();
+            if (type === 'multiAgent') {
+                const el = document.getElementById('multiAgentToggle');
+                const st = document.getElementById('multiAgentStatus');
+                st.textContent = el.checked ? 'ON' : 'OFF';
+                st.className = 'toggle-status ' + (el.checked ? 'on' : 'off');
+            }
+            if (type === 'approval') {
+                const el = document.getElementById('approvalToggle');
+                const st = document.getElementById('approvalStatus');
+                st.textContent = el.checked ? 'ON' : 'OFF';
+                st.className = 'toggle-status ' + (el.checked ? 'on' : 'off');
+            }
+        }
+
+        function settingsChanged() {
+            _pendingChanges = true;
+            document.getElementById('saveFeedback').textContent = '';
+        }
+
+        // ── Refresh model list from all sources ─────────────────────────
+        async function refreshModels() {
+            const summary = document.getElementById('modelSummary');
+            summary.textContent = 'Scanning localhost + Docker + WSL...';
+            try {
+                const resp = await fetch('/api/ai/scan_sources');
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    _allModels = data.models || [];
+                    populateModelDropdowns(_allModels);
+                    const src = data.sources || {};
+                    const tags = [];
+                    if (src.localhost) tags.push(`<span class="model-badge">🖥️ Localhost: ${src.localhost}</span>`);
+                    if (src.docker) tags.push(`<span class="model-badge">🐳 Docker: ${src.docker}</span>`);
+                    if (src.wsl) tags.push(`<span class="model-badge">🐧 WSL: ${src.wsl}</span>`);
+                    summary.innerHTML = tags.length ? tags.join(' ') : 'No models found. Install Ollama models first.';
+                } else {
+                    summary.textContent = 'Failed to scan models: ' + (data.message || 'Unknown error');
+                }
+            } catch (e) {
+                summary.textContent = 'Network error scanning models.';
+            }
+        }
+
+        function populateModelDropdowns(models) {
+            const selects = ['odinModelSelect', 'lokiModelSelect', 'kvasirModelSelect'];
+            selects.forEach(sid => {
+                const sel = document.getElementById(sid);
+                if (!sel) return;
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">(Auto-detect)</option>';
+                // Group by source
+                const sources = {};
+                models.forEach(m => {
+                    const src = m.source_label || m.source || 'Unknown';
+                    if (!sources[src]) sources[src] = [];
+                    sources[src].push(m);
+                });
+                Object.keys(sources).sort().forEach(src => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = src;
+                    sources[src].forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.name;
+                        opt.textContent = m.name;
+                        if (m.name === currentVal) opt.selected = true;
+                        optgroup.appendChild(opt);
+                    });
+                    sel.appendChild(optgroup);
+                });
+            });
+        }
+
+        // ── Environment status check ────────────────────────────────────
+        async function checkEnvironment() {
+            try {
+                const resp = await fetch('/api/ai/environment_status');
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    const env = data.environments || {};
+
+                    // Docker
+                    const d = env.docker || {};
+                    const dockerEl = document.getElementById('dockerStatus');
+                    dockerEl.innerHTML = d.available
+                        ? '<span class="status-indicator status-connected"><span class="status-dot green"></span> Connected</span>'
+                        : '<span class="status-indicator status-disconnected"><span class="status-dot red"></span> Not Available</span>';
+
+                    // WSL
+                    const w = env.wsl || {};
+                    const wslEl = document.getElementById('wslStatus');
+                    const distroList = (w.distros || []).join(', ') || 'none';
+                    wslEl.innerHTML = w.available
+                        ? `<span class="status-indicator status-connected"><span class="status-dot green"></span> Connected — ${distroList}</span>`
+                        : '<span class="status-indicator status-disconnected"><span class="status-dot red"></span> Not Available</span>';
+
+                    // Ollama (check separately)
+                    checkOllamaStatus();
+                }
+            } catch (e) {
+                console.error('Environment check failed:', e);
+            }
+        }
+
+        async function checkOllamaStatus() {
+            try {
+                const resp = await fetch('/api/ai/status');
+                const data = await resp.json();
+                const el = document.getElementById('ollamaStatus');
+                if (data.status === 'success') {
+                    const count = (data.models || []).length;
+                    el.innerHTML = `<span class="status-indicator status-connected"><span class="status-dot green"></span> Connected — ${count} model(s)</span>`;
+                } else {
+                    el.innerHTML = '<span class="status-indicator status-disconnected"><span class="status-dot red"></span> Not Running</span>';
+                }
+            } catch (e) {
+                document.getElementById('ollamaStatus').innerHTML =
+                    '<span class="status-indicator status-disconnected"><span class="status-dot red"></span> Not Running</span>';
+            }
+        }
+
+        // ── Load current settings ───────────────────────────────────────
+        async function loadSettings() {
+            try {
+                const resp = await fetch('/api/agent/settings');
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    _currentSettings = data.settings || {};
+                    applySettingsToUI(_currentSettings);
+                }
+            } catch (e) {
+                console.error('Failed to load settings:', e);
+            }
+        }
+
+        function applySettingsToUI(s) {
+            // Multi-agent toggle
+            if (s.multi_agent_mode !== undefined) {
+                document.getElementById('multiAgentToggle').checked = s.multi_agent_mode;
+                updateToggle('multiAgent');
+            }
+            // Approval toggle
+            if (s.approval_mode !== undefined) {
+                document.getElementById('approvalToggle').checked = s.approval_mode;
+                updateToggle('approval');
+            }
+            // Max steps
+            if (s.max_steps !== undefined) {
+                document.getElementById('maxStepsInput').value = s.max_steps;
+            }
+            // Model assignments
+            if (s.odin_model) document.getElementById('odinModelSelect').value = s.odin_model;
+            if (s.loki_model) document.getElementById('lokiModelSelect').value = s.loki_model;
+            if (s.kvasir_model) document.getElementById('kvasirModelSelect').value = s.kvasir_model;
+            _pendingChanges = false;
+        }
+
+        // ── Save everything ─────────────────────────────────────────────
+        async function saveAllSettings() {
+            const fb = document.getElementById('saveFeedback');
+            const payload = {
+                multi_agent_mode: document.getElementById('multiAgentToggle').checked,
+                approval_mode: document.getElementById('approvalToggle').checked,
+                max_steps: parseInt(document.getElementById('maxStepsInput').value) || 10,
+                odin_model: document.getElementById('odinModelSelect').value,
+                loki_model: document.getElementById('lokiModelSelect').value,
+                kvasir_model: document.getElementById('kvasirModelSelect').value,
+            };
+
+            try {
+                const resp = await fetch('/api/agent/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.csrfToken || '' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    _currentSettings = data.settings || {};
+                    _pendingChanges = false;
+                    fb.textContent = '✅ Settings saved successfully.';
+                    fb.className = 'save-feedback success';
+                } else {
+                    fb.textContent = '❌ ' + (data.message || 'Save failed.');
+                    fb.className = 'save-feedback error';
+                }
+            } catch (e) {
+                fb.textContent = '❌ Network error. Could not save.';
+                fb.className = 'save-feedback error';
+            }
+            setTimeout(() => { fb.textContent = ''; }, 4000);
+        }
+
+        // ── Init ────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            // Uncollapse sections with arrows
+            document.querySelectorAll('.section-arrow.open').forEach(a => a.classList.add('open'));
+            loadSettings();
+            refreshModels();
+            checkEnvironment();
+        });
+
+        // Warn on unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+            if (_pendingChanges) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes.';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -9,6 +9,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from core.db import init_db, init_c2_tables
 from core.monitor import start_monitor
+from core.logger import init_logging, set_socketio_instance, get_logger
 
 from routes.auth_routes import auth_bp
 from routes.api_routes import api_bp
@@ -17,7 +18,15 @@ from routes.action_routes import action_bp
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+# Restrict CORS to specific origins (e.g., localhost/127.0.0.1 for local dev, adjust as needed for production)
+CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5000", "http://127.0.0.1:5000", "https://localhost:5000"]}})
+
+# Secure Session Cookies
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=True, # Requires HTTPS
+    SESSION_COOKIE_SAMESITE='Lax',
+)
 
 def generate_and_save_secret(key_name, length=16):
     secret = secrets.token_hex(length)
@@ -33,15 +42,16 @@ if not app.secret_key:
     app.secret_key = generate_and_save_secret('SECRET_KEY', 32)
     print(f"\n[+] Generated and saved new SECRET_KEY to .env")
 
+import werkzeug.security
+
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 if not ADMIN_PASSWORD:
-    ADMIN_PASSWORD = generate_and_save_secret('ADMIN_PASSWORD', 8)
+    ADMIN_PASSWORD = generate_and_save_secret('ADMIN_PASSWORD', 12)
     print(f"\n[+] Generated and saved new ADMIN_PASSWORD to .env")
     print(f"[!] YOUR NEW ADMIN PASSWORD IS: {ADMIN_PASSWORD}\n")
 
-app.config['ADMIN_PASSWORD'] = ADMIN_PASSWORD
-
-from routes.auth_routes import auth_bp
+# Store the hash of the password, not the plaintext
+app.config['ADMIN_PASSWORD_HASH'] = werkzeug.security.generate_password_hash(ADMIN_PASSWORD)
 
 def load_translations():
     translations = {}
@@ -81,14 +91,7 @@ def before_request():
                 return jsonify({'status': 'error', 'message': 'CSRF token missing or incorrect.'}), 403
             return "CSRF Error", 403
 
-def login_required(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    return decorated_function
+from core.auth import login_required
 
 from routes.wsl_routes import api_wsl_bp
 from routes.ai_routes import ai_bp
@@ -99,6 +102,8 @@ from routes.graph_routes import graph_bp
 from routes.beacon_routes import beacon_bp
 from routes.evasion_routes import evasion_bp
 from routes.team_routes import team_bp, socketio as team_socketio, SOCKETIO_AVAILABLE
+from routes.log_routes import log_bp
+from routes.ops_routes import ops_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
@@ -112,9 +117,12 @@ app.register_blueprint(graph_bp)
 app.register_blueprint(beacon_bp)
 app.register_blueprint(evasion_bp)
 app.register_blueprint(team_bp)
+app.register_blueprint(log_bp)
+app.register_blueprint(ops_bp)
 
 if SOCKETIO_AVAILABLE and team_socketio:
     team_socketio.init_app(app)
+    set_socketio_instance(team_socketio)
 
     # Wire up monitor → SocketIO heartbeat
     def _heartbeat_callback(cpu, ram, ping_ms, ollama_online):
@@ -126,7 +134,7 @@ if SOCKETIO_AVAILABLE and team_socketio:
                 'ollama': ollama_online,
             })
         except Exception:
-            pass
+            get_logger('app').debug('Heartbeat callback emit failed', exc_info=True)
 
     from core.monitor import set_tick_callback
     set_tick_callback(_heartbeat_callback)
@@ -165,7 +173,18 @@ def check_auth_status():
 with app.app_context():
     init_db()
     init_c2_tables()
+    init_logging(app)
     start_monitor()
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Global Flask error handler — logs all unhandled exceptions."""
+    log = get_logger('flask')
+    log.error(f'Unhandled exception: {e}', exc_info=True)
+    if request.path.startswith('/api/') or request.is_json:
+        return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
+    return render_template('login.html'), 500
 
 if __name__ == '__main__':
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -177,7 +196,7 @@ if __name__ == '__main__':
       | | (_| | (_| | (_| | |_) | (_| | |  | | |
       \_/\__, |\__, |\__,_|_.__/ \__,_|_|  |_|_|
           __/ | __/ |
-         |___/ |___/     Security Framework v2.0.0
+         |___/ |___/     Security Framework v2.1.0
     """)
     threading.Timer(1.5, lambda: webbrowser.open_new("http://127.0.0.1:5000")).start()
     if SOCKETIO_AVAILABLE and team_socketio:

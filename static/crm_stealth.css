@@ -1,0 +1,44 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Stealth Mode CRM Override — Applied when Stealth Mode is active.
+   Overrides the dark Yggdrasil theme with a "boring corporate CRM" look.
+   Reference: included as fallback; the main stealth overlay is in ops_modals.html.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Quick-hide all Yggdrasil-specific elements when stealth is active */
+body.stealth-active .container,
+body.stealth-active .sidebar,
+body.stealth-active .main-content,
+body.stealth-active .action-bar,
+body.stealth-active #output-area,
+body.stealth-active .rune-corner,
+body.stealth-active .dashboard-panel,
+body.stealth-active #valkyrieTreePanel,
+body.stealth-active .header-group {
+    display: none !important;
+}
+
+body.stealth-active {
+    background: #f5f7fa !important;
+    color: #2d3748 !important;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
+}
+
+body.stealth-active::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #ffffff;
+    z-index: 99998;
+}
+
+/* Fallback CRM content when overlay JS fails */
+body.stealth-active::after {
+    content: "EnterpriseCRM v4.2 • Loading...";
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #718096;
+    font-size: 14px;
+    z-index: 99999;
+}

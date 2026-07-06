@@ -307,11 +307,26 @@ import re
 def sanitize_target(target):
     if not target:
         return target
-    if target.startswith("http://") or target.startswith("https://"):
-        target = target.split("://", 1)[1]
+        
+    target = target.strip()
+    
+    # Strip protocols
+    if target.startswith("http://"):
+        target = target[7:]
+    elif target.startswith("https://"):
+        target = target[8:]
+        
+    # Strip www.
+    if target.startswith("www."):
+        target = target[4:]
+        
+    # Strip paths
     if "/" in target:
         target = target.split("/", 1)[0]
+        
+    # Strip port numbers unless it's IPv6
     target = target.split(":")[0] if ":" in target and not target.count(":") > 1 else target
+    
     return target
 
 def validate_target(target):

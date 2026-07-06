@@ -1,5 +1,5 @@
 from .utils import run_command_safely
-def handle_hydra_bruteforce(target, data):
+def handle_hydra_bruteforce(target, data, output_callback=None):
     if data is None:
         data = {}
     protocol = data.get('protocol', 'ssh')
@@ -27,4 +27,4 @@ def handle_hydra_bruteforce(target, data):
         cmd.append('-V')
     cmd.append(target)
     cmd.append(protocol)
-    return run_command_safely(cmd, timeout=120)
+    return run_command_safely(cmd, timeout=120, output_callback=output_callback)

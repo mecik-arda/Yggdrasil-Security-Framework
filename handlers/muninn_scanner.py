@@ -1,7 +1,7 @@
 from .utils import run_command_safely
 import subprocess
 import os
-def handle_muninn_scan(target, data):
+def handle_muninn_scan(target, data, output_callback=None):
     if data is None:
         data = {}
     if not target or target.lower() == 'none':
@@ -21,4 +21,4 @@ def handle_muninn_scan(target, data):
         subprocess.check_output(['go', 'mod', 'tidy'], cwd=cwd_path, stderr=subprocess.STDOUT)
     except Exception:
         pass  # Non-fatal; proceed with scan
-    return run_command_safely(cmd, timeout=600, cwd=cwd_path)
+    return run_command_safely(cmd, timeout=600, cwd=cwd_path, output_callback=output_callback)

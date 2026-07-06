@@ -11,7 +11,7 @@ def wait_for_port(port, timeout=10):
                 return True
         time.sleep(0.5)
     return False
-def handle_mimir_scanner(target, data):
+def handle_mimir_scanner(target, data, output_callback=None):
     current_os = platform.system()
     runes_dir = os.path.join(os.getcwd(), 'Runes', 'mimir-scanner')
     frontend_dir = os.path.join(runes_dir, 'frontend')
@@ -19,9 +19,9 @@ def handle_mimir_scanner(target, data):
         return ">> ERROR: Mimir Scanner directory not found. Please sync runes."
     try:
         if current_os == 'Windows':
-            subprocess.Popen('start "Mimir Backend" cmd /c "mvn spring-boot:run"', shell=True, cwd=runes_dir)
+            subprocess.Popen(['cmd.exe', '/c', 'start', 'Mimir Backend', 'cmd', '/c', 'mvn spring-boot:run'], shell=False, cwd=runes_dir)
             wait_for_port(8080)
-            subprocess.Popen('start "Mimir Frontend" cmd /c "npm install && npm start"', shell=True, cwd=frontend_dir)
+            subprocess.Popen(['cmd.exe', '/c', 'start', 'Mimir Frontend', 'cmd', '/c', 'npm install && npm start'], shell=False, cwd=frontend_dir)
         else:
             subprocess.Popen(['x-terminal-emulator', '-e', 'bash -c "mvn spring-boot:run"'], cwd=runes_dir)
             wait_for_port(8080)

@@ -15,8 +15,9 @@ def login():
         attempts = [t for t in _AUTH_ATTEMPTS.get(ip, []) if now - t < 60]
         if len(attempts) >= 5:
             return render_template('login.html', error='Too many attempts. Wait 1 minute.'), 429
+        import werkzeug.security
         password = request.form.get('password')
-        if password == current_app.config['ADMIN_PASSWORD']:
+        if werkzeug.security.check_password_hash(current_app.config['ADMIN_PASSWORD_HASH'], password):
             session['logged_in'] = True
             _AUTH_ATTEMPTS.pop(ip, None)
             return redirect(url_for('home'))

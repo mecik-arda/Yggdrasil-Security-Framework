@@ -8,15 +8,7 @@ import os
 msf_bp = Blueprint('msf_routes', __name__)
 
 
-def login_required(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            from flask import redirect, url_for
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    return decorated_function
+from core.auth import login_required
 
 
 @msf_bp.route('/api/msf/status', methods=['GET'])
