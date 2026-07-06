@@ -101,7 +101,6 @@ class SocketIOLogHandler(logging.Handler):
     @property
     def _socketio(self):
         """Resolve the weak reference (returns None if the object was garbage-collected)."""
-        global _socketio_ref
         if _socketio_ref is None:
             return None
         return _socketio_ref()
