@@ -48,7 +48,11 @@ def test_js_references_found(js_asset_paths):
     # Check our specific modules are present
     expected = [
         'js/modules/ui.js',
-        'js/modules/api.js',
+        'js/modules/core_api.js',
+        'js/modules/tool_mapper.js',
+        'js/modules/c2_msf_api.js',
+        'js/modules/ai_agent_api.js',
+        'js/modules/reporting_logs.js',
         'js/modules/terminal.js',
         'js/modules/modals.js',
         'js/modules/wiki.js',
