@@ -134,6 +134,9 @@
                     <div class="tool-group" data-category="bifrost_gateway">
                         <h3>{{ t('rune_bifrost') }}</h3>
                     </div>
+                    <div class="tool-group" data-category="sleipnir_scanner">
+                        <h3>{{ t('rune_sleipnir') }}</h3>
+                    </div>
                 </div>
                 <div class="tool-group" data-category="tunnels_proxies">
                     <h3>{{ t('cat_tunnels') }}</h3>
@@ -242,7 +245,7 @@
                         <button onclick="globalKillSwitch()" class="btn-download" style="width: 100%; border-color: #bf616a; color: #bf616a;">{{ t('btn_kill_switch') }}</button>
                         <button onclick="downloadArtifact('txt')" class="btn-download" style="width: 100%;">{{ t('save_log') }}</button>
                         <button onclick="downloadArtifact('json')" class="btn-download" style="width: 100%;">{{ t('export_data') }}</button>
-                        <button onclick="openLokiModal()" class="btn-download" style="width: 100%; border-color: #a3be8c; color: #a3be8c;">{{ t('btn_loki_payloads') }}</button>
+                        <button onclick="openLokiPanel()" class="btn-download" style="width: 100%; border-color: #a3be8c; color: #a3be8c;">{{ t('btn_loki_payloads') }}</button>
                         <button onclick="openGtfobinsModal()" class="btn-download" style="width: 100%; border-color: #d08770; color: #d08770;">{{ t('btn_gtfobins') }}</button>
                         <button onclick="openPentestNotesModal()" class="btn-download" style="width: 100%; border-color: #b48ead; color: #b48ead;">{{ t('btn_pentest_notes') }}</button>
                         <button onclick="openOpsSessionsModal()" class="btn-download" style="width: 100%; border-color: #88c0d0; color: #88c0d0;" title="{{ t('btn_active_sessions_title') }}">🖧 {{ t('btn_active_sessions') }}</button>
@@ -327,6 +330,15 @@
     window.jsTranslations = {{ js_translations | tojson | safe }};
 </script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/modules/ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/core_api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/tool_mapper.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/c2_msf_api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/ai_agent_api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/reporting_logs.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/terminal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/modals.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/wiki.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 <button id="zenModeExitBtn" onclick="toggleZenMode()">✖ EXIT FOCUS MODE (ESC)</button>
 </body>

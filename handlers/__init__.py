@@ -10,6 +10,7 @@ from .knockpy import handle_knockpy
 from .gobuster_dns import handle_gobuster_dns
 from .fenrir import handle_fenrir_cracker
 from .muninn_scanner import handle_muninn_scan
+from .sleipnir_scanner import handle_sleipnir_scan
 HANDLER_MAP = {
     'packet_injector': handle_packet_injector,
     'erebus_scan': handle_erebus_scan,
@@ -24,6 +25,7 @@ HANDLER_MAP = {
     'gobuster_dns': handle_gobuster_dns,
     'fenrir_cracker': handle_fenrir_cracker,
     'muninn_scan': handle_muninn_scan,
+    'sleipnir_scan': handle_sleipnir_scan,
     'update_modules': handle_update_modules,
     'odin_ai': handle_odin_ai,
     'loki_ai': handle_loki_ai

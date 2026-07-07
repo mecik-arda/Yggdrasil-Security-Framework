@@ -713,34 +713,52 @@ button:hover::before {
    ==================================================== */
 body.zen-mode {
     background-color: #000000 !important;
-    overflow: hidden;
+    background-image: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
 }
-body.zen-mode .sidebar {
+body.zen-mode .container {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #000 !important;
+    box-sizing: border-box;
+}
+body.zen-mode .grid {
+    display: block !important;
+    margin: 0 !important;
+}
+body.zen-mode .sidebar,
+body.zen-mode .header-group,
+body.zen-mode .action-bar,
+body.zen-mode .status-bar,
+body.zen-mode #valkyrieTreePanel,
+body.zen-mode #aiSuggestionsPanel,
+body.zen-mode .rune-corner {
     display: none !important;
 }
 body.zen-mode .main-content {
-    margin-left: 0 !important;
+    margin: 0 !important;
     padding: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
+    width: 100% !important;
+    height: 100% !important;
     max-width: none !important;
 }
-body.zen-mode .action-bar {
-    display: none !important;
+body.zen-mode #output-area {
+    min-height: 100% !important;
+    max-height: 100% !important;
+    height: 100% !important;
+    overflow-y: auto !important;
 }
-body.zen-mode .terminal-container {
-    height: 100vh !important;
-    margin: 0 !important;
-}
-body.zen-mode .terminal {
-    height: 100vh !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background-color: #000000 !important;
-}
-body.zen-mode #valkyrieTreePanel,
-body.zen-mode .status-bar {
-    display: none !important;
+body.zen-mode .terminal-window {
+    height: calc(100vh - 40px) !important;
+    flex: 1 1 100% !important;
 }
 #zenModeExitBtn {
     display: none;

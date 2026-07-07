@@ -31,3 +31,6 @@
 [submodule "Runes/Huginn-SecureTransfer"]
 	path = Runes/Huginn-SecureTransfer
 	url = https://github.com/mecik-arda/Huginn-SecureTransfer.git
+[submodule "Runes/sleipnir-scanner"]
+	path = Runes/sleipnir-scanner
+	url = https://github.com/mecik-arda/Sleipnir-Scanner.git

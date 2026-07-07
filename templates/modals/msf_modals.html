@@ -194,29 +194,33 @@ function handleGraphRightClick(event) {
     }
 }
 
-const origRenderGraph = renderAttackGraph;
-renderAttackGraph = async function() {
-    await origRenderGraph();
-    try {
-        const res = await fetch('/api/graph/data');
-        const data = await res.json();
-        window._graphPositions = {};
-        window._graphNodeIds = [];
-        if (data.nodes) {
-            const W = document.getElementById('attackGraphCanvas')?.width || 1000;
-            const H = 450;
-            const maxDepth = Math.max(...data.nodes.map(n => n.depth || 0), 1);
-            data.nodes.forEach(n => {
-                const d = n.depth || 0;
-                const siblings = data.nodes.filter(sn => (sn.depth||0) === d);
-                const idx = siblings.indexOf(n);
-                window._graphNodeIds.push(n.id);
-                window._graphPositions[n.id] = {
-                    x: n.data?.x || ((idx + 1) / (siblings.length + 1)) * W,
-                    y: n.data?.y || (60 + (d / Math.max(maxDepth, 1)) * (H - 120))
-                };
-            });
-        }
-    } catch(e) {}
-};
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof window.renderAttackGraph === 'function') {
+        const origRenderGraph = window.renderAttackGraph;
+        window.renderAttackGraph = async function() {
+            await origRenderGraph();
+            try {
+                const res = await fetch('/api/graph/data');
+                const data = await res.json();
+                window._graphPositions = {};
+                window._graphNodeIds = [];
+                if (data.nodes) {
+                    const W = document.getElementById('attackGraphCanvas')?.width || 1000;
+                    const H = 450;
+                    const maxDepth = Math.max(...data.nodes.map(n => n.depth || 0), 1);
+                    data.nodes.forEach(n => {
+                        const d = n.depth || 0;
+                        const siblings = data.nodes.filter(sn => (sn.depth||0) === d);
+                        const idx = siblings.indexOf(n);
+                        window._graphNodeIds.push(n.id);
+                        window._graphPositions[n.id] = {
+                            x: n.data?.x || ((idx + 1) / (siblings.length + 1)) * W,
+                            y: n.data?.y || (60 + (d / Math.max(maxDepth, 1)) * (H - 120))
+                        };
+                    });
+                }
+            } catch(e) {}
+        };
+    }
+});
 </script>

@@ -357,3 +357,49 @@
             <button onclick="closeMuninnModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
         </div>
     </div>
+
+<div id="sleipnirScannerModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; width: 90%; text-align: left;">
+            <h2 style="color: #d08770; margin-top:0;">[ ᛋ ] SLEIPNIR SCANNER</h2>
+            <p style="color: var(--text-dim); margin-bottom: 20px;">Modular XSS injection scanner with WAF-evading payloads.</p>
+
+            <div style="margin-bottom: 15px;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('sleipnir_target_url') }}:</label>
+                <input type="text" id="sleipnirUrl" placeholder="http://example.com/search?q=test" style="width:100%; padding:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(208,135,112,0.4); color:white;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('sleipnir_profile') }}:</label>
+                    <select id="sleipnirProfile" style="width:100%; padding:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(208,135,112,0.4); color:white;">
+                        <option value="all">{{ t('sleipnir_profile_all') }}</option>
+                        <option value="standard">{{ t('sleipnir_profile_standard') }}</option>
+                        <option value="waf_bypass">{{ t('sleipnir_profile_waf') }}</option>
+                        <option value="polyglot">{{ t('sleipnir_profile_polyglot') }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('sleipnir_mode') }}:</label>
+                    <select id="sleipnirMode" style="width:100%; padding:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(208,135,112,0.4); color:white;">
+                        <option value="auto-query">{{ t('sleipnir_mode_auto') }}</option>
+                        <option value="form-crawl">{{ t('sleipnir_mode_form') }}</option>
+                        <option value="manual-fuzz">{{ t('sleipnir_mode_manual') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('sleipnir_threads') }}:</label>
+                <input type="range" id="sleipnirThreads" min="1" max="10" value="3" style="width:100%; accent-color: #d08770;">
+                <span id="sleipnirThreadsVal" style="color: #d08770; font-size: 12px;">3</span>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="color:var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;">{{ t('sleipnir_headers') }} ({{ t('sleipnir_headers_optional') }}):</label>
+                <textarea id="sleipnirHeaders" placeholder="Cookie: session=abc123&#10;Authorization: Bearer token" style="width:100%; height:60px; background:rgba(0,0,0,0.3); border:1px solid rgba(208,135,112,0.4); color:white; padding:10px; font-family:monospace; font-size:12px; resize:vertical;"></textarea>
+            </div>
+
+            <button onclick="submitSleipnirScan()" class="btn-install" style="width:100%; margin-bottom:10px; background: #d08770; color: var(--bg-dark);">{{ t('btn_sleipnir_scan') }}</button>
+            <button onclick="closeSleipnirModal()" class="btn-cancel" style="width:100%;">{{ t('cancel') }}</button>
+        </div>
+    </div>

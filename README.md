@@ -7,6 +7,11 @@
 ---
 
 ### 🚀 What's New in v2.2.0
+- **Modular JavaScript Architecture**: Complete refactoring of `api.js` into modular components for massive performance gains, cleaner code, and synchronous load fixes.
+- **Loki WAF Evader AI**: Brand new intelligent WAF bypass payload generator with deep AI context.
+- **Attack Graph Upgrades**: Real-time rendering fixes and asynchronous topology generation.
+- **XSS Protection**: Strengthened Kvasir AI Chat outputs with HTML escaping.
+- **Automated UI Testing Framework**: Integrated headless Selenium tests for GUI stability assurance.
 - **Smart Report Generation (AI-Powered)**: Integrates LLM assistance to parse tool outputs and draft professional vulnerability reports.
 - **Auto-Pwn Engine**: Automated, rule-based exploitation framework for rapid vulnerability verification.
 - **Stealth Mode (OPSEC)**: Obfuscates footprints, regulates scan intensity, and masks network traffic.

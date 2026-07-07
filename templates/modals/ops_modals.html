@@ -133,10 +133,10 @@
         <h2>📚 CVE Knowledge Base</h2>
         <p style="color:#81a1c1; font-size:0.85em;">Search live CVE details from the NIST NVD and Circl.lu databases.</p>
 
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <div style="display:flex; gap:10px; margin-bottom:15px; align-items: center;">
             <input type="text" id="cveSearchInput" placeholder="CVE-YYYY-NNNNN or keyword..." class="neon-input"
-                   style="flex:1;" onkeydown="if(event.key==='Enter')searchCve()">
-            <button class="btn" onclick="searchCve()" style="border-color:#d08770;color:#d08770;">🔍 SEARCH</button>
+                   style="flex:1; margin-bottom: 0;" onkeydown="if(event.key==='Enter')searchCve()">
+            <button type="button" onclick="searchCve()" style="width: auto; margin-bottom: 0; border-color:#d08770;color:#d08770;">🔍 SEARCH</button>
         </div>
 
         <div id="cveResultsContainer" style="max-height:500px; overflow-y:auto;">
