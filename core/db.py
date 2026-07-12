@@ -1,7 +1,18 @@
 import sqlite3
+import threading
+
+# FIX: Thread-safe database access with WAL mode for concurrent reads/writes
+_db_lock = threading.Lock()
+
+def get_connection(timeout=30):
+    """Return a thread-safe SQLite connection with WAL journal mode enabled."""
+    conn = sqlite3.connect('stats.db', timeout=timeout, check_same_thread=False)
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=5000')
+    return conn
 
 def init_db():
-    conn = sqlite3.connect('stats.db')
+    conn = get_connection()
     try:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS stats
@@ -19,7 +30,7 @@ def init_db():
 
 def init_log_tables():
     """Phase 3: Create centralized log tables for error tracking and system events."""
-    conn = sqlite3.connect('stats.db')
+    conn = get_connection()
     try:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS error_logs
@@ -47,7 +58,7 @@ def init_log_tables():
         conn.close()
 
 def get_db_stats():
-    conn = sqlite3.connect('stats.db')
+    conn = get_connection()
     try:
         c = conn.cursor()
         c.execute('SELECT total_scans, last_target, active_tool FROM stats WHERE id=1')
@@ -57,7 +68,7 @@ def get_db_stats():
         conn.close()
 
 def update_db_stats(target, tool):
-    conn = sqlite3.connect('stats.db')
+    conn = get_connection()
     try:
         c = conn.cursor()
         c.execute('UPDATE stats SET total_scans = total_scans + 1, last_target = ?, active_tool = ? WHERE id=1', (target, tool))
@@ -67,7 +78,7 @@ def update_db_stats(target, tool):
 
 def log_scan_start(task_id, tool, target):
     try:
-        conn = sqlite3.connect('stats.db')
+        conn = get_connection()
         try:
             c = conn.cursor()
             c.execute('INSERT OR REPLACE INTO scan_history (task_id, tool, target, status, output) VALUES (?, ?, ?, ?, ?)',
@@ -79,7 +90,7 @@ def log_scan_start(task_id, tool, target):
         print(f"Error logging scan start: {e}")
 
 def init_c2_tables():
-    conn = sqlite3.connect('stats.db')
+    conn = get_connection()
     try:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS c2_sessions
@@ -99,7 +110,7 @@ def init_c2_tables():
 
 
 def log_c2_session(zombie_id, listener_port, remote_addr, os_type):
-    conn = sqlite3.connect('stats.db')
+    conn = get_connection()
     try:
         c = conn.cursor()
         c.execute('INSERT INTO c2_sessions (zombie_id, listener_port, remote_addr, os_type) VALUES (?, ?, ?, ?)',
@@ -110,7 +121,7 @@ def log_c2_session(zombie_id, listener_port, remote_addr, os_type):
 
 
 def log_payload(payload_type, platform, lhost, lport):
-    conn = sqlite3.connect('stats.db')
+    conn = get_connection()
     try:
         c = conn.cursor()
         c.execute('INSERT INTO payload_history (payload_type, platform, lhost, lport) VALUES (?, ?, ?, ?)',
@@ -122,7 +133,7 @@ def log_payload(payload_type, platform, lhost, lport):
 
 def log_scan_end(task_id, status, output):
     try:
-        conn = sqlite3.connect('stats.db')
+        conn = get_connection()
         try:
             c = conn.cursor()
             c.execute('UPDATE scan_history SET status = ?, output = ? WHERE task_id = ?',

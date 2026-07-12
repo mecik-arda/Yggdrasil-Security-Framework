@@ -65,7 +65,9 @@ def install_tool_system(tool_key):
     except subprocess.CalledProcessError as e:
         return False, f"Installation failed:\n{e.output.decode('utf-8', errors='replace')}"
     except Exception as e:
-        return False, f"Error: {str(e)}"
+        from core.logger import get_logger
+        get_logger('system_manager').error(f'Install failed for {tool_key}: {e}', exc_info=True)
+        return False, "Installation failed. Check logs for details."
 
 def remove_tool_system(tool_key):
     config = TOOLS_CONFIG.get(tool_key, {})
@@ -81,7 +83,9 @@ def remove_tool_system(tool_key):
                 shutil.rmtree(repo_path, onerror=rm_error)
                 return True, f"Successfully removed {repo_name} repository."
             except Exception as e:
-                return False, f"Failed to delete {repo_name}: {str(e)}"
+                from core.logger import get_logger
+                get_logger('system_manager').error(f'Failed to delete {repo_name}: {e}', exc_info=True)
+                return False, f"Failed to delete {repo_name}. Check logs for details."
         return False, f"Repository {repo_name} not found."
         
     is_wsl = False
@@ -124,7 +128,9 @@ def remove_tool_system(tool_key):
     except subprocess.CalledProcessError as e:
         return False, f"Removal failed:\n{e.output.decode('utf-8', errors='replace')}"
     except Exception as e:
-        return False, f"Error: {str(e)}"
+        from core.logger import get_logger
+        get_logger('system_manager').error(f'Remove failed: {e}', exc_info=True)
+        return False, "Removal failed. Check logs for details."
 
 def update_tool_system(tool_key):
     config = TOOLS_CONFIG.get(tool_key, {})
@@ -150,7 +156,9 @@ def update_tool_system(tool_key):
             except subprocess.CalledProcessError as e:
                 return False, f"Update failed for {repo_name}:\n{e.output.decode('utf-8', errors='replace')}"
             except Exception as e:
-                return False, f"Update error for {repo_name}: {str(e)}"
+                from core.logger import get_logger
+                get_logger('system_manager').error(f'Update error for {repo_name}: {e}', exc_info=True)
+                return False, f"Update error for {repo_name}. Check logs for details."
         return False, f"Repository {repo_name} not found."
         
     is_wsl = False
@@ -195,7 +203,9 @@ def update_tool_system(tool_key):
     except subprocess.CalledProcessError as e:
         return False, f"Update failed:\n{e.output.decode('utf-8', errors='replace')}"
     except Exception as e:
-        return False, f"Error: {str(e)}"
+        from core.logger import get_logger
+        get_logger('system_manager').error(f'Update failed: {e}', exc_info=True)
+        return False, "Update failed. Check logs for details."
 
 def check_runes_updates():
     runes_dir = "Runes"
@@ -291,7 +301,7 @@ def check_tool_status_detail(tool_key):
                 res = subprocess.run(['wsl.exe', '-d', wsl_distro, '-u', 'root', '--', 'which', tool_bin], capture_output=True, text=True)
                 if res.returncode == 0 and res.stdout.strip():
                     return 'wsl'
-            except:
+            except Exception:
                 pass
         return 'missing'
     else:
@@ -333,7 +343,18 @@ def validate_target(target):
     if not target:
         return True
     target = sanitize_target(target)
-    pattern = r'^[\w\.\-]+(:\d+)?$'
+    # FIX: Block path traversal attempts
+    if '..' in target or '/' in target or '\\' in target:
+        return False
+    # Check for valid IP first
+    try:
+        import ipaddress
+        ipaddress.ip_address(target)
+        return True
+    except ValueError:
+        pass
+    # Then validate as domain name
+    pattern = r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
     if not re.match(pattern, target):
         return False
     return True

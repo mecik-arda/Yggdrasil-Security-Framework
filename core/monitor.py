@@ -40,7 +40,7 @@ def _system_monitor():
         # 4. Update Ollama Status
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.5)
+            s.settimeout(0.1)
             s.connect(("127.0.0.1", 11434))
             s.close()
             OLLAMA_ONLINE = True

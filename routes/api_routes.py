@@ -74,8 +74,8 @@ def system_resources():
 @login_required
 def get_history():
     try:
-        import sqlite3
-        conn = sqlite3.connect('stats.db')
+        from core.db import get_connection
+        conn = get_connection()
         try:
             c = conn.cursor()
             c.execute('SELECT id, timestamp, tool, target, status, output FROM scan_history ORDER BY id DESC LIMIT 30')
@@ -101,8 +101,8 @@ def get_history():
 @login_required
 def clear_history():
     try:
-        import sqlite3
-        conn = sqlite3.connect('stats.db')
+        from core.db import get_connection
+        conn = get_connection()
         try:
             c = conn.cursor()
             c.execute('DELETE FROM scan_history')

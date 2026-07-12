@@ -49,7 +49,8 @@ class SQLiteLogHandler(logging.Handler):
 
     def _get_conn(self):
         if self._conn is None:
-            self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
+            from core.db import get_connection
+            self._conn = get_connection()
         return self._conn
 
     def emit(self, record: logging.LogRecord):
@@ -210,7 +211,8 @@ def get_logger(name: str) -> logging.Logger:
 def emit_log_event(event_type: str, message: str, source: str = None, extra_data: dict = None):
     """Programmatic system-event entry (for non-logger call-sites)."""
     _ensure_log_tables()
-    conn = sqlite3.connect('stats.db')
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     c.execute(
         'INSERT INTO system_events (event_type, source, message, extra_data) VALUES (?, ?, ?, ?)',
@@ -223,7 +225,8 @@ def emit_log_event(event_type: str, message: str, source: str = None, extra_data
 def get_recent_errors(limit=100, level=None, tool=None, since=None):
     """Query the error_logs table. Returns list of dicts (newest first)."""
     _ensure_log_tables()
-    conn = sqlite3.connect('stats.db')
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     query = 'SELECT id, timestamp, level, module, tool, target, message, traceback, extra_data FROM error_logs WHERE 1=1'
     params = []
@@ -254,7 +257,8 @@ def get_recent_errors(limit=100, level=None, tool=None, since=None):
 def get_recent_events(limit=100, event_type=None, since=None):
     """Query the system_events table. Returns list of dicts (newest first)."""
     _ensure_log_tables()
-    conn = sqlite3.connect('stats.db')
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     query = 'SELECT id, timestamp, event_type, source, message, extra_data FROM system_events WHERE 1=1'
     params = []
@@ -281,7 +285,8 @@ def get_recent_events(limit=100, event_type=None, since=None):
 def get_log_stats():
     """Return summary stats for the dashboard badge row."""
     _ensure_log_tables()
-    conn = sqlite3.connect('stats.db')
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     today = datetime.utcnow().strftime('%Y-%m-%d')
     c.execute("SELECT COUNT(*) FROM error_logs WHERE level='ERROR' AND timestamp >= ?", (today,))
@@ -313,7 +318,8 @@ def get_log_stats():
 def clear_all_logs():
     """Delete all entries from both log tables."""
     _ensure_log_tables()
-    conn = sqlite3.connect('stats.db')
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     c.execute('DELETE FROM error_logs')
     c.execute('DELETE FROM system_events')
@@ -328,7 +334,8 @@ def clear_all_logs():
 def _ensure_log_tables():
     """Create log tables if they don't exist (idempotent, safe to call anytime)."""
     try:
-        conn = sqlite3.connect('stats.db')
+        from core.db import get_connection
+        conn = get_connection()
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS error_logs
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -384,7 +391,8 @@ def _prune_old_logs_conn(conn):
 def _prune_old_logs(db_path):
     """Keep only the newest MAX_ROWS_PER_TABLE rows in each table."""
     try:
-        conn = sqlite3.connect(db_path)
+        from core.db import get_connection
+        conn = get_connection()
         _prune_old_logs_conn(conn)
         conn.close()
     except Exception:

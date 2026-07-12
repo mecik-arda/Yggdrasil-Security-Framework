@@ -9,7 +9,8 @@ GRAPH_SESSION = "default"
 
 def get_graph_data(session_id=None):
     sid = session_id or GRAPH_SESSION
-    conn = sqlite3.connect(DB_PATH)
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     c.execute('SELECT node_id, node_type, label, parent_id, data, created_at FROM attack_graph_nodes WHERE session_id=? ORDER BY id ASC', (sid,))
     rows = c.fetchall()
@@ -56,7 +57,8 @@ def add_graph_node(label, node_type, parent_id=None, data=None, session_id=None)
     node_id = str(uuid.uuid4())[:8]
 
     if parent_id:
-        conn = sqlite3.connect(DB_PATH)
+        from core.db import get_connection
+        conn = get_connection()
         c = conn.cursor()
         c.execute('SELECT COUNT(*) FROM attack_graph_nodes WHERE node_id=?', (parent_id,))
         if c.fetchone()[0] == 0:
@@ -66,7 +68,8 @@ def add_graph_node(label, node_type, parent_id=None, data=None, session_id=None)
 
     data_json = json.dumps(data) if data else "{}"
 
-    conn = sqlite3.connect(DB_PATH)
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     try:
         c.execute(
@@ -84,7 +87,8 @@ def add_graph_node(label, node_type, parent_id=None, data=None, session_id=None)
 
 def remove_graph_node(node_id, session_id=None):
     sid = session_id or GRAPH_SESSION
-    conn = sqlite3.connect(DB_PATH)
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     c.execute('DELETE FROM attack_graph_nodes WHERE node_id=? AND session_id=?', (node_id, sid))
     deleted = c.rowcount
@@ -96,7 +100,8 @@ def remove_graph_node(node_id, session_id=None):
 
 def reset_graph(session_id=None):
     sid = session_id or GRAPH_SESSION
-    conn = sqlite3.connect(DB_PATH)
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     c.execute('DELETE FROM attack_graph_nodes WHERE session_id=?', (sid,))
     conn.commit()
@@ -112,7 +117,8 @@ def auto_populate_from_scans(target, session_id=None):
 
     root_id = root["node_id"]
 
-    conn = sqlite3.connect(DB_PATH)
+    from core.db import get_connection
+    conn = get_connection()
     c = conn.cursor()
     c.execute(
         'SELECT tool, output FROM scan_history WHERE target=? AND status=? ORDER BY id DESC LIMIT 15',

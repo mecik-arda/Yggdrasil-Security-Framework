@@ -271,9 +271,9 @@ def ai_auto_pwn():
     results = []
     commands_sent = 0
 
-    import sqlite3
+    from core.db import get_connection
     try:
-        conn = sqlite3.connect('stats.db')
+        conn = get_connection()
         c = conn.cursor()
         
         for sid in session_ids:

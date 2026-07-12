@@ -25,7 +25,8 @@ ops_bp = Blueprint('ops_routes', __name__)
 def get_active_sessions():
     """Return all active C2 (zombie) sessions from the database."""
     try:
-        conn = sqlite3.connect('stats.db')
+        from core.db import get_connection
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
             'SELECT zombie_id, listener_port, remote_addr, os_type, connected_at, '
@@ -49,7 +50,9 @@ def get_active_sessions():
 
         return jsonify({'status': 'success', 'sessions': sessions, 'count': len(sessions)})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'Database error: {str(e)}'})
+        from core.logger import get_logger
+        get_logger('ops_routes').error(f'Database error in get_active_sessions: {e}', exc_info=True)
+        return jsonify({'status': 'error', 'message': 'Internal server error'})
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -68,7 +71,8 @@ def get_network_topology():
       - Vulnerabilities → 'vulnerability' nodes
     """
     try:
-        conn = sqlite3.connect('stats.db')
+        from core.db import get_connection
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
             'SELECT task_id, tool, target, output, status, timestamp '
@@ -78,7 +82,9 @@ def get_network_topology():
         rows = c.fetchall()
         conn.close()
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'Database error: {str(e)}'})
+        from core.logger import get_logger
+        get_logger('ops_routes').error(f'Database error in get_network_topology: {e}', exc_info=True)
+        return jsonify({'status': 'error', 'message': 'Internal server error'})
 
     if not rows:
         return jsonify({'status': 'success', 'nodes': [], 'edges': [], 'message': 'No scan history found.'})

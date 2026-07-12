@@ -42,22 +42,22 @@ def execute_tool(tool_key, target, data=None, task_id=None):
     tool_type = config.get('type')
 
     if tool_type == 'gui':
+        current_os = platform.system()
+        cwd = config.get('cwd', '.')
+        log_path = config.get('log_file', 'launcher.log')
         try:
-            current_os = platform.system()
-            cwd = config.get('cwd', '.')
-            log_path = config.get('log_file', 'launcher.log')
-            log_file = open(log_path, "w")
-
-            if current_os == 'Windows':
-                cmd_str = config.get('cmd_windows')
-                # Use cmd.exe /c start to avoid direct shell=True with raw string
-                cmd_list = ['cmd.exe', '/c', cmd_str]
-                process = subprocess.Popen(cmd_list, shell=False, cwd=cwd, stdout=log_file, stderr=log_file)
-            else:
-                cmd_str = config.get('cmd_linux')
-                # Split the linux command
-                cmd_list = shlex.split(cmd_str)
-                process = subprocess.Popen(cmd_list, shell=False, cwd=cwd, stdout=log_file, stderr=log_file)
+            # FIX: Use with-statement to ensure log file handle is closed
+            with open(log_path, "w") as log_file:
+                if current_os == 'Windows':
+                    cmd_str = config.get('cmd_windows')
+                    # Use cmd.exe /c start to avoid direct shell=True with raw string
+                    cmd_list = ['cmd.exe', '/c', cmd_str]
+                    process = subprocess.Popen(cmd_list, shell=False, cwd=cwd, stdout=log_file, stderr=log_file)
+                else:
+                    cmd_str = config.get('cmd_linux')
+                    # Split the linux command
+                    cmd_list = shlex.split(cmd_str)
+                    process = subprocess.Popen(cmd_list, shell=False, cwd=cwd, stdout=log_file, stderr=log_file)
 
             # Note: GUI processes run independently, so we just return success
             return f">> INITIATING GUI TOOL ({current_os.upper()} MODE)...\n>> PLEASE CHECK YOUR TASKBAR FOR THE NEW WINDOW."
@@ -66,7 +66,8 @@ def execute_tool(tool_key, target, data=None, task_id=None):
                 f'GUI launch failed: {tool_key} - {e}',
                 extra={'tool': tool_key},
             )
-            return f"GUI Launch Error: {str(e)}"
+            # FIX: Return generic message to avoid information disclosure
+            return f"GUI Launch Error: Could not launch {tool_key}. Check logs for details."
 
     elif tool_type in ['cli', 'script']:
         cmd_template = config.get('cmd', [])
@@ -108,7 +109,8 @@ def execute_tool(tool_key, target, data=None, task_id=None):
                 f'Tool execution failed: {tool_key} - {e}',
                 extra={'tool': tool_key, 'target': target or 'NONE'},
             )
-            return f"System Error: {str(e)}"
+            # FIX: Return generic message to avoid information disclosure
+            return f"System Error: Tool execution failed. Check logs for details."
 
     elif tool_type in ['custom_html', 'custom_script']:
         handler_name = config.get('handler')
@@ -223,6 +225,6 @@ def execute_tool_streaming(tool_key, target, output_callback, data=None, task_id
             f'Tool execution failed (streaming): {tool_key} - {e}',
             extra={'tool': tool_key, 'target': target or 'NONE'},
         )
-        msg = f"System Error: {str(e)}"
+        msg = "System Error: Tool execution failed. Check logs for details."
         output_callback(msg)
         return msg

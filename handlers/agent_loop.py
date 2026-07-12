@@ -788,11 +788,12 @@ def start_agent(target, mode="recon"):
                 ),
             }
 
-    # Validate target format
-    if not re.match(r'^[\w\.\-\:\@]+$', target):
+    # FIX: Use centralized validate_target with path traversal and IP checks
+    from core.system_manager import validate_target
+    if not validate_target(target):
         return {
             "status": "error",
-            "message": "Invalid target format. Banned characters detected."
+            "message": "Invalid target format. Use a valid IP or domain name."
         }
 
     if mode == "redteam":

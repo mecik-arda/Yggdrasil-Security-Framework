@@ -29,10 +29,15 @@ app.config.update(
 )
 
 def generate_and_save_secret(key_name, length=16):
+    """Generate a cryptographically secure secret and persist it to .env.
+
+    Uses ``dotenv.set_key`` to avoid duplicate lines that accumulate with
+    repeated ``'a'`` (append) writes.
+    """
     secret = secrets.token_hex(length)
     try:
-        with open('.env', 'a') as f:
-            f.write(f"\n{key_name}={secret}\n")
+        from dotenv import set_key as _dotenv_set_key
+        _dotenv_set_key('.env', key_name, secret)
     except Exception as e:
         print(f"[!] Warning: Could not save {key_name} to .env: {e}")
     return secret
@@ -47,8 +52,16 @@ import werkzeug.security
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 if not ADMIN_PASSWORD:
     ADMIN_PASSWORD = generate_and_save_secret('ADMIN_PASSWORD', 12)
-    print(f"\n[+] Generated and saved new ADMIN_PASSWORD to .env")
-    print(f"[!] YOUR NEW ADMIN PASSWORD IS: {ADMIN_PASSWORD}\n")
+    # FIX: Never print the password to stdout — write to a secure file instead
+    try:
+        pw_file = 'admin_password_initial.txt'
+        with open(pw_file, 'w') as f:
+            f.write(ADMIN_PASSWORD)
+        os.chmod(pw_file, 0o600)
+        print(f"\n[+] Generated and saved new ADMIN_PASSWORD to .env")
+        print(f"[!] Initial admin password saved to {pw_file} — store it securely and delete this file.\n")
+    except Exception as e:
+        print(f"\n[+] Generated and saved new ADMIN_PASSWORD to .env (could not write file: {e})\n")
 
 # Store the hash of the password, not the plaintext
 app.config['ADMIN_PASSWORD_HASH'] = werkzeug.security.generate_password_hash(ADMIN_PASSWORD)
@@ -85,13 +98,30 @@ def generate_csrf_token():
 def before_request():
     app.jinja_env.globals.update(t=get_translation, csrf_token=generate_csrf_token)
     if request.method == "POST" and request.endpoint and not request.endpoint.startswith("auth."):
-        token = session.get('csrf_token')
-        if not token or token != request.headers.get('X-CSRFToken'):
-            if request.is_json or request.path.startswith('/api/'):
-                return jsonify({'status': 'error', 'message': 'CSRF token missing or incorrect.'}), 403
-            return "CSRF Error", 403
+        # FIX: Beacon register/checkin use API key auth (X-Beacon-Key), not session cookies.
+        # They must be exempt from CSRF since implants can't send CSRF tokens.
+        if request.path in ('/api/beacon/register',) or request.path.startswith('/api/beacon/checkin/'):
+            pass  # Skip CSRF — validated by X-Beacon-Key header in beacon_routes.py
+        else:
+            token = session.get('csrf_token')
+            if not token or not secrets.compare_digest(token, request.headers.get('X-CSRFToken') or ''):
+                if request.is_json or request.path.startswith('/api/'):
+                    return jsonify({'status': 'error', 'message': 'CSRF token missing or incorrect.'}), 403
+                return "CSRF Error", 403
 
 from core.auth import login_required
+
+# FIX: API rate limiting to prevent DoS/brute-force on sensitive endpoints
+try:
+    from core.extensions import limiter
+    if limiter:
+        limiter.init_app(app)
+        LIMITER_AVAILABLE = True
+    else:
+        LIMITER_AVAILABLE = False
+except ImportError:
+    limiter = None
+    LIMITER_AVAILABLE = False
 
 from routes.wsl_routes import api_wsl_bp
 from routes.ai_routes import ai_bp
@@ -199,9 +229,26 @@ if __name__ == '__main__':
          |___/ |___/     Security Framework v2.1.0
     """)
     threading.Timer(1.5, lambda: webbrowser.open_new("http://127.0.0.1:5000")).start()
-    if SOCKETIO_AVAILABLE and team_socketio:
-        print("[+] SocketIO active — WebSocket real-time mode enabled")
-        team_socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    # FIX: Default to localhost — user must explicitly set FLASK_HOST=0.0.0.0 for network exposure
+    flask_host = os.environ.get('FLASK_HOST', '127.0.0.1')
+
+    # SSL/TLS support — set SSL_CERT_FILE and SSL_KEY_FILE env vars to enable HTTPS
+    ssl_context = None
+    ssl_cert = os.environ.get('SSL_CERT_FILE')
+    ssl_key = os.environ.get('SSL_KEY_FILE')
+    if ssl_cert and ssl_key and os.path.exists(ssl_cert) and os.path.exists(ssl_key):
+        ssl_context = (ssl_cert, ssl_key)
+        print(f"[+] SSL/TLS enabled — HTTPS active")
+        # Downgrade secure cookie requirement if using self-signed cert locally
+        if flask_host in ('127.0.0.1', 'localhost'):
+            app.config['SESSION_COOKIE_SECURE'] = False
     else:
-        print("[!] SocketIO not available — falling back to polling mode")
-        app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+        # Disable secure cookie for plain HTTP (browsers reject Secure cookies over HTTP)
+        app.config['SESSION_COOKIE_SECURE'] = False
+
+    if SOCKETIO_AVAILABLE and team_socketio:
+        print(f"[+] SocketIO active — WebSocket real-time mode enabled (host: {flask_host})")
+        team_socketio.run(app, host=flask_host, port=5000, debug=False, ssl_context=ssl_context, allow_unsafe_werkzeug=True)
+    else:
+        print(f"[!] SocketIO not available — falling back to polling mode (host: {flask_host})")
+        app.run(host=flask_host, port=5000, debug=False, threaded=True, ssl_context=ssl_context)
