@@ -64,11 +64,10 @@ def auth_post(client, path, data=None):
     )
 
 
-@pytest.fixture
-def temp_db_path(tmp_path_factory):
+@pytest.fixture(scope="function")
+def temp_db_path(tmp_path):
     """Temporary SQLite database path for core module tests."""
-    db_dir = tmp_path_factory.mktemp("db")
-    db_path = db_dir / "test_stats.db"
+    db_path = tmp_path / "test_stats.db"
     # Redirect core.db's DB_PATH to temp file
     import core.db as db_mod
     original = getattr(db_mod, "DB_PATH", None)
