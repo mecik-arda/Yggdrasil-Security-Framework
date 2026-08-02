@@ -38,7 +38,7 @@ if __name__ == '__main__':
           __/ | __/ |
          |___/ |___/     Security Framework v2.1.0
     """)
-    threading.Timer(1.5, lambda: webbrowser.open_new("http://127.0.0.1:5000")).start()
+    threading.Timer(1.5, lambda: webbrowser.open_new("http://127.0.0.1:8080")).start()
     # Default to localhost — user must explicitly set FLASK_HOST=0.0.0.0 for network exposure
     flask_host = os.environ.get('FLASK_HOST', '127.0.0.1')
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     else:
         app.config['SESSION_COOKIE_SECURE'] = False
 
-    flask_port = int(os.environ.get('FLASK_PORT', 5000))
+    flask_port = int(os.environ.get('FLASK_PORT', 8080))
     if SOCKETIO_AVAILABLE and team_socketio:
         print(f"[+] SocketIO active — WebSocket real-time mode enabled (host: {flask_host}:{flask_port})")
         team_socketio.run(app, host=flask_host, port=flask_port, debug=False, ssl_context=ssl_context, allow_unsafe_werkzeug=True)

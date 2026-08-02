@@ -22,5 +22,5 @@ source venv/bin/activate
 echo "Installing/updating dependencies..."
 pip install -r requirements.txt
 echo "Starting Yggdrasil Security Framework..."
-(sleep 1.5 && xdg-open http://127.0.0.1:5000 || python3 -m webbrowser http://127.0.0.1:5000) >/dev/null 2>&1 &
+(sleep 1.5 && xdg-open http://127.0.0.1:8080 || python3 -m webbrowser http://127.0.0.1:8080) >/dev/null 2>&1 &
 python3 app.py
