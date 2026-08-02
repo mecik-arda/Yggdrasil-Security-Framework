@@ -82,7 +82,7 @@ function initSocketIO() {
             if (pt) {
                 if (pt.contentDiv && (!pt.lines || pt.lines.length === 0)) {
                     pt.contentDiv.innerHTML = '';
-                    if (data.type === 'html') {
+                    if (data.type === 'html' && data.trusted_source) {
                         pt.contentDiv.innerHTML = data.output || '';
                     } else if (data.output) {
                         typeWriter(pt.contentDiv, data.output, 0);
@@ -193,7 +193,7 @@ function handleTaskResponse(data, contentDiv, statusDiv, win) {
             if (pt.isComplete) {
                 if (contentDiv) {
                     contentDiv.innerHTML = '';
-                    if (pt.finalData && pt.finalData.type === 'html') {
+                    if (pt.finalData && pt.finalData.type === 'html' && pt.finalData.trusted_source) {
                         contentDiv.innerHTML = pt.finalData.output || '';
                     } else {
                         const finalOutput = (pt.finalData && pt.finalData.output) ? pt.finalData.output : '';
@@ -229,7 +229,7 @@ function handleTaskResponse(data, contentDiv, statusDiv, win) {
         }
     } else if (data.status === 'success') {
         contentDiv.innerHTML = '';
-        if (data.type === 'html') { contentDiv.innerHTML = data.output || ''; }
+        if (data.type === 'html' && data.trusted_source) { contentDiv.innerHTML = data.output || ''; }
         else { typeWriter(contentDiv, data.output || '', 0); }
         if (statusDiv) { statusDiv.innerText = window.t('operation_complete'); statusDiv.style.color = 'var(--highlight-color)'; statusDiv.style.borderColor = 'var(--highlight-color)'; }
         if (win && data.output) { parseScanOutput(win._scanTool, win._scanTarget, data.output); }
@@ -247,7 +247,7 @@ async function pollTaskStatus(taskId, contentDiv, statusDiv, win, offset) {
         if (data.status === 'success' || data.status === 'error') {
             if (contentDiv && (!contentDiv.innerHTML || contentDiv.innerHTML.includes('CONNECTING'))) {
                 contentDiv.innerHTML = '';
-                if (data.type === 'html') { contentDiv.innerHTML = data.output || ''; }
+                if (data.type === 'html' && data.trusted_source) { contentDiv.innerHTML = data.output || ''; }
                 else { typeWriter(contentDiv, data.output || '', 0); }
             }
             if (statusDiv) {

@@ -22,7 +22,12 @@ def login():
         if len(attempts) >= 5:
             return render_template('login.html', error='Too many attempts. Wait 1 minute.'), 429
         import werkzeug.security
-        password = request.form.get('password')
+        # Support both form-data and JSON login
+        if request.is_json:
+            data = request.get_json(silent=True) or {}
+            password = data.get('password', '')
+        else:
+            password = request.form.get('password', '')
         if werkzeug.security.check_password_hash(current_app.config['ADMIN_PASSWORD_HASH'], password):
             # FIX: Regenerate session ID to prevent session fixation attacks
             session.clear()

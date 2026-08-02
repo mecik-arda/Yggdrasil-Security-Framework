@@ -10,7 +10,12 @@ launcher.log
 *.sqlite3
 *.db
 stats.db
+stats.db-shm
+stats.db-wal
 vectordb/
+
+# Security — never commit the initial admin password artefact
+admin_password_initial.txt
 
 # Security Framework Generated Files
 generated_payloads/

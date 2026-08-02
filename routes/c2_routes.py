@@ -10,6 +10,7 @@ c2_bp = Blueprint('c2_routes', __name__)
 
 
 from core.auth import login_required
+from core.validation import bounded_integer
 
 # FIX: Optional rate-limit decorator for sensitive C2 endpoints
 try:
@@ -37,12 +38,7 @@ def api_get_listeners():
 @rate_limit("10 per minute")
 def api_start_listener():
     data = request.get_json()
-    try:
-        port = int(data.get('port', 4444))
-        if not (1 <= port <= 65535):
-            return jsonify({"status": "error", "message": "Port must be 1-65535."})
-    except (ValueError, TypeError):
-        return jsonify({"status": "error", "message": "Invalid port number."})
+    port = bounded_integer(data.get('port', 4444), 'port', minimum=1, maximum=65535, default=4444)
 
     bind_addr = data.get('bind_addr', '0.0.0.0')
     # FIX: Validate IP/bind address format
@@ -84,7 +80,7 @@ def api_get_zombies():
 @login_required
 def api_get_zombie_output():
     zombie_id = request.args.get('zombie_id', '')
-    since = int(request.args.get('since', 0))
+    since = bounded_integer(request.args.get('since', 0), 'since', minimum=0, maximum=999999, default=0)
     if not zombie_id:
         return jsonify({"status": "error", "message": "zombie_id required."})
     result = get_zombie_output(zombie_id, since)

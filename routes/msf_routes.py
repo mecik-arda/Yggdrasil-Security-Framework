@@ -9,6 +9,7 @@ msf_bp = Blueprint('msf_routes', __name__)
 
 
 from core.auth import login_required
+from core.validation import bounded_integer
 
 
 @msf_bp.route('/api/msf/status', methods=['GET'])
@@ -30,10 +31,10 @@ def api_generate_payload():
     data = request.get_json()
     platform = data.get('platform', 'linux')
     lhost = data.get('lhost', '')
-    lport = int(data.get('lport', 4444))
+    lport = bounded_integer(data.get('lport', 4444), 'lport', minimum=1, maximum=65535, default=4444)
     payload_type = data.get('payload_type', None)
     encoder = data.get('encoder', 'none')
-    iterations = int(data.get('iterations', 0))
+    iterations = bounded_integer(data.get('iterations', 0), 'iterations', minimum=0, maximum=100, default=0)
     arch = data.get('arch', None)
     output_format = data.get('output_format', 'exe')
 

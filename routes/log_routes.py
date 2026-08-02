@@ -2,6 +2,7 @@
 from flask import Blueprint, jsonify, request, session, redirect, url_for
 from functools import wraps
 from core.logger import get_recent_errors, get_recent_events, get_log_stats, clear_all_logs
+from core.validation import bounded_integer
 
 log_bp = Blueprint('log_routes', __name__)
 
@@ -30,11 +31,7 @@ def api_get_errors():
         except (ValueError, TypeError):
             since = None
 
-    try:
-        limit = int(limit)
-    except (ValueError, TypeError):
-        limit = 100
-
+    limit = bounded_integer(limit, 'limit', minimum=1, maximum=500, default=100)
     errors = get_recent_errors(limit=limit, level=level, tool=tool, since=since)
     return jsonify({'status': 'success', 'errors': errors, 'count': len(errors)})
 
@@ -53,11 +50,7 @@ def api_get_events():
         except (ValueError, TypeError):
             since = None
 
-    try:
-        limit = int(limit)
-    except (ValueError, TypeError):
-        limit = 100
-
+    limit = bounded_integer(limit, 'limit', minimum=1, maximum=500, default=100)
     events = get_recent_events(limit=limit, event_type=event_type, since=since)
     return jsonify({'status': 'success', 'events': events, 'count': len(events)})
 

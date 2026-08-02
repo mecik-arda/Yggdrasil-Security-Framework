@@ -22,6 +22,9 @@ from core.logger import emit_log_event
 # Configuration
 # ---------------------------------------------------------------------------
 MAX_CONCURRENT_SCANS = 5  # maximum simultaneous tool executions
+MAX_TASK_HISTORY = 1000    # maximum number of completed/errored tasks to retain
+TASK_RETENTION_SECONDS = 86400  # 24 hours — completed tasks older than this are purged
+TASK_CLEANUP_INTERVAL = 300     # run cleanup every 5 minutes
 
 
 # ---------------------------------------------------------------------------
@@ -32,10 +35,11 @@ class Task:
     """Lightweight task record stored in the in-memory registry."""
     __slots__ = (
         'id', 'tool', 'target', 'action', 'status', 'process',
-        'output', 'message', 'type', 'created_at', '_future',
+        'output', 'message', 'type', 'created_at', 'completed_at',
+        'client_task_id', '_future',
     )
 
-    def __init__(self, task_id, tool, target, action):
+    def __init__(self, task_id, tool, target, action, client_task_id=None):
         self.id = task_id
         self.tool = tool
         self.target = target
@@ -46,6 +50,8 @@ class Task:
         self.message = ''
         self.type = 'text'
         self.created_at = time.time()
+        self.completed_at = None     # set when task reaches terminal state
+        self.client_task_id = client_task_id  # caller-supplied correlation id (never used as primary key)
         self._future = None          # concurrent.futures.Future (internal)
 
 
@@ -65,6 +71,57 @@ class _TaskManager:
         self._queue: deque[Task] = deque()         # explicit pending-task visibility
         self._tasks: dict[str, Task] = {}           # all tasks ever created
         self._active_futures: dict[str, Future] = {}  # currently-running futures
+        self._cleanup_started = False
+
+    def _start_cleanup_thread(self):
+        """Launch a daemon thread that periodically prunes old completed tasks."""
+        if self._cleanup_started:
+            return
+        self._cleanup_started = True
+
+        def _cleanup_loop():
+            while True:
+                time.sleep(TASK_CLEANUP_INTERVAL)
+                self._prune_old_tasks()
+
+        cleanup_thread = threading.Thread(target=_cleanup_loop, daemon=True, name='ygg-task-cleanup')
+        cleanup_thread.start()
+
+    def _prune_old_tasks(self):
+        """Remove completed/errored tasks beyond retention limits.
+
+        Applies two policies:
+        1. Count-based: keep at most ``MAX_TASK_HISTORY`` terminal tasks.
+        2. Time-based: drop terminal tasks older than ``TASK_RETENTION_SECONDS``.
+        Active (pending / running) tasks are never pruned.
+        """
+        cutoff = time.time() - TASK_RETENTION_SECONDS
+        with self._lock:
+            # Collect terminal task ids with their completed_at timestamps
+            terminal_tasks = [
+                (tid, t.completed_at or t.created_at)
+                for tid, t in self._tasks.items()
+                if t.status in ('success', 'error', 'cancelled')
+            ]
+            # Sort oldest-first
+            terminal_tasks.sort(key=lambda x: x[1])
+
+            # Time-based pruning
+            for tid, ts in terminal_tasks:
+                if ts < cutoff:
+                    self._tasks.pop(tid, None)
+
+            # Count-based pruning (re-evaluate after time-based cleanup)
+            terminal_tasks = [
+                (tid, t.completed_at or t.created_at)
+                for tid, t in self._tasks.items()
+                if t.status in ('success', 'error', 'cancelled')
+            ]
+            terminal_tasks.sort(key=lambda x: x[1])
+
+            excess = len(terminal_tasks) - MAX_TASK_HISTORY
+            for tid, _ in terminal_tasks[:max(0, excess)]:
+                self._tasks.pop(tid, None)
 
     # -- read-only helpers --------------------------------------------------
 
@@ -90,14 +147,20 @@ class _TaskManager:
 
     # -- task lifecycle -----------------------------------------------------
 
-    def create_task(self, tool, target, action, task_id=None):
-        """Create a *pending* task and return its UUID."""
-        if not task_id:
-            task_id = str(uuid.uuid4())
-        task = Task(task_id, tool, target, action)
+    def create_task(self, tool, target, action, task_id=None, client_task_id=None):
+        """Create a *pending* task and return a server-generated UUID.
+
+        ``task_id`` is deprecated and ignored (kept for backward-compat).
+        ``client_task_id`` is stored for correlation only — it never overrides
+        the server-assigned primary key.
+        """
+        self._start_cleanup_thread()
+        server_id = str(uuid.uuid4())
+        correlation_id = client_task_id or task_id
+        task = Task(server_id, tool, target, action, client_task_id=correlation_id)
         with self._lock:
-            self._tasks[task_id] = task
-        return task_id
+            self._tasks[server_id] = task
+        return server_id
 
     def submit(self, task_id, func, *args, **kwargs):
         """Run ``func(*args, **kwargs)`` inside the thread pool."""
@@ -115,6 +178,7 @@ class _TaskManager:
                 func(*args, **kwargs)
             finally:
                 with self._lock:
+                    task.completed_at = time.time()
                     self._active_futures.pop(task_id, None)
 
         future = self._executor.submit(_wrapper)
@@ -146,6 +210,7 @@ class _TaskManager:
                     task.status = 'error'
                     task.message = 'Task cancelled from queue.'
                     task.output = '[!] TASK CANCELLED FROM QUEUE.'
+                    task.completed_at = time.time()
                     self._active_futures.pop(task_id, None)
                 return True, 0
 
@@ -170,6 +235,7 @@ class _TaskManager:
         with self._lock:
             task.status = 'error'
             task.message = 'Task aborted by user.'
+            task.completed_at = time.time()
             if task.output:
                 task.output += "\n\n[!] PROCESS ABORTED BY USER."
             else:
@@ -211,6 +277,7 @@ class _TaskManager:
                 if task.status in ('pending', 'running'):
                     task.status = 'error'
                     task.message = 'Aborted by Global Kill Switch.'
+                    task.completed_at = time.time()
                     if task.output:
                         task.output += "\n\n[!] PROCESS ABORTED BY GLOBAL KILL SWITCH."
                     else:
@@ -274,9 +341,9 @@ _manager = _TaskManager()
 # Public API (backward-compatible with v1 task_manager)
 # ---------------------------------------------------------------------------
 
-def create_task(tool, target, action, task_id=None):
-    """Create a pending async task and return its UUID."""
-    return _manager.create_task(tool, target, action, task_id=task_id)
+def create_task(tool, target, action, task_id=None, client_task_id=None):
+    """Create a pending async task and return a server-generated UUID."""
+    return _manager.create_task(tool, target, action, task_id=task_id, client_task_id=client_task_id)
 
 
 def set_task_process(task_id, process):

