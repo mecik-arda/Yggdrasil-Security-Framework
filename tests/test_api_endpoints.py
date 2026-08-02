@@ -36,7 +36,7 @@ def client():
         with _app.app_context():
             # Pre-login via session
             with c.session_transaction() as sess:
-                sess['logged_in'] = True
+                sess\['logged_in'\] = True; sess['role'] = 'admin'
                 sess['csrf_token'] = 'test-csrf-token-api'
             yield c
 
