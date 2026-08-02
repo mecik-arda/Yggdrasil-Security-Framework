@@ -10,8 +10,6 @@ import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import schedule as _schedule_lib
-
 from core.logger import get_logger
 
 SCHEDULE_FILE: str = os.path.join(
@@ -94,7 +92,7 @@ def _run_scheduler_loop() -> None:
 
 
 def start_scheduler() -> None:
-    global _runner, _stop_flag
+    global _runner
     _stop_flag.clear()
     _load_schedules()
     if _runner and _runner.is_alive():
