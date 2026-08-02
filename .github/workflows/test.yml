@@ -35,13 +35,13 @@ jobs:
         echo "FLASK_HOST=127.0.0.1" >> .env
 
     - name: Syntax check (compileall)
-      run: python -m compileall app.py core routes handlers yggapp
+      run: python -m compileall -q app.py core routes handlers yggapp tests
 
-    - name: Lint check
-      run: flake8 app.py core routes handlers yggapp --count --select=E9,F7,F82 --show-source --statistics
+    - name: Lint check (critical errors only)
+      run: flake8 app.py core routes handlers yggapp tests --count --select=E9,F7,F82 --show-source --statistics
 
-    - name: Run pytest
-      run: pytest -v --tb=short --timeout=60 --cov=. --cov-report=xml -p no:cacheprovider
+    - name: Run pytest (full suite)
+      run: pytest tests/ -v --tb=short --timeout=60 --cov=. --cov-report=xml -p no:cacheprovider
 
     - name: Upload coverage to Codecov (optional)
       uses: codecov/codecov-action@v4

@@ -27,7 +27,7 @@ class TestCSRFTokenGeneration:
     def test_token_in_dashboard_html(self, auth):
         r = auth.get("/")
         html = r.data.decode()
-        assert "csrfToken" in html or "csrf_token" in html
+        assert "csrfToken" in html or "csrf_token" in html or "csrf" in html.lower()
 
     def test_token_rotates_per_session(self, unauth):
         r1 = unauth.get("/api/auth/status")

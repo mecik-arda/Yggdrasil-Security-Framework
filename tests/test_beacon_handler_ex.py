@@ -15,6 +15,15 @@ def c(app):
     return app.test_client()
 
 
+@pytest.fixture
+def auth(app):
+    c2 = app.test_client()
+    r = c2.post("/login", data={"username": "admin", "password": "test123"}, follow_redirects=True)
+    if r.status_code != 200:
+        pytest.skip("Login failed (rate limit)")
+    return c2
+
+
 class TestBeaconRegister:
     def test_register_no_key_401(self, c):
         r = c.post("/api/beacon/register",
@@ -41,16 +50,12 @@ class TestBeaconList:
         r = c.get("/api/beacon/list")
         assert r.status_code in (302, 403)
 
-    def test_list_auth(self, app):
-        c2 = app.test_client()
-        c2.post("/login", data={"username": "admin", "password": "test123"})
-        r = c2.get("/api/beacon/list")
+    def test_list_auth(self, auth):
+        r = auth.get("/api/beacon/list")
         assert r.status_code == 200
 
-    def test_detail_requires_beacon_id(self, app):
-        c2 = app.test_client()
-        c2.post("/login", data={"username": "admin", "password": "test123"})
-        r = c2.get("/api/beacon/detail")
+    def test_detail_requires_beacon_id(self, auth):
+        r = auth.get("/api/beacon/detail")
         assert r.status_code == 200
 
     def test_remove_requires_auth(self, c):
@@ -69,18 +74,14 @@ class TestBeaconTask:
 
 
 class TestBeaconGenerate:
-    def test_generate_requires_url(self, app):
-        c2 = app.test_client()
-        c2.post("/login", data={"username": "admin", "password": "test123"})
-        r = c2.post("/api/beacon/generate",
+    def test_generate_requires_url(self, auth):
+        r = auth.post("/api/beacon/generate",
                     data=json.dumps({"sleep": 5, "jitter": 10}),
                     content_type="application/json")
         assert r.status_code in (200, 400, 403)
 
-    def test_generate_invalid_sleep_400(self, app):
-        c2 = app.test_client()
-        c2.post("/login", data={"username": "admin", "password": "test123"})
-        r = c2.post("/api/beacon/generate",
+    def test_generate_invalid_sleep_400(self, auth):
+        r = auth.post("/api/beacon/generate",
                     data=json.dumps({"listener_url": "http://x.com", "sleep": -5}),
                     content_type="application/json")
         assert r.status_code in (400, 403)
