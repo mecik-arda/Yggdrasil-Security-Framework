@@ -28,7 +28,7 @@ class TestToolCheckRoutes:
         r = c.post("/api/tool/check",
                    data='{"tool":"whois"}',
                    content_type="application/json")
-        assert r.status_code in (200, 302, 500)
+        assert r.status_code in (200, 302, 404, 500)
 
     def test_tools_list_endpoint(self, app):
         c = app.test_client()

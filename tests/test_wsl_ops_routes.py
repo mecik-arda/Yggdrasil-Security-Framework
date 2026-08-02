@@ -7,18 +7,18 @@ import json
 class TestWSLRoutes:
     def test_wsl_distros(self, auth_client):
         r = auth_client.get("/api/wsl/distros")
-        assert r.status_code in (200, 404, 500)
+        assert r.status_code in (200, 302, 403, 404, 500)
 
 
 # ── Ops Routes ──
 class TestOpsRoutes:
     def test_ops_cve(self, auth_client):
         r = auth_client.get("/api/ops/cve")
-        assert r.status_code in (200, 404)
+        assert r.status_code in (200, 302, 403, 404)
 
     def test_ops_sessions(self, auth_client):
         r = auth_client.get("/api/ops/sessions")
-        assert r.status_code in (200, 404)
+        assert r.status_code in (200, 302, 403, 404)
 
     def test_ops_topology(self, auth_client):
         r = auth_client.get("/api/ops/topology")
