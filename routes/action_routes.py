@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from core.task_manager import create_task, get_async_tasks, get_task_manager
 from core.db import log_scan_start, update_db_stats, log_scan_end
 from core.system_manager import sanitize_target, validate_target, check_tool_status, check_runes_updates, apply_runes_updates, install_tool_system, update_tool_system, remove_tool_system
@@ -15,7 +15,7 @@ except ImportError:
 action_bp = Blueprint('action', __name__)
 
 
-from core.auth import login_required
+from core import login_required, require_role
 
 
 def _emit_event(event_name, data):
@@ -137,6 +137,7 @@ def run_async_task(task_id, tool, target, data, action):
 
 @action_bp.route('/api/action', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def handle_action():
     data = request.form
     tool = data.get('tool')
@@ -144,6 +145,9 @@ def handle_action():
     if target:
         target = sanitize_target(target)
     action = data.get('action')
+
+    if action in {'apply_updates', 'install', 'update', 'remove'} and session.get('role') != 'admin':
+        return jsonify({'status': 'error', 'message': 'Admin role required for this action.'}), 403
 
     if not validate_target(target):
         return jsonify({'status': 'error', 'message': '>> INVALID TARGET. BANNED CHARACTERS DETECTED.'})

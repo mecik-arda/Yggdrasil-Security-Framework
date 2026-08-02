@@ -9,8 +9,8 @@ from handlers.c2_listener import (
 c2_bp = Blueprint('c2_routes', __name__)
 
 
-from core.auth import login_required
-from core.validation import bounded_integer
+from core import login_required, csrf_protect, require_role
+from core.validation import bounded_integer, require_json_object
 
 # FIX: Optional rate-limit decorator for sensitive C2 endpoints
 try:
@@ -35,9 +35,10 @@ def api_get_listeners():
 
 @c2_bp.route('/api/c2/listener/start', methods=['POST'])
 @login_required
+@require_role("admin")
 @rate_limit("10 per minute")
 def api_start_listener():
-    data = request.get_json()
+    data = require_json_object(request)
     port = bounded_integer(data.get('port', 4444), 'port', minimum=1, maximum=65535, default=4444)
 
     bind_addr = data.get('bind_addr', '0.0.0.0')
@@ -52,8 +53,9 @@ def api_start_listener():
 
 @c2_bp.route('/api/c2/listener/stop', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_stop_listener():
-    data = request.get_json()
+    data = require_json_object(request)
     listener_id = data.get('listener_id', '')
     if not listener_id:
         return jsonify({"status": "error", "message": "listener_id required."})
@@ -63,6 +65,7 @@ def api_stop_listener():
 
 @c2_bp.route('/api/c2/listener/stop_all', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_stop_all_listeners():
     result = stop_all_listeners()
     return jsonify(result)
@@ -89,8 +92,9 @@ def api_get_zombie_output():
 
 @c2_bp.route('/api/c2/zombie/command', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_send_command():
-    data = request.get_json()
+    data = require_json_object(request)
     zombie_id = data.get('zombie_id', '')
     command = data.get('command', '')
     if not zombie_id or not command:
@@ -101,8 +105,9 @@ def api_send_command():
 
 @c2_bp.route('/api/c2/zombie/disconnect', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_disconnect_zombie():
-    data = request.get_json()
+    data = require_json_object(request)
     zombie_id = data.get('zombie_id', '')
     if not zombie_id:
         return jsonify({"status": "error", "message": "zombie_id required."})
@@ -112,9 +117,10 @@ def api_disconnect_zombie():
 
 @c2_bp.route('/api/c2/payload/generate', methods=['POST'])
 @login_required
+@require_role("admin")
 @rate_limit("20 per minute")
 def api_generate_payload():
-    data = request.get_json()
+    data = require_json_object(request)
     listener_ip = data.get('listener_ip', '')
     listener_port = data.get('listener_port', 4444)
     payload_type = data.get('payload_type', 'python')

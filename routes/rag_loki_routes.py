@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from routes.action_routes import login_required
+from core import login_required, require_role
+from core.validation import require_json_object
 from handlers.rag_engine import (
     check_rag_status, index_knowledge_base, query_knowledge,
     fetch_gtfobins_live
@@ -18,6 +19,7 @@ def rag_status():
 
 @rag_loki_bp.route('/api/rag/index', methods=['POST'])
 @login_required
+@require_role("admin")
 def rag_index():
     """Index built-in knowledge base into ChromaDB."""
     result = index_knowledge_base()
@@ -25,6 +27,7 @@ def rag_index():
 
 @rag_loki_bp.route('/api/rag/fetch', methods=['POST'])
 @login_required
+@require_role("admin")
 def rag_fetch():
     """Fetch latest GTFOBins data from GitHub."""
     result = fetch_gtfobins_live()
@@ -32,9 +35,10 @@ def rag_fetch():
 
 @rag_loki_bp.route('/api/rag/query', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def rag_query():
     """Query the RAG knowledge base."""
-    data = request.get_json()
+    data = require_json_object(request)
     query = data.get('query', '')
     collections = data.get('collections', None)
     top_k = data.get('top_k', 5)
@@ -45,9 +49,10 @@ def rag_query():
 
 @rag_loki_bp.route('/api/loki/mutate', methods=['POST'])
 @login_required
+@require_role("admin")
 def loki_mutate():
     """Mutate a payload using selected WAF evasion techniques."""
-    data = request.get_json()
+    data = require_json_object(request)
     payload = data.get('payload', '')
     techniques = data.get('techniques', None)
     count = data.get('count', 5)
@@ -62,9 +67,10 @@ def loki_techniques():
 
 @rag_loki_bp.route('/api/loki/analyze', methods=['POST'])
 @login_required
+@require_role("admin")
 def loki_analyze_waf():
     """Analyze a WAF block response and suggest bypass strategies."""
-    data = request.get_json()
+    data = require_json_object(request)
     status_code = data.get('status_code', 403)
     response_body = data.get('response_body', '')
     result = analyze_waf_response(status_code, response_body)

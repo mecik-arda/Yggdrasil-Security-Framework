@@ -1,399 +1,338 @@
-"""
-Phase 3: Centralized Logging Module for Yggdrasil Security Framework.
+"""Centralized logging for the Yggdrasil Security Framework.
 
-Provides structured logging with three backends:
-  1. SQLiteLogHandler  — writes to error_logs / system_events tables in stats.db
-  2. SocketIOLogHandler — pushes log_entry events to the browser in real time
-  3. RotatingFileHandler — writes to logs/yggdrasil.log (5 MB rotation, 3 backups)
+Provides:
+    - init_logging()      — set up the root Yggdrasil logger with
+                            rotating file + SQLite + optional SocketIO
+                            handlers.
+    - get_logger(name)    — convenience helper returning a child logger
+                            under the 'yggdrasil' namespace.
+    - emit_log_event()    — write a structured event to the system_events
+                            table.
+    - get_recent_errors() — query recent error_logs rows.
+    - get_recent_events() — query recent system_events rows.
+    - get_log_stats()     — summary counts.
+    - clear_all_logs()    — truncate both log tables.
 
-Usage:
-    from core.logger import get_logger
-    log = get_logger(__name__)
-    log.error("Something broke", extra={'tool': 'nmap', 'target': '10.0.0.1'})
+Log Rotation
+------------
+The rotating file handler is capped at 5 MB with 3 backups.  Old backups
+are automatically rolled over so the log file never grows unbounded.
 """
 
 import logging
 import logging.handlers
 import os
-import json
 import sqlite3
-import traceback as tb
-import weakref
 import threading
-from datetime import datetime
+import time
+import weakref
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 # ---------------------------------------------------------------------------
-# module-level state
+# Constants
 # ---------------------------------------------------------------------------
-_socketio_ref = None          # weakref to the Flask-SocketIO instance
-_root_logger_initialized = False
+LOG_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
+LOG_FILE: str = os.path.join(LOG_DIR, "yggdrasil.log")
 
-# constants
-MAX_ROWS_PER_TABLE = 5000
-LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
-LOG_FILE = os.path.join(LOG_DIR, 'yggdrasil.log')
+# Log rotation: 5 MB per file, keep 3 backups
+MAX_LOG_BYTES: int = 5 * 1024 * 1024  # 5 MB
+BACKUP_COUNT: int = 3
 
 # ---------------------------------------------------------------------------
-# custom handlers
+# Module-level state
 # ---------------------------------------------------------------------------
-
-class SQLiteLogHandler(logging.Handler):
-    """Writes structured log records into stats.db (error_logs / system_events)."""
-
-    def __init__(self, db_path='stats.db'):
-        super().__init__()
-        self.db_path = db_path
-        self._lock = threading.Lock()
-        self._conn = None
-        self._log_count = 0
-
-    def _get_conn(self):
-        if self._conn is None:
-            from core.db import get_connection
-            self._conn = get_connection()
-        return self._conn
-
-    def emit(self, record: logging.LogRecord):
-        _ensure_log_tables()
-        try:
-            msg = self.format(record)
-            level = record.levelname.upper()
-            module = record.name
-            # extra fields (tool, target, traceback, extra_data)
-            tool = getattr(record, 'tool', None)
-            target = getattr(record, 'target', None)
-            exc_text = None
-            if record.exc_info and record.exc_info != (None, None, None):
-                exc_text = ''.join(tb.format_exception(*record.exc_info))
-            extra_data = getattr(record, 'extra_data', None)
-            if extra_data and not isinstance(extra_data, str):
-                extra_data = json.dumps(extra_data, default=str)
-
-            with self._lock:
-                conn = self._get_conn()
-                c = conn.cursor()
-                c.execute(
-                    'INSERT INTO error_logs (level, module, tool, target, message, traceback, extra_data) '
-                    'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    (level, module, tool, target, msg, exc_text, extra_data)
-                )
-                conn.commit()
-                
-                # Periodically prune old logs (e.g., every 500 logs)
-                self._log_count += 1
-                if self._log_count >= 500:
-                    self._log_count = 0
-                    _prune_old_logs_conn(conn)
-        except Exception:
-            self.handleError(record)
-
-
-class SocketIOLogHandler(logging.Handler):
-    """Pushes log_entry events to connected browsers via SocketIO.
-
-    Holds a weak reference to the SocketIO instance so it degrades gracefully
-    when SocketIO is unavailable (polling-mode fallback).
-    """
-
-    def __init__(self):
-        super().__init__()
-        self._lock = threading.Lock()
-
-    @property
-    def _socketio(self):
-        """Resolve the weak reference (returns None if the object was garbage-collected)."""
-        if _socketio_ref is None:
-            return None
-        return _socketio_ref()
-
-    def emit(self, record: logging.LogRecord):
-        sio = self._socketio
-        if sio is None:
-            return
-        try:
-            level = record.levelname.upper()
-            module = record.name
-            tool = getattr(record, 'tool', None)
-            target = getattr(record, 'target', None)
-            has_traceback = bool(record.exc_info and record.exc_info != (None, None, None))
-
-            payload = {
-                'id': getattr(record, 'log_id', 0),
-                'timestamp': datetime.utcnow().isoformat() + 'Z',
-                'level': level,
-                'module': module,
-                'tool': tool,
-                'target': target,
-                'message': self.format(record),
-                'has_traceback': has_traceback,
-            }
-            with self._lock:
-                sio.emit('log_entry', payload)
-        except Exception:
-            self.handleError(record)
+_root_logger_initialized: bool = False
+_socketio_ref: Optional[weakref.ref] = None
+_emit_lock: threading.Lock = threading.Lock()
+_sqlite_initialised: bool = False
 
 
 # ---------------------------------------------------------------------------
-# public API
+# Initialisation
 # ---------------------------------------------------------------------------
 
-def init_logging(app=None, db_path='stats.db'):
-    """One-time setup. Creates all handlers, configures the root Yggdrasil logger.
+def init_logging(app=None) -> None:
+    """Create the root Yggdrasil logger with rotating file + SQLite handlers.
 
-    Must be called once during app startup (inside an app-context if using Flask).
+    Idempotent — subsequent calls are no-ops.
     """
     global _root_logger_initialized
-
     if _root_logger_initialized:
         return
 
-    # ensure log directory exists
     os.makedirs(LOG_DIR, exist_ok=True)
 
-    # root logger for our namespace
-    root = logging.getLogger('yggdrasil')
+    root = logging.getLogger("yggdrasil")
     root.setLevel(logging.DEBUG)
-    root.propagate = False  # don't bubble to the Python root logger
+    root.propagate = False
 
-    # -- handler 1: rotating file (5 MB, 3 backups) --
-    file_handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding='utf-8'
-    )
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(logging.Formatter(
-        '[%(asctime)s] %(levelname)-8s %(name)s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
-    ))
-    root.addHandler(file_handler)
+    # -- Rotating file handler (5 MB, 3 backups) ------------------------------
+    try:
+        fh = logging.handlers.RotatingFileHandler(
+            LOG_FILE,
+            maxBytes=MAX_LOG_BYTES,
+            backupCount=BACKUP_COUNT,
+            encoding="utf-8",
+        )
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        ))
+        root.addHandler(fh)
+    except Exception:
+        pass  # best-effort
 
-    # -- handler 2: SQLite --
-    sqlite_handler = SQLiteLogHandler(db_path=db_path)
-    sqlite_handler.setLevel(logging.WARNING)  # WARNING+ go to DB
-    sqlite_handler.setFormatter(logging.Formatter('%(message)s'))
-    root.addHandler(sqlite_handler)
-
-    # -- handler 3: SocketIO real-time push --
-    sio_handler = SocketIOLogHandler()
-    sio_handler.setLevel(logging.WARNING)
-    sio_handler.setFormatter(logging.Formatter('%(message)s'))
-    root.addHandler(sio_handler)
+    # -- SQLite handler -------------------------------------------------------
+    _ensure_log_tables()
+    try:
+        db_path = os.environ.get("YGG_STATS_DB", os.path.join(LOG_DIR, "stats.db"))
+        sql_handler = SQLiteLogHandler(db_path=db_path)
+        sql_handler.setLevel(logging.WARNING)
+        root.addHandler(sql_handler)
+    except Exception:
+        pass
 
     _root_logger_initialized = True
 
-    # prune old rows on startup
-    _prune_old_logs(db_path)
 
-
-def set_socketio_instance(sio):
-    """Store a weak reference to the Flask-SocketIO instance.
-
-    Called from app.py after team_socketio.init_app(app).
-    """
-    global _socketio_ref
-    if sio is not None:
-        _socketio_ref = weakref.ref(sio)
-    else:
-        _socketio_ref = None
-
+# ---------------------------------------------------------------------------
+# Logger access
+# ---------------------------------------------------------------------------
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a child logger under the 'yggdrasil' namespace.
-
-    Usage:
-        log = get_logger(__name__)
-        log.error("something broke", extra={'tool': 'nmap', 'target': '10.0.0.1'})
-    """
-    if not name.startswith('yggdrasil.'):
-        name = f'yggdrasil.{name}'
+    """Return a child logger under the ``yggdrasil`` namespace."""
+    if not name.startswith("yggdrasil."):
+        name = f"yggdrasil.{name}"
     return logging.getLogger(name)
 
 
-def emit_log_event(event_type: str, message: str, source: str = None, extra_data: dict = None):
-    """Programmatic system-event entry (for non-logger call-sites)."""
-    _ensure_log_tables()
-    from core.db import get_connection
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute(
-        'INSERT INTO system_events (event_type, source, message, extra_data) VALUES (?, ?, ?, ?)',
-        (event_type, source, message, json.dumps(extra_data) if extra_data else None)
-    )
-    conn.commit()
-    conn.close()
-
-
-def get_recent_errors(limit=100, level=None, tool=None, since=None):
-    """Query the error_logs table. Returns list of dicts (newest first)."""
-    _ensure_log_tables()
-    from core.db import get_connection
-    conn = get_connection()
-    c = conn.cursor()
-    query = 'SELECT id, timestamp, level, module, tool, target, message, traceback, extra_data FROM error_logs WHERE 1=1'
-    params = []
-    if level:
-        query += ' AND level = ?'
-        params.append(level.upper())
-    if tool:
-        query += ' AND tool = ?'
-        params.append(tool)
-    if since:
-        query += ' AND timestamp >= ?'
-        params.append(since)
-    query += ' ORDER BY timestamp DESC LIMIT ?'
-    params.append(int(limit))
-    c.execute(query, params)
-    rows = c.fetchall()
-    conn.close()
-    return [
-        {
-            'id': r[0], 'timestamp': r[1], 'level': r[2], 'module': r[3],
-            'tool': r[4], 'target': r[5], 'message': r[6],
-            'traceback': r[7], 'extra_data': r[8],
-        }
-        for r in rows
-    ]
-
-
-def get_recent_events(limit=100, event_type=None, since=None):
-    """Query the system_events table. Returns list of dicts (newest first)."""
-    _ensure_log_tables()
-    from core.db import get_connection
-    conn = get_connection()
-    c = conn.cursor()
-    query = 'SELECT id, timestamp, event_type, source, message, extra_data FROM system_events WHERE 1=1'
-    params = []
-    if event_type:
-        query += ' AND event_type = ?'
-        params.append(event_type)
-    if since:
-        query += ' AND timestamp >= ?'
-        params.append(since)
-    query += ' ORDER BY timestamp DESC LIMIT ?'
-    params.append(int(limit))
-    c.execute(query, params)
-    rows = c.fetchall()
-    conn.close()
-    return [
-        {
-            'id': r[0], 'timestamp': r[1], 'event_type': r[2],
-            'source': r[3], 'message': r[4], 'extra_data': r[5],
-        }
-        for r in rows
-    ]
-
-
-def get_log_stats():
-    """Return summary stats for the dashboard badge row."""
-    _ensure_log_tables()
-    from core.db import get_connection
-    conn = get_connection()
-    c = conn.cursor()
-    today = datetime.utcnow().strftime('%Y-%m-%d')
-    c.execute("SELECT COUNT(*) FROM error_logs WHERE level='ERROR' AND timestamp >= ?", (today,))
-    errors_today = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM error_logs WHERE level='WARNING' AND timestamp >= ?", (today,))
-    warnings_today = c.fetchone()[0]
-    c.execute("SELECT COUNT(DISTINCT tool) FROM error_logs WHERE tool IS NOT NULL AND timestamp >= ?", (today,))
-    unique_tools = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM error_logs WHERE level='CRITICAL' AND timestamp >= ?", (today,))
-    critical_today = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM error_logs")
-    total_errors = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM system_events")
-    total_events = c.fetchone()[0]
-    c.execute("SELECT message, timestamp FROM error_logs WHERE level IN ('ERROR','CRITICAL') ORDER BY timestamp DESC LIMIT 1")
-    last_error = c.fetchone()
-    conn.close()
-    return {
-        'errors_today': errors_today,
-        'warnings_today': warnings_today,
-        'unique_tools_errored': unique_tools,
-        'critical_today': critical_today,
-        'total_errors': total_errors,
-        'total_events': total_events,
-        'last_error': {'message': last_error[0], 'timestamp': last_error[1]} if last_error else None,
-    }
-
-
-def clear_all_logs():
-    """Delete all entries from both log tables."""
-    _ensure_log_tables()
-    from core.db import get_connection
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('DELETE FROM error_logs')
-    c.execute('DELETE FROM system_events')
-    conn.commit()
-    conn.close()
-
-
 # ---------------------------------------------------------------------------
-# internal helpers
+# SQLite helpers
 # ---------------------------------------------------------------------------
 
-def _ensure_log_tables():
-    """Create log tables if they don't exist (idempotent, safe to call anytime)."""
+def _get_db_connection(db_path: str = "") -> sqlite3.Connection:
+    if not db_path:
+        db_path = os.environ.get("YGG_STATS_DB", os.path.join(LOG_DIR, "stats.db"))
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _ensure_log_tables() -> None:
+    global _sqlite_initialised
+    if _sqlite_initialised:
+        return
+    conn = _get_db_connection()
     try:
-        from core.db import get_connection
-        conn = get_connection()
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS error_logs
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                      level TEXT NOT NULL,
-                      module TEXT,
-                      tool TEXT,
-                      target TEXT,
-                      message TEXT NOT NULL,
-                      traceback TEXT,
-                      extra_data TEXT)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS system_events
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                      event_type TEXT NOT NULL,
-                      source TEXT,
-                      message TEXT NOT NULL,
-                      extra_data TEXT)''')
-        c.execute('CREATE INDEX IF NOT EXISTS idx_error_logs_timestamp ON error_logs(timestamp DESC)')
-        c.execute('CREATE INDEX IF NOT EXISTS idx_error_logs_level ON error_logs(level)')
-        c.execute('CREATE INDEX IF NOT EXISTS idx_system_events_timestamp ON system_events(timestamp DESC)')
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS error_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                level TEXT NOT NULL,
+                module TEXT NOT NULL,
+                tool TEXT DEFAULT '',
+                target TEXT DEFAULT '',
+                message TEXT NOT NULL,
+                traceback TEXT DEFAULT ''
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS system_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                source TEXT DEFAULT '',
+                message TEXT NOT NULL,
+                extra_data TEXT DEFAULT ''
+            )
+        """)
         conn.commit()
+    finally:
         conn.close()
-    except Exception:
-        pass
+    _sqlite_initialised = True
 
 
-def _prune_old_logs_conn(conn):
-    """Helper to prune logs using an existing connection."""
+def _prune_old_logs_conn(conn: sqlite3.Connection) -> None:
+    """Keep at most 10 000 rows in each log table."""
+    for table in ("error_logs", "system_events"):
+        conn.execute(f"DELETE FROM {table} WHERE id NOT IN (SELECT id FROM {table} ORDER BY id DESC LIMIT 10000)")
+
+
+# ---------------------------------------------------------------------------
+# Event emission
+# ---------------------------------------------------------------------------
+
+def emit_log_event(
+    event_type: str,
+    message: str,
+    source: str = "",
+    extra_data: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Write a structured event to the system_events table."""
+    import json as _json
+    _ensure_log_tables()
+    conn = _get_db_connection()
     try:
-        c = conn.cursor()
-        c.execute('SELECT COUNT(*) FROM error_logs')
-        count = c.fetchone()[0]
-        if count > MAX_ROWS_PER_TABLE:
-            c.execute(
-                'DELETE FROM error_logs WHERE id NOT IN '
-                '(SELECT id FROM error_logs ORDER BY timestamp DESC LIMIT ?)',
-                (MAX_ROWS_PER_TABLE,)
-            )
-        c.execute('SELECT COUNT(*) FROM system_events')
-        count = c.fetchone()[0]
-        if count > MAX_ROWS_PER_TABLE:
-            c.execute(
-                'DELETE FROM system_events WHERE id NOT IN '
-                '(SELECT id FROM system_events ORDER BY timestamp DESC LIMIT ?)',
-                (MAX_ROWS_PER_TABLE,)
-            )
+        conn.execute(
+            "INSERT INTO system_events (timestamp, event_type, source, message, extra_data) VALUES (?, ?, ?, ?, ?)",
+            (datetime.now(timezone.utc).isoformat(), event_type, source, message,
+             _json.dumps(extra_data) if extra_data else ""),
+        )
         conn.commit()
-    except Exception:
-        pass
-
-
-def _prune_old_logs(db_path):
-    """Keep only the newest MAX_ROWS_PER_TABLE rows in each table."""
-    try:
-        from core.db import get_connection
-        conn = get_connection()
         _prune_old_logs_conn(conn)
+    finally:
         conn.close()
-    except Exception:
-        pass  # best-effort; never crash startup on log pruning
+
+
+# ---------------------------------------------------------------------------
+# Query helpers
+# ---------------------------------------------------------------------------
+
+def get_recent_errors(limit: int = 50, level: str = "") -> List[Dict[str, Any]]:
+    _ensure_log_tables()
+    conn = _get_db_connection()
+    try:
+        if level:
+            rows = conn.execute(
+                "SELECT * FROM error_logs WHERE level = ? ORDER BY id DESC LIMIT ?",
+                (level.upper(), int(limit)),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM error_logs ORDER BY id DESC LIMIT ?",
+                (int(limit),),
+            ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_recent_events(limit: int = 50, event_type: str = "") -> List[Dict[str, Any]]:
+    _ensure_log_tables()
+    conn = _get_db_connection()
+    try:
+        if event_type:
+            rows = conn.execute(
+                "SELECT * FROM system_events WHERE event_type = ? ORDER BY id DESC LIMIT ?",
+                (event_type, int(limit)),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM system_events ORDER BY id DESC LIMIT ?",
+                (int(limit),),
+            ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_log_stats() -> Dict[str, int]:
+    _ensure_log_tables()
+    conn = _get_db_connection()
+    try:
+        now = datetime.now(timezone.utc)
+        today = now.strftime("%Y-%m-%d")
+        total_errors = conn.execute("SELECT COUNT(*) FROM error_logs").fetchone()[0]
+        total_events = conn.execute("SELECT COUNT(*) FROM system_events").fetchone()[0]
+        errors_today = conn.execute(
+            "SELECT COUNT(*) FROM error_logs WHERE timestamp LIKE ?", (f"{today}%",)
+        ).fetchone()[0]
+        warnings_today = conn.execute(
+            "SELECT COUNT(*) FROM error_logs WHERE level = 'WARNING' AND timestamp LIKE ?",
+            (f"{today}%",),
+        ).fetchone()[0]
+        return {
+            "errors_today": errors_today,
+            "warnings_today": warnings_today,
+            "total_errors": total_errors,
+            "total_events": total_events,
+        }
+    finally:
+        conn.close()
+
+
+def clear_all_logs() -> None:
+    _ensure_log_tables()
+    conn = _get_db_connection()
+    try:
+        conn.execute("DELETE FROM error_logs")
+        conn.execute("DELETE FROM system_events")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _prune_old_logs(db_path: str) -> None:
+    """Public entry point used by test_log_pruning."""
+    conn = _get_db_connection(db_path)
+    try:
+        _prune_old_logs_conn(conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# SocketIO integration
+# ---------------------------------------------------------------------------
+
+def set_socketio_instance(sio: Any) -> None:
+    global _socketio_ref
+    if sio is None:
+        _socketio_ref = None
+    else:
+        _socketio_ref = weakref.ref(sio)
+
+
+class SocketIOLogHandler(logging.Handler):
+    """Log handler that emits log records to SocketIO clients."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            ref = _socketio_ref
+            if ref is None:
+                return
+            sio = ref()
+            if sio is None:
+                return
+            sio.emit("log_entry", {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "level": record.levelname,
+                "module": record.name,
+                "message": self.format(record),
+            })
+        except Exception:
+            pass
+
+
+class SQLiteLogHandler(logging.Handler):
+    """Log handler that writes ERROR+ records to the error_logs table."""
+
+    def __init__(self, db_path: str = "") -> None:
+        super().__init__()
+        self._db_path = db_path or os.environ.get("YGG_STATS_DB", os.path.join(LOG_DIR, "stats.db"))
+
+    def emit(self, record: logging.LogRecord) -> None:
+        _ensure_log_tables()
+        try:
+            conn = _get_db_connection(self._db_path)
+            try:
+                conn.execute(
+                    "INSERT INTO error_logs (timestamp, level, module, tool, target, message) VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        datetime.now(timezone.utc).isoformat(),
+                        record.levelname,
+                        record.name,
+                        getattr(record, "tool", ""),
+                        getattr(record, "target", ""),
+                        self.format(record),
+                    ),
+                )
+                conn.commit()
+                _prune_old_logs_conn(conn)
+            finally:
+                conn.close()
+        except Exception:
+            pass

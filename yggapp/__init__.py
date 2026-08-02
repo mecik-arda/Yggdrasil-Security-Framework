@@ -33,8 +33,12 @@ def create_app(config_name='default'):
     app.config['SESSION_COOKIE_SECURE'] = app.config.get('SESSION_COOKIE_SECURE', True)
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or _generate_and_save_secret('ADMIN_PASSWORD', 12)
-    _save_admin_password_file(ADMIN_PASSWORD)
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+    if not ADMIN_PASSWORD:
+        raise RuntimeError(
+            "ADMIN_PASSWORD environment variable is required. "
+            "Set it in your .env file before starting the application."
+        )
     app.config['ADMIN_PASSWORD_HASH'] = werkzeug.security.generate_password_hash(ADMIN_PASSWORD)
 
     CORS(app, resources={r"/api/*": {
@@ -133,6 +137,12 @@ def create_app(config_name='default'):
 
     @app.errorhandler(Exception)
     def handle_exception(e):
+        from werkzeug.exceptions import HTTPException
+        # HTTPException'leri kendi durum koduyla döndür (404 → 404, 403 → 403)
+        if isinstance(e, HTTPException):
+            if request.path.startswith('/api/') or request.is_json:
+                return jsonify({'status': 'error', 'message': str(e)}), e.code
+            return render_template('login.html'), e.code
         from core.logger import get_logger
         log = get_logger('flask')
         log.error(f'Unhandled exception: {e}', exc_info=True)

@@ -5,7 +5,7 @@ import psutil
 
 api_bp = Blueprint('api', __name__)
 
-from core.auth import login_required
+from core import login_required, require_role
 
 @api_bp.route('/api/task_status', methods=['GET'])
 @login_required
@@ -21,6 +21,7 @@ def get_task_status():
 
 @api_bp.route('/api/task_kill', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def api_kill_task():
     task_id = request.form.get('task_id')
     success, result = kill_task(task_id)
@@ -33,6 +34,7 @@ def api_kill_task():
 
 @api_bp.route('/api/task_kill_all', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_kill_all_tasks():
     total_killed = kill_all_tasks()
     return jsonify({'status': 'success', 'killed': total_killed})
@@ -99,6 +101,7 @@ def get_history():
 
 @api_bp.route('/api/history/clear', methods=['POST'])
 @login_required
+@require_role("admin")
 def clear_history():
     try:
         from core.db import get_connection

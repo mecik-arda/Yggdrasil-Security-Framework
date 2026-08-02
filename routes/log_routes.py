@@ -1,19 +1,10 @@
 """Phase 3: Log Dashboard API — query and manage centralized logs."""
-from flask import Blueprint, jsonify, request, session, redirect, url_for
-from functools import wraps
+from flask import Blueprint, jsonify, request
+from core import login_required, require_role
 from core.logger import get_recent_errors, get_recent_events, get_log_stats, clear_all_logs
 from core.validation import bounded_integer
 
 log_bp = Blueprint('log_routes', __name__)
-
-
-def login_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    return decorated
 
 
 @log_bp.route('/api/logs/errors', methods=['GET'])
@@ -65,6 +56,7 @@ def api_get_stats():
 
 @log_bp.route('/api/logs/clear', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_clear_logs():
     """POST /api/logs/clear — delete all log entries."""
     clear_all_logs()

@@ -19,6 +19,22 @@ class TestInnerHTMLGuards:
         assert trusted_count > 0, "No trusted_source guard found"
         assert inner_count > 0, "No innerHTML usage found (unexpected)"
 
+    def test_trusted_html_uses_allowlist_sanitizer(self):
+        js = open("static/js/modules/core_api.js", encoding="utf-8").read()
+        sanitizer = open("static/js/modules/html_sanitizer.js", encoding="utf-8").read()
+        assert "setSanitizedHtml(pt.contentDiv" in js
+        assert "setSanitizedHtml(contentDiv" in js
+        assert "allowedTags" in sanitizer
+        assert "allowedAttributes" in sanitizer
+        assert "element.removeAttribute" in sanitizer
+
+    def test_sanitizer_rejects_active_content(self):
+        sanitizer = open("static/js/modules/html_sanitizer.js", encoding="utf-8").read()
+        assert "'SCRIPT'" not in sanitizer
+        assert "'IFRAME'" not in sanitizer
+        assert "'SVG'" not in sanitizer
+        assert "'style'" not in sanitizer
+
     def test_html_type_guarded(self):
         js = open("static/js/modules/core_api.js").read()
         # At least one occurrence of trusted_source near innerHTML

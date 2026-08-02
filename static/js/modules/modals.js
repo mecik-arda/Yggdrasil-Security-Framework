@@ -320,7 +320,7 @@ async function applyUpdates() {
     try {
         const response = await fetch('/api/action', { method: 'POST', body: formData });
         const data = await response.json();
-        if (updateContentDiv) { updateContentDiv.innerHTML = data.output; }
+        if (updateContentDiv) { setSanitizedHtml(updateContentDiv, data.output || ''); }
         statusDiv.innerText = '>> FATE HAS BEEN WOVEN. UPDATES INTEGRATED.';
         statusDiv.style.color = 'var(--highlight-color)';
     } catch (error) {

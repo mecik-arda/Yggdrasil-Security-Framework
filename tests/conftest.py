@@ -3,6 +3,8 @@ import os
 import pytest
 import json
 import re
+import time
+from collections import OrderedDict
 
 # Ensure env vars override .env file values
 os.environ["BEACON_API_KEY"] = "test-beacon-key-32-chars-long!!"
@@ -13,6 +15,13 @@ os.environ["ADMIN_PASSWORD"] = "test123"
 _src = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _src not in __import__("sys").path:
     __import__("sys").path.insert(0, _src)
+
+
+@pytest.fixture(autouse=True)
+def _reset_auth_attempts():
+    """Her test öncesinde auth rate-limit counter'ını sıfırla."""
+    import routes.auth_routes as auth_mod
+    auth_mod._AUTH_ATTEMPTS.clear()
 
 
 @pytest.fixture(scope="session")

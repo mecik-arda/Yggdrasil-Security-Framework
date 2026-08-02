@@ -255,24 +255,30 @@ async function refreshOpsSessions() {
         const resp = await fetch('/api/ops/sessions');
         const data = await resp.json();
         if (data.status === 'success' && data.sessions && data.sessions.length > 0) {
-            tbody.innerHTML = data.sessions.map((s, i) => `
+            tbody.innerHTML = data.sessions.map((s, i) => {
+                const zombieId = escapeHtml(s.zombie_id || s.id || '');
+                return `
                 <tr style="border-bottom:1px solid rgba(136,192,208,0.1);">
-                    <td style="padding:8px;"><input type="checkbox" class="sessionCheck" value="${s.zombie_id || s.id || ''}"></td>
-                    <td style="padding:8px;color:#88c0d0;">${s.zombie_id || s.id || 'N/A'}</td>
-                    <td style="padding:8px;">${s.os_type || s.os || 'Unknown'}</td>
-                    <td style="padding:8px;color:#a3be8c;">${s.remote_addr || s.remote || 'N/A'}</td>
-                    <td style="padding:8px;">${s.hostname || 'Unknown'}</td>
-                    <td style="padding:8px;color:#81a1c1;">${s.connected_at || s.connected || 'N/A'}</td>
+                    <td style="padding:8px;"><input type="checkbox" class="sessionCheck" value="${zombieId}"></td>
+                    <td style="padding:8px;color:#88c0d0;">${zombieId || 'N/A'}</td>
+                    <td style="padding:8px;">${escapeHtml(s.os_type || s.os || 'Unknown')}</td>
+                    <td style="padding:8px;color:#a3be8c;">${escapeHtml(s.remote_addr || s.remote || 'N/A')}</td>
+                    <td style="padding:8px;">${escapeHtml(s.hostname || 'Unknown')}</td>
+                    <td style="padding:8px;color:#81a1c1;">${escapeHtml(s.connected_at || s.connected || 'N/A')}</td>
                     <td style="padding:8px;">
-                        <button class="btn btn-small" onclick="sendAutoPwnCommand('${s.zombie_id || s.id}')" style="border-color:#bf616a;color:#bf616a;">💀 PWN</button>
+                        <button class="btn btn-small autoPwnSessionButton" data-zombie-id="${zombieId}" style="border-color:#bf616a;color:#bf616a;">PWN</button>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+            tbody.querySelectorAll('.autoPwnSessionButton').forEach(button => {
+                button.addEventListener('click', () => sendAutoPwnCommand(button.dataset.zombieId));
+            });
         } else {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4c566a;padding:20px;">No active sessions found. Start a C2 listener first.</td></tr>';
         }
     } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#bf616a;padding:20px;">Failed to load sessions: ' + e.message + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#bf616a;padding:20px;">Failed to load sessions: ' + escapeHtml(e.message) + '</td></tr>';
     }
 }
 
@@ -407,21 +413,21 @@ async function searchCve() {
         if (data.status === 'success' && data.results && data.results.length > 0) {
             if (results) results.innerHTML = data.results.map(r => `
                 <div style="margin-bottom:15px; padding:12px; border:1px solid rgba(136,192,208,0.2); border-radius:5px; background:rgba(20,24,35,0.5);">
-                    <h4 style="color:#ebcb8b; margin:0 0 5px 0;">${r.id} <span style="font-size:0.75em; padding:2px 8px; border-radius:3px; background:${_cveSeverityColor(r.severity)}; color:white;">${r.severity || 'N/A'}</span></h4>
-                    <p style="color:#d8dee9; margin:5px 0; font-size:0.85em;">${r.description || 'No description available.'}</p>
+                    <h4 style="color:#ebcb8b; margin:0 0 5px 0;">${escapeHtml(r.id)} <span style="font-size:0.75em; padding:2px 8px; border-radius:3px; background:${_cveSeverityColor(r.severity)}; color:white;">${escapeHtml(r.severity || 'N/A')}</span></h4>
+                    <p style="color:#d8dee9; margin:5px 0; font-size:0.85em;">${escapeHtml(r.description || 'No description available.')}</p>
                     <div style="font-size:0.75em; color:#81a1c1;">
-                        ${r.cvss ? 'CVSS: <b>' + r.cvss + '</b> • ' : ''}
-                        Published: ${r.published || 'Unknown'} •
-                        <a href="${r.url || '#'}" target="_blank" style="color:#88c0d0;">NVD Link ↗</a>
+                        ${r.cvss ? 'CVSS: <b>' + escapeHtml(r.cvss) + '</b> • ' : ''}
+                        Published: ${escapeHtml(r.published || 'Unknown')} •
+                        <a href="${escapeHtml(safeExternalUrl(r.url || '#'))}" target="_blank" rel="noopener noreferrer" style="color:#88c0d0;">NVD Link ↗</a>
                     </div>
                 </div>
             `).join('');
         } else {
-            if (results) results.innerHTML = '<p style="color:#4c566a; text-align:center;padding:20px;">No results found for "' + query + '".</p>';
+            if (results) results.innerHTML = '<p style="color:#4c566a; text-align:center;padding:20px;">No results found for "' + escapeHtml(query) + '".</p>';
         }
     } catch (e) {
         if (loading) loading.style.display = 'none';
-        if (results) results.innerHTML = '<p style="color:#bf616a;">Search error: ' + e.message + '</p>';
+        if (results) results.innerHTML = '<p style="color:#bf616a;">Search error: ' + escapeHtml(e.message) + '</p>';
     }
 }
 
@@ -463,7 +469,7 @@ async function generateSmartReport() {
         });
         const data = await resp.json();
         if (data.status === 'success') {
-            preview.innerHTML = data.report || data.html || data.message || 'Report generated.';
+            setSanitizedHtml(preview, data.report || data.html || data.message || 'Report generated.');
             if (data.html) {
                 document.getElementById('btnDownloadPdf').style.display = 'inline-block';
                 window._reportHtml = data.html;

@@ -17,7 +17,8 @@ except ImportError:
     SOCKETIO_AVAILABLE = False
 
 
-from core.auth import login_required
+from core import login_required, require_role
+from core.validation import require_json_object
 
 
 @team_bp.route('/api/team/users', methods=['GET'])
@@ -35,8 +36,9 @@ def api_team_messages():
 
 @team_bp.route('/api/team/message', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def api_team_message_post():
-    data = request.get_json()
+    data = require_json_object(request)
     message = data.get('message', '')
     if not message:
         return jsonify({"status": "error", "message": "Message required."})
@@ -48,8 +50,9 @@ def api_team_message_post():
 
 @team_bp.route('/api/team/broadcast', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_team_broadcast():
-    data = request.get_json()
+    data = require_json_object(request)
     event = data.get('event', '')
     payload = data.get('data', {})
     if not event:

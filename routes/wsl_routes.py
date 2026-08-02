@@ -7,7 +7,8 @@ import platform
 import json
 
 api_wsl_bp = Blueprint('api_wsl', __name__)
-from routes.action_routes import login_required
+from core import login_required, require_role
+from core.validation import require_json_object
 
 WSL_CONFIG_FILE = 'wsl_config.json'
 
@@ -20,8 +21,9 @@ def api_wsl_distros():
 
 @api_wsl_bp.route('/api/wsl/config', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_wsl_config():
-    distro = request.json.get('distro')
+    distro = require_json_object(request).get('distro')
     if distro in get_wsl_distros() or not distro:
         with open(WSL_CONFIG_FILE, 'w') as f:
             json.dump({'wsl_distro': distro}, f)

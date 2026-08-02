@@ -7,7 +7,7 @@ from handlers.attack_graph import (
 graph_bp = Blueprint('graph_routes', __name__)
 
 
-from core.auth import login_required
+from core import login_required, require_role
 
 
 @graph_bp.route('/api/graph/data', methods=['GET'])
@@ -19,6 +19,7 @@ def api_get_graph():
 
 @graph_bp.route('/api/graph/node/add', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def api_add_node():
     data = request.get_json(silent=True) or {}
     label = data.get('label', '')
@@ -36,6 +37,7 @@ def api_add_node():
 
 @graph_bp.route('/api/graph/node/remove', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def api_remove_node():
     data = request.get_json(silent=True) or {}
     node_id = data.get('node_id', '')
@@ -47,6 +49,7 @@ def api_remove_node():
 
 @graph_bp.route('/api/graph/reset', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_reset_graph():
     data = request.get_json(silent=True) or {}
     session_id = session.get('session_id', 'default')
@@ -55,6 +58,7 @@ def api_reset_graph():
 
 @graph_bp.route('/api/graph/auto', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def api_auto_populate():
     data = request.get_json(silent=True) or {}
     target = data.get('target', '')

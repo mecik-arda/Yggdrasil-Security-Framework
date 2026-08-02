@@ -214,6 +214,24 @@
 
 ---
 
+## 🔒 Güvenlik Denetimi Düzeltmeleri (Saat 19:10-19:30)
+
+| # | Saat | Dosya:Satır | Sorun | Düzeltme |
+|---|------|-------------|-------|----------|
+| 66 | 19:15 | `yggapp/__init__.py:36-37` | `create_app()` her çağrıda `admin_password_initial.txt`'e düz metin parola yazıyor | `_save_admin_password_file()` çağrısı kaldırıldı, test/CI için varsayılan, production'da `RuntimeError` |
+| 67 | 19:15 | `handlers/beacon_handler.py:96,241` | Beacon checkin hep `system_info` döndürüyor, istemci şifreli cevabı JSON olarak okumaya çalışıyor | `BEACON_TASKS_STORE` eklendi, `assign_task()` store'a yazıyor, beacon istemcisi Fernet çözümü yapıyor, `BEACON_KEY` env'den kalıcı secret'a taşındı |
+| 68 | 19:18 | `handlers/beacon_handler.py:28` | `BEACON_TASKS_STORE` silinen beacon'larda temizlenmiyor → memory leak | `remove_beacon()` içinde `BEACON_TASKS_STORE.pop(beacon_id, None)` eklendi |
+| 69 | 19:20 | `static/js/modules/core_api.js:85,197,232` + `templates/modals/ops_modals.html:258,408,466` | Araç/C2/CVE/AI çıktıları doğrudan `innerHTML` ile işleniyor — XSS | `html_sanitizer.js` allowlist tabanlı DOM sanitizer eklendi, tüm `innerHTML`'ler `sanitizeHtml()`'den geçiyor, `<script>`, `on*`, `javascript:`, SVG, iframe temizleniyor |
+| 70 | 19:22 | `routes/c2_routes.py`, `routes/msf_routes.py`, `routes/action_routes.py`, `routes/beacon_routes.py`, `routes/ai_routes.py`, `routes/api_routes.py`, `routes/evasion_routes.py`, `routes/graph_routes.py`, `routes/team_routes.py`, `routes/wsl_routes.py`, `routes/log_routes.py`, `routes/rag_loki_routes.py` | RBAC `require_role()` tanımlı ama hiçbir route'ta kullanılmıyor | Tüm kritik POST endpoint'lerine `@require_role("admin")` eklendi (C2 start/stop/command/disconnect/payload, MSF generate, action run, beacon generate/remove/assign, AI, evasion, graph, team, WSL, log, rag_loki) |
+| 71 | 19:24 | `routes/c2_routes.py:41`, `routes/msf_routes.py`, `routes/beacon_routes.py`, `routes/ai_routes.py`, `routes/evasion_routes.py` | JSON `null` gövdesinde 500 hatası (tüm JSON endpoint'ler) | `require_json_object(request)` tüm JSON POST endpoint'lerine eklendi |
+| 72 | 19:26 | `yggapp/__init__.py:134` | Genel exception handler Flask 404'ü 500 yapıyor | `HTTPException`'ler artık kendi durum koduyla döndürülüyor |
+| 73 | 19:26 | `tests/conftest.py:67` | Test izolasyonu bozuk — login counter sızıyor, gerçek DB'ye yazıyor | `_reset_auth_attempts` autouse fixture eklendi |
+| 74 | 19:27 | `tests/test_rbac.py` | Session'a doğrudan admin yazıyor, gerçek login/rol reddini test etmiyor | Session bypass korundu ama `test_require_role_blocks_readonly` gibi rol reddi testleri eklendi |
+| 75 | 19:27 | `tests/test_frontend_xss.py` | innerHTML testleri regex sanitizasyonu beklemiyor | `sanitizeHtml()` allowlist testleri eklendi |
+| 76 | 19:28 | `tests/test_error_handlers.py`, `tests/test_c2_listener.py` | 404→500 testi ve C2_LOCK testi | HTTPException ve RLock uyumu için güncellendi |
+
+---
+
 ## 🧪 Nihai Test Sonuçları (Güncel)
 
 | Metrik | Değer |

@@ -341,7 +341,7 @@ class TestGeneratePayload:
     def test_generate_payload_valid_python(self):
         """Should generate a Python reverse shell payload."""
         from handlers.c2_listener import generate_payload
-        result = generate_payload('192.168.1.1', 4444, payload_type='python')
+        result = generate_payload('192.168.1.1', 4444, payload_type='python', api_key='testkey')
         assert result['status'] == 'success'
         assert 'payload' in result
         assert '192.168.1.1' in result['payload']
@@ -360,7 +360,7 @@ class TestGeneratePayload:
         types = ['python', 'python3', 'bash', 'nc', 'nc_mkfifo', 'php',
                  'ruby', 'perl', 'powershell']
         for pt in types:
-            result = generate_payload('10.0.0.1', 9999, payload_type=pt)
+            result = generate_payload('10.0.0.1', 9999, payload_type=pt, api_key='testkey')
             assert result['status'] == 'success', f'Failed for type: {pt}'
             assert len(result['payload']) > 0, f'Empty payload for type: {pt}'
 

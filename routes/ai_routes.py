@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from routes.action_routes import login_required
+from core import login_required, require_role
+from core.validation import require_json_object
 from handlers.ai_engine import (
     list_models, chat_completion, pull_model, remove_model, get_ai_profile_tiers,
     analyze_scan_output, scan_all_model_sources, check_environment_status
@@ -40,9 +41,10 @@ def ai_environment_status():
 
 @ai_bp.route('/api/ai/chat', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def ai_chat():
     """Send chat completion to local Ollama model."""
-    data = request.get_json()
+    data = require_json_object(request)
     model = data.get('model', 'qwen2.5-coder:7b')
     messages = data.get('messages', [])
     if not messages:
@@ -63,9 +65,10 @@ def ai_models():
 
 @ai_bp.route('/api/ai/pull', methods=['POST'])
 @login_required
+@require_role("admin")
 def ai_pull():
     """Pull (download) a model from Ollama registry."""
-    data = request.get_json()
+    data = require_json_object(request)
     model = data.get('model', '')
     if not model:
         return jsonify({'status': 'error', 'message': 'Model adi gerekli.'})
@@ -74,9 +77,10 @@ def ai_pull():
 
 @ai_bp.route('/api/ai/remove', methods=['POST'])
 @login_required
+@require_role("admin")
 def ai_remove():
     """Remove an installed Ollama model."""
-    data = request.get_json()
+    data = require_json_object(request)
     model = data.get('model', '')
     if not model:
         return jsonify({'status': 'error', 'message': 'Model adi gerekli.'})
@@ -110,6 +114,7 @@ def ai_tiers():
 
 @ai_bp.route('/api/ai/report', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def ai_report():
     """
     Generate a security assessment report.
@@ -118,7 +123,7 @@ def ai_report():
       - terminals: [{tool, target, output, analysis}]
       - session_id: str (if source='agent_session')
     """
-    data = request.get_json()
+    data = require_json_object(request)
     source = data.get('source', 'terminals')
     if source == 'agent_session':
         session_id = data.get('session_id', '')
@@ -137,9 +142,10 @@ def ai_report():
 
 @ai_bp.route('/api/ai/report/html', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def ai_report_html():
     """Generate report as standalone HTML (for print-to-PDF)."""
-    data = request.get_json()
+    data = require_json_object(request)
     source = data.get('source', 'terminals')
     if source == 'agent_session':
         session_id = data.get('session_id', '')
@@ -157,8 +163,9 @@ def ai_report_html():
 
 @ai_bp.route('/api/agent/start', methods=['POST'])
 @login_required
+@require_role("admin")
 def agent_start():
-    data = request.get_json()
+    data = require_json_object(request)
     target = data.get('target', '')
     mode = data.get('mode', 'recon')
     if not target:
@@ -178,9 +185,10 @@ def agent_status():
 
 @ai_bp.route('/api/agent/stop', methods=['POST'])
 @login_required
+@require_role("admin")
 def agent_stop():
     """Force-stop a running agent session."""
-    data = request.get_json()
+    data = require_json_object(request)
     session_id = data.get('session_id', '')
     if not session_id:
         return jsonify({'status': 'error', 'message': 'Session ID required.'})
@@ -195,12 +203,13 @@ def agent_sessions():
 
 @ai_bp.route('/api/ai/analyze', methods=['POST'])
 @login_required
+@require_role("admin", "analyst")
 def ai_analyze():
     """
     Heimdall Agent: Analyze raw tool output and return structured findings.
     Accepts JSON: {output, tool_name, target}
     """
-    data = request.get_json()
+    data = require_json_object(request)
     output = data.get('output', '')
     tool_name = data.get('tool_name', 'unknown')
     target = data.get('target', '')
@@ -222,13 +231,14 @@ def agent_settings_get():
 
 @ai_bp.route('/api/agent/settings', methods=['POST'])
 @login_required
+@require_role("admin")
 def agent_settings_update():
     """Update autonomous agent settings.
 
     Accepts JSON: {max_steps: int, approval_mode: bool, multi_agent_mode: bool,
                     odin_model: str, loki_model: str, kvasir_model: str}
     """
-    data = request.get_json() or {}
+    data = require_json_object(request)
     updates = {}
     if 'max_steps' in data:
         try:
@@ -254,6 +264,7 @@ def agent_settings_update():
 
 @ai_bp.route('/api/ai/auto-pwn', methods=['POST'])
 @login_required
+@require_role("admin")
 def ai_auto_pwn():
     """Kvasir-guided autonomous Privilege Escalation / Lateral Movement.
 
@@ -262,7 +273,7 @@ def ai_auto_pwn():
     privilege escalation vectors based on the zombie's OS, then sends
     appropriate enumeration commands via the C2 handler.
     """
-    data = request.get_json() or {}
+    data = require_json_object(request)
     session_ids = data.get('session_ids', [])
 
     if not session_ids:
@@ -366,4 +377,3 @@ def _query_kvasir_for_privesc(os_type):
     except Exception:
         pass
     return []
-

@@ -8,8 +8,8 @@ import os
 msf_bp = Blueprint('msf_routes', __name__)
 
 
-from core.auth import login_required
-from core.validation import bounded_integer
+from core import login_required, require_role
+from core.validation import bounded_integer, require_json_object
 
 
 @msf_bp.route('/api/msf/status', methods=['GET'])
@@ -27,8 +27,9 @@ def api_payload_list():
 
 @msf_bp.route('/api/msf/payload/generate', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_generate_payload():
-    data = request.get_json()
+    data = require_json_object(request)
     platform = data.get('platform', 'linux')
     lhost = data.get('lhost', '')
     lport = bounded_integer(data.get('lport', 4444), 'lport', minimum=1, maximum=65535, default=4444)
@@ -47,6 +48,7 @@ def api_generate_payload():
 
 @msf_bp.route('/api/msf/payload/download', methods=['GET'])
 @login_required
+@require_role("admin")
 def api_download_payload():
     filename = request.args.get('filename', '')
     if not filename or '..' in filename or '/' in filename or '\\' in filename:
@@ -90,8 +92,9 @@ def _validate_msf_command(command):
 
 @msf_bp.route('/api/msf/execute', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_msf_execute():
-    data = request.get_json()
+    data = require_json_object(request)
     command = data.get('command', '')
     if not command:
         return jsonify({"status": "error", "message": "Command required."})

@@ -5,13 +5,15 @@ import os
 evasion_bp = Blueprint('evasion_routes', __name__)
 
 
-from core.auth import login_required
+from core import login_required, require_role
+from core.validation import require_json_object
 
 
 @evasion_bp.route('/api/evasion/craft', methods=['POST'])
 @login_required
+@require_role("admin")
 def api_craft_evasive():
-    data = request.get_json()
+    data = require_json_object(request)
     shellcode_hex = data.get('shellcode', '')
     language = data.get('language', 'python')
     method = data.get('method', 'aes')
@@ -49,6 +51,7 @@ def api_evasion_templates():
 
 @evasion_bp.route('/api/evasion/download', methods=['GET'])
 @login_required
+@require_role("admin")
 def api_evasion_download():
     filename = request.args.get('filename', '')
     if not filename or '..' in filename or '/' in filename or '\\' in filename:

@@ -7,12 +7,12 @@ class TestHTTPErrors:
     def test_404_returns_json_on_api(self, app):
         c = app.test_client()
         r = c.get("/api/nonexistent")
-        assert r.status_code in (404, 500)
+        assert r.status_code == 404
 
     def test_405_method_not_allowed(self, app):
         c = app.test_client()
         r = c.put("/api/beacon/register")
-        assert r.status_code in (404, 405, 500)
+        assert r.status_code == 405
 
     def test_400_bad_request_body(self, app):
         c = app.test_client()
@@ -31,7 +31,7 @@ class TestHTTPErrors:
     def test_500_not_crash_on_missing_route(self, app):
         c = app.test_client()
         r = c.get("/api/nonexistent/endpoint/xyz")
-        assert r.status_code in (404, 500)
+        assert r.status_code == 404
 
     def test_api_errors_return_json(self, app):
         c = app.test_client()

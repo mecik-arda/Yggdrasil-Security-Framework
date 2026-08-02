@@ -34,6 +34,9 @@ def login():
             # FIX: Regenerate session ID to prevent session fixation attacks
             session.clear()
             session['logged_in'] = True
+            session['role'] = 'admin'  # RBAC: default role
+            from core import generate_csrf_token
+            generate_csrf_token()
             _AUTH_ATTEMPTS.pop(ip, None)
             return redirect(url_for('home'))
         else:
