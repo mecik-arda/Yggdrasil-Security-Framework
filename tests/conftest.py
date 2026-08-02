@@ -62,3 +62,20 @@ def auth_post(client, path, data=None):
         content_type="application/json",
         headers=headers,
     )
+
+
+@pytest.fixture
+def temp_db_path(tmp_path_factory):
+    """Temporary SQLite database path for core module tests."""
+    db_dir = tmp_path_factory.mktemp("db")
+    db_path = db_dir / "test_stats.db"
+    # Redirect core.db's DB_PATH to temp file
+    import core.db as db_mod
+    original = getattr(db_mod, "DB_PATH", None)
+    db_mod.DB_PATH = str(db_path)
+    # Ensure tables are fresh
+    db_mod.init_db()
+    db_mod.init_c2_tables()
+    yield str(db_path)
+    if original is not None:
+        db_mod.DB_PATH = original

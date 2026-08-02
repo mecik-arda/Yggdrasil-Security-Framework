@@ -363,9 +363,10 @@ class TestGeneratePayload:
 
 class TestThreadSafety:
     def test_c2_lock_exists(self):
-        """C2_LOCK should be a threading.Lock."""
+        """C2_LOCK should be a threading lock (RLock for reentrancy)."""
         from handlers.c2_listener import C2_LOCK
-        assert isinstance(C2_LOCK, type(threading.Lock()))
+        import threading
+        assert isinstance(C2_LOCK, (type(threading.Lock()), type(threading.RLock())))
 
     @patch('handlers.c2_listener.socket.socket')
     @patch('handlers.c2_listener.threading.Thread')
