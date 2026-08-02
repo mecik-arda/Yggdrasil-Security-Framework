@@ -1,146 +1,64 @@
-"""
-Shared pytest fixtures for Yggdrasil Security Framework tests.
-"""
-import sys
-import types
-import sqlite3 as real_sqlite3
-
+"""Pytest fixtures — tüm testler için ortak session yönetimi."""
+import os
 import pytest
+import json
+import re
+
+# Ensure env vars override .env file values
+os.environ["BEACON_API_KEY"] = "test-beacon-key-32-chars-long!!"
+os.environ["SECRET_KEY"] = "test-secret-key-32-chars-long!!"
+os.environ["ADMIN_PASSWORD"] = "test123"
+
+# Ensure project root is on path
+_src = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _src not in __import__("sys").path:
+    __import__("sys").path.insert(0, _src)
 
 
-# ---------------------------------------------------------------------------
-# Session-scoped: prevent heavy handler imports
-# ---------------------------------------------------------------------------
-
-@pytest.fixture(scope="session", autouse=True)
-def _mock_handlers_module():
-    """Mock the entire handlers package so core modules can be imported
-    without pulling in 25+ handler modules, Flask, etc."""
-    if 'handlers' not in sys.modules:
-        pkg = types.ModuleType('handlers')
-        pkg.__path__ = []  # make it look like a package
-
-        def _dispatch_handler(handler_name, target, data):
-            return f"[mocked dispatch] handler={handler_name} target={target}"
-
-        pkg.dispatch_handler = _dispatch_handler
-        sys.modules['handlers'] = pkg
-
-    yield
-    # keep mock in sys.modules for the entire session
-
-
-# ---------------------------------------------------------------------------
-# Database fixtures
-# ---------------------------------------------------------------------------
-
-@pytest.fixture
-def temp_db_path(tmp_path):
-    """Return path to a temporary, isolated SQLite database."""
-    return str(tmp_path / "test_stats.db")
-
-
-@pytest.fixture(autouse=True)
-def _mock_db_connect(mocker, temp_db_path):
-    """
-    Redirect all ``sqlite3.connect('stats.db')`` calls inside ``core.db``
-    to the temporary database so tests never touch the real file.
-    """
-    original_connect = real_sqlite3.connect
-
-    def _mocked_connect(database, *args, **kwargs):
-        if database == 'stats.db' or (isinstance(database, str) and database.endswith('stats.db')):
-            database = temp_db_path
-        return original_connect(database, *args, **kwargs)
-
-    mocker.patch('core.db.sqlite3.connect', side_effect=_mocked_connect)
-
-
-# ---------------------------------------------------------------------------
-# Platform / OS helpers
-# ---------------------------------------------------------------------------
-
-@pytest.fixture
-def mock_platform_linux(mocker):
-    """Make ``platform.system()`` return 'Linux'."""
-    mocker.patch('platform.system', return_value='Linux')
-    mocker.patch('core.tool_runner.platform.system', return_value='Linux')
-    mocker.patch('core.system_manager.platform.system', return_value='Linux')
+@pytest.fixture(scope="session")
+def app():
+    """Fresh Flask app — no services, no DB (session-scoped)."""
+    from yggapp import create_app, init_services
+    a = create_app("test")
+    init_services(a)
+    return a
 
 
 @pytest.fixture
-def mock_platform_windows(mocker):
-    """Make ``platform.system()`` return 'Windows'."""
-    mocker.patch('platform.system', return_value='Windows')
-    mocker.patch('core.tool_runner.platform.system', return_value='Windows')
-    mocker.patch('core.system_manager.platform.system', return_value='Windows')
+def client(app):
+    """Test client with NO login (unauth)."""
+    return app.test_client()
 
 
-# ---------------------------------------------------------------------------
-# Subprocess helpers
-# ---------------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def auth_client(app):
+    """Test client with admin login + CSRF token (session-scoped, tek login)."""
+    from yggapp import init_services
+    init_services(app)
 
-@pytest.fixture
-def mock_subprocess(mocker):
-    """Return a bundle of mocks for subprocess.Popen and check_output."""
-    mock_popen = mocker.MagicMock()
-    mock_process = mocker.MagicMock()
-    mock_process.communicate.return_value = (b"mocked output", b"")
-    mock_process.returncode = 0
-    mock_popen.return_value = mock_process
+    c = app.test_client()
+    r = c.post("/login", data={"username": "admin", "password": "test123"},
+               follow_redirects=True)
+    assert r.status_code == 200, f"Login failed: {r.status_code}"
 
-    mock_check_output = mocker.MagicMock(return_value=b"mocked output")
+    # Extract CSRF token from HTML
+    html = r.data.decode()
+    m = re.search(r'"csrf_token"\s*,\s*"([^"]+)"', html)
+    csrf_token = m.group(1) if m else None
 
-    mocker.patch('subprocess.Popen', mock_popen)
-    mocker.patch('subprocess.check_output', mock_check_output)
-    mocker.patch('subprocess.check_call')
-
-    return {
-        'popen': mock_popen,
-        'process': mock_process,
-        'check_output': mock_check_output,
-    }
+    # Attach CSRF token to client for auto-injection
+    c._csrf_token = csrf_token
+    return c
 
 
-# ---------------------------------------------------------------------------
-# psutil helpers
-# ---------------------------------------------------------------------------
-
-@pytest.fixture
-def mock_psutil(mocker):
-    """Mock psutil.Process so task-manager tests never touch real processes."""
-    mock_process_class = mocker.MagicMock()
-    mock_process_instance = mocker.MagicMock()
-    mock_process_instance.pid = 99999
-    mock_process_instance.children.return_value = []
-    mock_process_class.return_value = mock_process_instance
-
-    mocker.patch('psutil.Process', mock_process_class)
-
-    return {
-        'Process': mock_process_class,
-        'instance': mock_process_instance,
-    }
-
-
-# ---------------------------------------------------------------------------
-# Task-manager state reset
-# ---------------------------------------------------------------------------
-
-@pytest.fixture(autouse=True)
-def _reset_task_manager():
-    """Re-create the task-manager singleton so tests are isolated."""
-    from core.task_manager import _TaskManager, _manager as old_mgr
-    import core.task_manager as tm
-    try:
-        old_mgr._executor.shutdown(wait=False)
-    except Exception:
-        pass
-    new_mgr = _TaskManager()
-    tm._manager = new_mgr
-    yield
-    try:
-        new_mgr._executor.shutdown(wait=False)
-    except Exception:
-        pass
-    tm._manager = old_mgr
+def auth_post(client, path, data=None):
+    """Helper: POST with CSRF token and session cookie."""
+    headers = {}
+    if getattr(client, '_csrf_token', None):
+        headers["X-CSRFToken"] = client._csrf_token
+    return client.post(
+        path,
+        data=json.dumps(data) if data else None,
+        content_type="application/json",
+        headers=headers,
+    )

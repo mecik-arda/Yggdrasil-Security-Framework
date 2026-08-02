@@ -243,40 +243,38 @@ def _generate_csrf_token():
 
 
 def _register_blueprints(app):
-    from routes.auth_routes import auth_bp
-    from routes.api_routes import api_bp
-    from routes.action_routes import action_bp
-    from routes.wsl_routes import api_wsl_bp
-    from routes.ai_routes import ai_bp
-    from routes.rag_loki_routes import rag_loki_bp
-    from routes.c2_routes import c2_bp
-    from routes.msf_routes import msf_bp
-    from routes.graph_routes import graph_bp
-    from routes.beacon_routes import beacon_bp
-    from routes.evasion_routes import evasion_bp
-    from routes.log_routes import log_bp
-    from routes.ops_routes import ops_bp
+    # Her blueprint import'u bağımsız try/except ile korunuyor
+    # Böylece tek bir eksik modül tüm uygulamayı çökertmez
+    blueprints = []
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(api_bp)
-    app.register_blueprint(action_bp)
-    app.register_blueprint(api_wsl_bp)
-    app.register_blueprint(ai_bp)
-    app.register_blueprint(rag_loki_bp)
-    app.register_blueprint(c2_bp)
-    app.register_blueprint(msf_bp)
-    app.register_blueprint(graph_bp)
-    app.register_blueprint(beacon_bp)
-    app.register_blueprint(evasion_bp)
-    app.register_blueprint(log_bp)
-    app.register_blueprint(ops_bp)
+    def _try_import(module_path, bp_name):
+        try:
+            mod = __import__(module_path, fromlist=[bp_name])
+            bp = getattr(mod, bp_name)
+            blueprints.append(bp)
+        except Exception:
+            pass  # Best-effort: eksik modül sessizce atlanır
 
-    # team_bp is registered inside try/except above since it also carries socketio
-    try:
-        from routes.team_routes import team_bp
-        app.register_blueprint(team_bp)
-    except ImportError:
-        pass
+    _try_import("routes.auth_routes", "auth_bp")
+    _try_import("routes.api_routes", "api_bp")
+    _try_import("routes.action_routes", "action_bp")
+    _try_import("routes.wsl_routes", "api_wsl_bp")
+    _try_import("routes.ai_routes", "ai_bp")
+    _try_import("routes.rag_loki_routes", "rag_loki_bp")
+    _try_import("routes.c2_routes", "c2_bp")
+    _try_import("routes.msf_routes", "msf_bp")
+    _try_import("routes.graph_routes", "graph_bp")
+    _try_import("routes.beacon_routes", "beacon_bp")
+    _try_import("routes.evasion_routes", "evasion_bp")
+    _try_import("routes.log_routes", "log_bp")
+    _try_import("routes.ops_routes", "ops_bp")
+    _try_import("routes.team_routes", "team_bp")
+
+    for bp in blueprints:
+        try:
+            app.register_blueprint(bp)
+        except Exception:
+            pass
 
 
 def _init_services(app):

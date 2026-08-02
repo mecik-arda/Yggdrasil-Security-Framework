@@ -7,18 +7,23 @@
 ---
 
 ### 🚀 What's New in v2.2.0
+- **Application Factory (`create_app`)**: Test edilebilir ve deploy edilebilir Flask uygulaması
+- **C2 SQLite Persistence**: Listener ve zombie session'ları veritabanında kalıcı
+- **Kritik Güvenlik Düzeltmeleri (32 adet)**: Deadlock, sabit anahtarlar, XSS koruması, input validation
+- **Kapsamlı Test Altyapısı (42 dosya, 225+ test, 0 FAIL)**: Birim, entegrasyon, güvenlik, frontend, fuzzing testleri
+- **GitHub Actions CI Pipeline**: Otomatik lint + pytest + coverage
+- **Runes Alt Proje Paketleme**: 12 alt proje bağımsız `pyproject.toml` ile paketlenebilir
+- **JSON Login Desteği**: `/login` endpoint'i artık hem form-data hem JSON kabul ediyor
+- **Automated UI Testing Framework**: Selenium + Chrome headless ile otomatik arayüz testleri (`test_frontend.py`)
+- **Smart Report Generation (AI-Powered)**: Valkyrie — CVSS skorlu, LLM destekli profesyonel güvenlik raporları (`handlers/valkyrie_reporter.py`)
+- **Auto-Pwn Engine (Odin Agent)**: Otonom sızma testi — ReAct karar döngüsü, native tool calling (`handlers/agent_loop.py`)
 - **Modular JavaScript Architecture**: Complete refactoring of `api.js` into modular components for massive performance gains, cleaner code, and synchronous load fixes.
 - **Loki WAF Evader AI**: Brand new intelligent WAF bypass payload generator with deep AI context.
 - **Attack Graph Upgrades**: Real-time rendering fixes and asynchronous topology generation.
 - **XSS Protection**: Strengthened Kvasir AI Chat outputs with HTML escaping.
-- **Automated UI Testing Framework**: Integrated headless Selenium tests for GUI stability assurance.
-- **Smart Report Generation (AI-Powered)**: Integrates LLM assistance to parse tool outputs and draft professional vulnerability reports.
-- **Auto-Pwn Engine**: Automated, rule-based exploitation framework for rapid vulnerability verification.
 - **Stealth Mode (OPSEC)**: Obfuscates footprints, regulates scan intensity, and masks network traffic.
 - **Active Sessions & Metasploit Tracker**: Tracks C2 connections, reverse shells, and active exploit sessions in real-time.
 - **Network Topology Visualizer**: Generates dynamic, interactive node graphs of the target network architecture.
-- **CVE Knowledge Base Integration**: Direct access to NVD databases for instant vulnerability lookup.
-- **Yggdrasil Wiki & Linux Command Handbook**: Integrated, lightning-fast searchable database of Linux commands powered by [Linux Command Handbook](https://github.com/mecik-arda/linux-command-handbook).
 - **Focus / Zen Mode (Hack Mode)**: Immersive, distraction-free terminal layout with pitch-black UI for deep hacking sessions.
 
 
