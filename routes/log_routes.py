@@ -23,7 +23,7 @@ def api_get_errors():
             since = None
 
     limit = bounded_integer(limit, 'limit', minimum=1, maximum=500, default=100)
-    errors = get_recent_errors(limit=limit, level=level, tool=tool, since=since)
+    errors = get_recent_errors(limit=limit, level=level or "")
     return jsonify({'status': 'success', 'errors': errors, 'count': len(errors)})
 
 
@@ -42,7 +42,7 @@ def api_get_events():
             since = None
 
     limit = bounded_integer(limit, 'limit', minimum=1, maximum=500, default=100)
-    events = get_recent_events(limit=limit, event_type=event_type, since=since)
+    events = get_recent_events(limit=limit, event_type=event_type or "")
     return jsonify({'status': 'success', 'events': events, 'count': len(events)})
 
 
