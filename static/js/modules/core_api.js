@@ -385,7 +385,7 @@ async function updateHeartbeat() {
             aiEl.style.color = '#bf616a';
         }
 
-        const activeDiv = document.getElementById('heartbeat-active-scans');
+        const activeDiv = document.getElementById('heartbeat-scans');
         let scansHtml = '';
         if (data.active_scans && data.active_scans.length > 0) {
             data.active_scans.forEach(function (scan) {

@@ -1,10 +1,4 @@
-from functools import wraps
-from flask import session, redirect, url_for
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    return decorated_function
+# Backward-compatible re-export of login_required.
+# The canonical definition lives in core.__init__ so that
+# ``from core import login_required`` works without extra imports.
+from core import login_required  # noqa: F401

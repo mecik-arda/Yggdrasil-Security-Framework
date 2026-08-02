@@ -201,6 +201,19 @@
 
 ---
 
+## 🔧 Denetim Düzeltmeleri (Saat 15:50-16:10)
+
+| # | Saat | Dosya:Satır | Sorun | Düzeltme |
+|---|------|-------------|-------|----------|
+| 60 | 16:03 | `static/js/modules/core_api.js:388` | `updateHeartbeat()` → `getElementById('heartbeat-active-scans')` elementi `index.html`'de `heartbeat-scans` olarak tanımlı → her poll'da sessiz JS hatası | `'heartbeat-scans'` olarak düzeltildi |
+| 61 | 16:04 | `core/__init__.py` | Dosya boş — `__all__`, modül docstring, versiyon stringi yok | `login_required` decorator'ü buraya taşındı, docstring ve session fixation uyarısı eklendi |
+| 62 | 16:08 | `core/auth.py` | `core/__init__.py`'e `login_required` taşındıktan sonra `from core.auth import login_required` kullanan mevcut kod kırılabilir | Backward-compatible re-export wrapper: `from core import login_required` |
+| 63 | 16:09 | `temp.js`, `temp_real_script.js` | Kök dizinde artık geçici dosyalar kalmış | Her ikisi de silindi |
+| 64 | 16:09 | `yggapp/repositories/__init__.py` | Dosya yok — `repositories` bir Python paketi olarak tanınmıyor | `__init__.py` oluşturuldu |
+| 65 | 16:10 | `static/js/modules/wiki.js:66` | `filterWiki()` → `visibleCards` değişkeni tanımlanmış ama hiç kullanılmamış (ölü kod) | Kullanılmayan `visibleCards` satırı kaldırıldı |
+
+---
+
 ## 🧪 Nihai Test Sonuçları (Güncel)
 
 | Metrik | Değer |

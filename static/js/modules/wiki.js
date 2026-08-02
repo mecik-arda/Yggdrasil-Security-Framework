@@ -64,7 +64,6 @@
 
         const categories = document.querySelectorAll('.wiki-category');
         categories.forEach(cat => {
-            const visibleCards = cat.querySelectorAll('.wiki-cmd-card[style*="display: block"]');
             const allBlockCards = Array.from(cat.querySelectorAll('.wiki-cmd-card')).filter(c => c.style.display !== 'none');
             if (allBlockCards.length === 0 && term !== '') {
                 cat.style.display = 'none';
